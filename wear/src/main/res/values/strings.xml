@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">HapticWash</string>
-    <string name="hello_world">Hello, %1$s!</string>
+    <string name="start_wash">Start wash</string>
+    <string name="stop_wash">Stop</string>
+    <string name="ready">Ready</string>
+    <string name="listening">Listening…</string>
+    <string name="timer_only">Timer only: step detection unavailable</string>
+    <string name="channel_session">Wash session</string>
+    <string name="session_running">Wash in progress</string>
 </resources>

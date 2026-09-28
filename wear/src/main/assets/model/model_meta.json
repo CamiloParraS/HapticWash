@@ -1,0 +1,79 @@
+{
+  "spec_version": "1.0",
+  "model_id": "step-classifier",
+  "model_version": "0.1.0",
+  "task": "step_classification",
+  "sample_rate_hz": 50,
+  "window_size_s": 3.0,
+  "window_stride_s": 1.5,
+  "channels": [
+    "ax",
+    "ay",
+    "az",
+    "gx",
+    "gy",
+    "gz"
+  ],
+  "preprocessing": {
+    "bandpass": {
+      "low_hz": 1.0,
+      "high_hz": 18.0,
+      "order": 3
+    },
+    "gravity_align": true,
+    "gravity_lowpass_hz": 0.3,
+    "normalization": "zscore_per_channel",
+    "norm_mean": [
+      0.0004394827119540423,
+      -7.629752508364618e-05,
+      -0.0007427195087075233,
+      0.0002618162543512881,
+      -0.00027842531562782824,
+      -0.0003142078348901123
+    ],
+    "norm_std": [
+      2.6582441329956055,
+      3.4117329120635986,
+      3.116720676422119,
+      1.7176496982574463,
+      1.1319949626922607,
+      1.4416648149490356
+    ]
+  },
+  "input": {
+    "shape": [
+      1,
+      150,
+      6
+    ],
+    "dtype": "float32"
+  },
+  "output": {
+    "shape": [
+      1,
+      7
+    ],
+    "dtype": "float32",
+    "activation": "softmax"
+  },
+  "labels": [
+    "NULL",
+    "PALM_TO_PALM",
+    "BACK_OF_HAND",
+    "INTERLACED_FINGERS",
+    "THUMBS",
+    "FINGERTIPS",
+    "WASH_OTHER"
+  ],
+  "postprocessing": {
+    "moving_average_k": 2
+  },
+  "training": {
+    "datasets": [
+      "uwash"
+    ],
+    "loso_macro_f1": 0.7045,
+    "loso_macro_f1_std": 0.1266,
+    "commit": "12741109dacfad155f4573a9ace4b6af32c73182"
+  }
+}
