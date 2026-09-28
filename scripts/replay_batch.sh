@@ -11,6 +11,16 @@
 #      .to_csv(f'data/replay/zhang_who_{i}_1_{w}.csv', index=False, lineterminator='\n') \
 #      for i in range(1, 11) for w in ['left' if i % 2 else 'right']]"
 #
+# In-distribution sanity set (D26): the held-out uwash subject (D22) cut into washes at > 5 s
+# NULL/unlabelled gaps, fragments under the 10 s minimum dropped. Run it as a second <csv dir>
+# with its own [results dir], and move reports/M4_replay.md aside before git restores it:
+#   cd ../HapticWash-AI && uv run python -c "from haptic_ai import corpus; import numpy as np; \
+#     d = corpus.load(); s = d[d.session_id == 'library_2_t7046'].reset_index(drop=True); \
+#     i = np.flatnonzero(~s.label.isin([0, -1]).to_numpy()); cut = np.flatnonzero(np.diff(i) > 250); \
+#     [s.iloc[max(a - 50, 0):b + 51].to_csv(f'data/replay_uwash/uwash_library_2_w{n:02d}.csv', \
+#      index=False, lineterminator='\n') for n, (a, b) in enumerate(zip(np.r_[i[0], i[cut + 1]], \
+#      np.r_[i[cut], i[-1]])) if (b - a) / 50 >= 10]"
+#
 # Each CSV replays with `wrist` from its own wrist column; right-wrist CSVs replay a second
 # time forced to `left` (unmirrored comparison). Speed > 1 is fine: Coverage uses the sample
 # clock. Cold start and mid-replay heap are recorded too (§4.3, indicative on an emulator).
