@@ -4,11 +4,12 @@
 #
 #   scripts/replay_demo.sh <session.csv> [speed]
 #
+# The CSV must be canonical (SPEC 8.1), cut from the AI corpus; raw dataset files won't parse.
 # Make a held-out zhang_who session CSV from HapticWash-AI (never commit it: CC-BY-NC-ND, D4).
 # Use a left-wrist session; right-wrist mirroring arrives with the wrist setting in M4.
 #   cd ../HapticWash-AI && uv run python -c "from haptic_ai import corpus; d = corpus.load(); \
 #     d[(d.subject_id == 'zhang_who_1') & (d.session_id == '1_left_t0')] \
-#     .to_csv('session.csv', index=False, lineterminator='\n')"
+#     .to_csv('data/replay/zhang_who_1_1_left.csv', index=False, lineterminator='\n')"
 set -euo pipefail
 export MSYS_NO_PATHCONV=1 # Git Bash on Windows would otherwise rewrite the device paths
 csv=${1:?usage: $0 <session.csv> [speed]}
