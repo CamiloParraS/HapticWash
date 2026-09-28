@@ -22,6 +22,9 @@ The model and golden files come from `HapticWash-AI/artifacts/` (release `step-c
 0.1.0). To take a new model, copy `model.tflite` + `model_meta.json` into
 `wear/src/main/assets/model/` and `golden/*.npy` into `wear/src/androidTest/assets/golden/`.
 
+Needs `JAVA_HOME` (JDK 17+), `ANDROID_HOME` (or `sdk.dir` in `local.properties`), `adb` on
+`PATH`, and a running Wear OS AVD for the last three. Run the scripts from Git Bash.
+
 ```sh
 ./gradlew :wear:testDebugUnitTest            # preprocessing parity, replay parser, manifest rules
 ./gradlew :wear:connectedDebugAndroidTest    # inference parity + latency, model-load failure (Wear AVD)

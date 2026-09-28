@@ -22,5 +22,9 @@ hardware numbers come at M6.
 back of hand, interlaced/fingertips, WASH_OTHER, thumbs, then NULL. That is the protocol's
 step order, but M3 does not score it; per-step accuracy against ground truth is M4 (§9.3).
 
+Final verification (2026-09-28, clean clone of `m3/app-skeleton`, fresh install): all of the
+above reproduced. Golden inference median 0.09 ms, p95 0.51 ms. Replay at 1.0× took 85.0 s of
+session time for 85 s of data, 55 windows, inference median 0.24 ms, p95 0.68 ms.
+
 Commands: `./gradlew :wear:testDebugUnitTest`, `./gradlew :wear:connectedDebugAndroidTest`,
 `scripts/replay_demo.sh`, `scripts/release_smoke.sh`.

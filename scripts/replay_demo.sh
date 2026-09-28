@@ -25,4 +25,9 @@ adb shell "cat /data/local/tmp/replay.csv | run-as $pkg sh -c 'mkdir -p files &&
 adb logcat -c
 adb shell am start -W -n $pkg/.ui.MainActivity >/dev/null # a background app can't start the service
 adb shell am broadcast -a $pkg.REPLAY --es path $dest --ef speed "$speed" -n $pkg/.sensing.ReplayReceiver >/dev/null
-adb logcat -v brief -s HapticWash:I | sed -u '/Session ended\|Session failed/q'
+adb logcat -v brief -s HapticWash:I &
+logcat=$!
+trap 'kill $logcat 2>/dev/null' EXIT
+# Poll instead of piping into `sed q`: a pipe only closes on logcat's next write, which may never come.
+until adb logcat -d -s HapticWash:I | grep -q 'Session ended\|Session failed'; do sleep 1; done
+sleep 1
