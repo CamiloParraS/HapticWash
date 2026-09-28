@@ -45,6 +45,8 @@ android {
 // ManifestTest reads both merged manifests (SPEC 4.2 R1, 8.5).
 tasks.withType<Test>().configureEach {
     dependsOn("processDebugMainManifest", "processReleaseMainManifest")
+    // ReplayReportTest runs only when scripts/replay_batch.sh passes these (M4 slice b).
+    for (k in listOf("replay.dir", "replay.csv")) providers.systemProperty(k).orNull?.let { systemProperty(k, it) }
 }
 
 dependencies {

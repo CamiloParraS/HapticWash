@@ -12,12 +12,18 @@ import org.junit.Test
 /** SPEC 9.2 item 4: golden raw stream through the Kotlin chain reproduces Python's windows. */
 class PreprocessorParityTest {
     @Test
-    fun goldenRawReproducesGoldenInputs() {
+    fun goldenRawReproducesGoldenInputs() = parity("inputs.npy", mirror = false)
+
+    /** M4: right-wrist mirroring matches the AI repo's `mirror()` (golden file from D25). */
+    @Test
+    fun mirroredGoldenRawReproducesMirroredInputs() = parity("inputs_right.npy", mirror = true)
+
+    private fun parity(expectedFile: String, mirror: Boolean) {
         val meta = ModelMeta.parse(File("src/main/assets/model/model_meta.json").readText())
         val raw = Npy.read(File("src/androidTest/assets/golden/raw.npy").readBytes())
-        val expected = Npy.read(File("src/androidTest/assets/golden/inputs.npy").readBytes())
+        val expected = Npy.read(File("src/androidTest/assets/golden/$expectedFile").readBytes())
 
-        val pre = Preprocessor(meta)
+        val pre = Preprocessor(meta, mirror)
         val d = raw.data
         val windows = (0 until raw.shape[0]).mapNotNull { t ->
             val i = t * 6
@@ -30,7 +36,7 @@ class PreprocessorParityTest {
         windows.forEachIndexed { n, win ->
             for (k in win.indices) maxDiff = maxOf(maxDiff, abs(win[k] - expected.data[n * w + k]))
         }
-        println("preprocessing parity: ${windows.size} windows, max |diff| = $maxDiff")
+        println("preprocessing parity ($expectedFile): ${windows.size} windows, max |diff| = $maxDiff")
         assertTrue("max |diff| = $maxDiff", maxDiff <= 1e-3f)
     }
 }

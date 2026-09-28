@@ -10,10 +10,15 @@ import kotlin.math.sqrt
  * time; a z-scored window (`W x 6`, row-major) comes back every stride once the first `W`
  * samples are in. One instance per session.
  *
+ * [mirror] reflects right-wrist motion into the model's left-wrist frame before anything
+ * else, exactly as `haptic_ai.preprocess.mirror`: ax, gy, gz negated. Frame geometry, not a
+ * model constant, so it is not in the meta. Same unverified x-axis assumption as the Python
+ * side (D19), confirmed on hardware in M6.
+ *
  * ponytail: assumes samples arrive at meta's rate; no on-device resampling. Add it if M6
  * shows the real sensor rate drifting from 50 Hz.
  */
-class Preprocessor(private val meta: ModelMeta) {
+class Preprocessor(private val meta: ModelMeta, private val mirror: Boolean = false) {
     private val fs = meta.sampleRateHz.toDouble()
     private val gravity = SosFilter(Butterworth.lowpass(2, meta.gravityLowpassHz, fs), 3)
     private val band = SosFilter(Butterworth.bandpass(meta.bandOrder, meta.bandLowHz, meta.bandHighHz, fs), C)
@@ -26,6 +31,9 @@ class Preprocessor(private val meta: ModelMeta) {
     fun push(s: MotionSample): FloatArray? {
         x[0] = s.ax.toDouble(); x[1] = s.ay.toDouble(); x[2] = s.az.toDouble()
         x[3] = s.gx.toDouble(); x[4] = s.gy.toDouble(); x[5] = s.gz.toDouble()
+        if (mirror) {
+            x[0] = -x[0]; x[4] = -x[4]; x[5] = -x[5]
+        }
         if (meta.gravityAlign) {
             g[0] = x[0]; g[1] = x[1]; g[2] = x[2]
             gravity.step(g)

@@ -56,12 +56,15 @@ class WashService : Service() {
         if (job?.isActive == true) return START_NOT_STICKY
         val replay = intent?.getStringExtra(EXTRA_REPLAY_PATH)
         val speed = intent?.getFloatExtra(EXTRA_SPEED, 1f) ?: 1f
+        val wristExtra = intent?.getStringExtra(EXTRA_WRIST)
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "HapticWash:session")
             .apply { acquire(MAX_SESSION_MS) }
         job = scope.launch {
             try {
-                if (replay != null) run(ReplaySource(File(replay), speed), "replay") else run(RealSensorSource(this@WashService), "sensor")
+                // Read once at Wash start. ponytail: setting fixed to LEFT until Settings land (M4 slice d).
+                val wrist = Wrist.resolve(wristExtra, Wrist.LEFT)
+                if (replay != null) run(ReplaySource(File(replay), speed), "replay", wrist) else run(RealSensorSource(this@WashService), "sensor", wrist)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -81,17 +84,17 @@ class WashService : Service() {
         super.onDestroy()
     }
 
-    private suspend fun run(source: MotionSource, kind: String) {
+    private suspend fun run(source: MotionSource, kind: String, wrist: Wrist) {
         val model = StepModel.bundled(this)
         val pre = model?.let {
             require(source.nominalRateHz == it.meta.sampleRateHz) { "source rate != model rate" }
-            Preprocessor(it.meta)
+            Preprocessor(it.meta, mirror = wrist == Wrist.RIGHT)
         }
         val smoother = model?.let { Smoother(it.meta) }
         val coverage = CoverageStateMachine(model?.meta)
         val startedAtEpochMs = System.currentTimeMillis()
         _status.value = WashStatus(running = true, timerOnly = model == null)
-        Log.i(TAG, "Session started: source=$kind model=${model?.meta?.modelVersion ?: "none (timer-only)"}")
+        Log.i(TAG, "Session started: source=$kind wrist=$wrist model=${model?.meta?.modelVersion ?: "none (timer-only)"}")
         val latencyNs = ArrayList<Long>()
         var first = -1L
         var last = -1L
@@ -112,8 +115,14 @@ class WashService : Service() {
             }
         } finally {
             val durationS = (last - first).coerceAtLeast(0) / 1e9f
-            // Persistence arrives in M4 slices (b) and (c); for now the Wash is logged.
-            Log.i(TAG, "Wash: ${coverage.finish(durationS, startedAtEpochMs, kind)}")
+            val wash = coverage.finish(durationS, startedAtEpochMs, kind)
+            // Sensor Washes go to History in M4 slice (c). Replay only exists in debug builds.
+            // Never masks what ended the Wash; a lost replay Wash fails the report's count check instead.
+            if (kind == "replay") {
+                runCatching { WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash) }
+                    .onFailure { Log.e(TAG, "Replay Wash not stored", it) }
+            }
+            Log.i(TAG, "Wash: $wash")
             val sorted = latencyNs.sorted()
             fun pct(q: Double) = if (sorted.isEmpty()) 0.0 else sorted[(q * sorted.size).toInt().coerceAtMost(sorted.size - 1)] / 1e6
             Log.i(
@@ -141,6 +150,10 @@ class WashService : Service() {
         private const val ACTION_STOP = "com.hapticwash.STOP"
         private const val EXTRA_REPLAY_PATH = "replay_path"
         private const val EXTRA_SPEED = "speed"
+        private const val EXTRA_WRIST = "wrist"
+        /** Replay Washes, kept apart from History; `scripts/replay_batch.sh` clears and pulls it. */
+        private const val REPLAY_STORE = "replay_washes.json"
+        private const val REPLAY_CAP = 50
         private const val CHANNEL = "session"
         // ponytail: wake lock capped at 10 min so a stuck session cannot hold it forever; longer
         // sessions run on without it. Revisit if D12 (is it needed at all?) says keep it.
@@ -152,8 +165,12 @@ class WashService : Service() {
         fun start(context: Context) =
             context.startForegroundService(Intent(context, WashService::class.java))
 
-        fun replay(context: Context, path: String, speed: Float) = context.startForegroundService(
-            Intent(context, WashService::class.java).putExtra(EXTRA_REPLAY_PATH, path).putExtra(EXTRA_SPEED, speed),
+        /** [wrist] `left|right` overrides the Wrist side setting for this replay only; null uses it. */
+        fun replay(context: Context, path: String, speed: Float, wrist: String?) = context.startForegroundService(
+            Intent(context, WashService::class.java)
+                .putExtra(EXTRA_REPLAY_PATH, path)
+                .putExtra(EXTRA_SPEED, speed)
+                .putExtra(EXTRA_WRIST, wrist),
         )
 
         fun stop(context: Context) =
