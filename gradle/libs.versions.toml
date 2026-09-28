@@ -14,6 +14,10 @@ composeFoundation = "1.5.6"
 composeUiTooling = "1.5.6"
 wearToolingPreview = "1.0.0"
 coreSplashscreen = "1.2.0"
+litert = "1.4.2"
+coroutines = "1.11.0"
+orgJson = "20260814"
+testRunner = "1.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +40,10 @@ androidx-compose-foundation = { group = "androidx.wear.compose", name = "compose
 compose-ui-tooling = { group = "androidx.wear.compose", name = "compose-ui-tooling", version.ref = "composeUiTooling" }
 androidx-wear-tooling-preview = { group = "androidx.wear", name = "wear-tooling-preview", version.ref = "wearToolingPreview" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

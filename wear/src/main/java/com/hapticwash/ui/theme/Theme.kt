@@ -1,4 +1,4 @@
-package com.example.hapticwash.presentation.theme
+package com.hapticwash.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.wear.compose.material3.MaterialTheme
