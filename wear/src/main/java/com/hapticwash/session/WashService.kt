@@ -87,6 +87,9 @@ class WashService : Service() {
             require(source.nominalRateHz == it.meta.sampleRateHz) { "source rate != model rate" }
             Preprocessor(it.meta)
         }
+        val smoother = model?.let { Smoother(it.meta) }
+        val coverage = CoverageStateMachine(model?.meta)
+        val startedAtEpochMs = System.currentTimeMillis()
         _status.value = WashStatus(running = true, timerOnly = model == null)
         Log.i(TAG, "Session started: source=$kind model=${model?.meta?.modelVersion ?: "none (timer-only)"}")
         val latencyNs = ArrayList<Long>()
@@ -101,18 +104,22 @@ class WashService : Service() {
                 val t = System.nanoTime()
                 val p = m.predict(w)
                 latencyNs += System.nanoTime() - t
+                coverage.window(smoother!!.push(p))
                 val top = p.indices.maxBy { p[it] }
                 val label = m.meta.labels[top]
                 Log.i(TAG, "window %d t=%.1fs %s p=%.2f".format(latencyNs.size, (last - first) / 1e9, label, p[top]))
                 _status.update { it.copy(label = label, windows = latencyNs.size) }
             }
         } finally {
+            val durationS = (last - first).coerceAtLeast(0) / 1e9f
+            // Persistence arrives in M4 slices (b) and (c); for now the Wash is logged.
+            Log.i(TAG, "Wash: ${coverage.finish(durationS, startedAtEpochMs, kind)}")
             val sorted = latencyNs.sorted()
             fun pct(q: Double) = if (sorted.isEmpty()) 0.0 else sorted[(q * sorted.size).toInt().coerceAtMost(sorted.size - 1)] / 1e6
             Log.i(
                 TAG,
                 "Session ended: %.1f s, %d windows, inference median %.2f ms, p95 %.2f ms"
-                    .format((last - first).coerceAtLeast(0) / 1e9, sorted.size, pct(0.5), pct(0.95)),
+                    .format(durationS, sorted.size, pct(0.5), pct(0.95)),
             )
         }
     }
