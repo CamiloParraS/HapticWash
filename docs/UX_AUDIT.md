@@ -34,9 +34,9 @@ Columns are the screens: **St** Start, **IP** In-progress, **Su** Summary, **Hi*
 | § | Item | St | IP | Su | Hi | Se | Notes |
 |---|---|---|---|---|---|---|---|
 | 1 | Glanceable < 5 s | ✓ | ✓ | ✓ | ✓ | ✓ | Each screen has one header and short lines. Summary is five rows of a Step name and its Status. |
-| 2 | Round-safe, scaling list, `TimeText` | ✓ | ✓ | ✓ | ✓ | ✓ | Lists use `TransformingLazyColumn`, the Wear Material 3 successor to `ScalingLazyColumn`. `TimeText` comes from `AppScaffold` on every screen. In-progress is centred and not scrollable. The ring leaves a 60° gap at the top for `TimeText` (fixed in this audit: it used to run under the clock). |
-| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | Buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start's primary action is Start wash (History and Settings are tonal); In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
-| 4 | One-tap start | ✓ | — | — | — | — | Start wash is the first item. A single tap starts the service and opens In-progress. |
+| 2 | Round-safe, scaling list, `TimeText` | ✓ | ✓ | ✓ | ✓ | ✓ | Lists use `TransformingLazyColumn`, the Wear Material 3 successor to `ScalingLazyColumn`. `TimeText` comes from `AppScaffold` on every screen. Start and In-progress are centred and not scrollable. The ring leaves a 60° gap at the top for `TimeText` (fixed in this audit: it used to run under the clock). |
+| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | List buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start wash is a 104 dp round button (92 dp in Timer-only), History and Settings 52 dp tonal icon buttons (redesign, below). Start's primary action is Start wash; In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
+| 4 | One-tap start | ✓ | — | — | — | — | Start wash is the large centre button. A single tap starts the service and opens In-progress. The Tile and the complication start a Wash from outside the app (below). |
 | 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | ✓ | No text fields. The only dialog is the system notification permission (Allow / Don't allow), now asked on the first Start tap. Wrist side is two radio buttons. Deepest paths: Start → In-progress → Summary (In-progress is popped) and Start → History → Summary. Swipe-to-dismiss works from In-progress, Summary, History and Settings. A swipe mid-Wash leaves it running; Start then shows "Wash in progress" and returns to In-progress. |
 | 6 | Haptics, patterns, ≤ 1 per 3 s | — | ✓ | ◐ | — | ✓ | From `dumpsys vibrator_manager`: start 80 ms; end 80 + 120 + 80 ms; missed-step 600 ms, starting 3.2 s after the end pulses start (13 s Wash, all `NOT_DETECTED`). A too-short Wash and a Timer-only Wash each got only start and end. Replays are silent. The Haptics setting is read at fire time (unit-tested in `HapticsTest`). See note A. |
 | 7 | Ambient / screen-off | — | ✓ | — | — | — | `KEYCODE_SLEEP` mid-Wash put the device in `Dozing`: 17 windows logged in 25 s (1.5 s stride), and on wake the Wash was still running at 0:45. No crash in logcat. |
@@ -50,7 +50,9 @@ Because of emulator vibrator latency it began 2.92 s after the end pulses actual
 finished. That meets §4.1.6 but is 80 ms short of M4-PLAN's "≥ 3 s after the end pulses", hence ◐. Re-check on hardware (M6) if the "≥ 3 s after the end
 pulses" wording in M4-PLAN is read strictly.
 
-**B — labels.** No control is icon-only. Every interactive element is a Material 3
+**B — labels.** History and Settings on Start are icon-only; their icons carry the
+`contentDescription` "History" and "Settings" (`uiautomator dump`). The Summary ring is one
+node read as "n of 5 look covered". Every other interactive element is a Material 3
 `Button`/`FilledTonalButton`/`SwitchButton`, and its accessible label is its merged text
 label (`uiautomator dump`: each clickable node wraps exactly its label and secondary
 label). Compose uses that text as the spoken name, so there is no separate
@@ -127,6 +129,34 @@ carousel too).
 The Tile was added with the `DEBUG_SURFACE` broadcast (`add-tile`, `show-tile`); the complication
 through the watch face editor. No new permission: `ManifestTest` passes, and the release build
 (R8) succeeds. `./gradlew :wear:testDebugUnitTest`: 32 tests, 0 failures, 1 skipped.
+
+## Redesign: Start and Summary
+
+Same day, same AVD, after the Tile and complication. `MainActivity.kt`, `strings.xml` and two
+icons.
+
+- **Start** is one large round Start wash button with a drop icon, and History and Settings as
+  52 dp tonal icon buttons under it. The screen no longer scrolls. In Timer-only the button is
+  92 dp and the notice reads "Timer only", so the icon buttons keep 52 dp (first try squeezed
+  them to about 33 dp). While a Wash runs the button reads "Wash in progress".
+- **Summary** leads with a ring: five arcs, clockwise from 12 o'clock in list order, around
+  "n of 5 / look covered". Looks covered fills an arc, May have been brief fills half, Not detected
+  leaves the track, matching the ✓ ◐ ○ glyphs, so shape carries the Status and colour only
+  repeats it (§4.1.10). The arcs grow in with the row cascade. The list below is unchanged.
+  Too-short and Timer-only Summaries keep the duration header.
+
+Screenshots retaken: Start, Start (Timer-only, corrupt-model build again; the real model was
+restored and loads), Summary (mixed) and scrolled. `./gradlew :wear:testDebugUnitTest`: 32 tests,
+0 failures, 1 skipped.
+
+**Not done, needs a spec decision:**
+- Countdown and a completion tap: M4 asks for elapsed time on In-progress, and §4.1.6 defines
+  exactly three vibration patterns.
+- A five-segment pacing ring on In-progress: may read as naming a Step during the Wash.
+- A weekly strip on History: History keeps the last 20 Washes (M4), so weekly counts would
+  undercount.
+- **Always-on placeholder:** M4 lists "always-on toggle placeholder" under Settings. The polish
+  pass removed the disabled switch; restore it or amend M4.
 
 ## Other M4 checks
 

@@ -22,6 +22,19 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.wear.compose.material3.FilledTonalIconButton
+import androidx.wear.compose.material3.Icon
+import com.hapticwash.session.StepCoverage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -97,6 +110,15 @@ private const val RING_TARGET_S = 40f
 private const val ROW_MS = 200f
 private const val STAGGER_MS = 40f
 private const val ENTRANCE_MS = 360 // ROW_MS + 4 × STAGGER_MS, for five rows
+
+/** Start wash: the one large target on the Start screen. */
+private val START_SIZE = 104.dp
+private val START_SIZE_COMPACT = 92.dp
+
+/** Summary ring: diameter, stroke, and the gap between Step arcs. */
+private val RING_SIZE = 124.dp
+private val RING_STROKE = 8.dp
+private const val RING_GAP_DEG = 14f
 
 /** Strong ease-out: moves at once, settles gently. */
 private val EaseOutStrong = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
@@ -196,20 +218,31 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
         timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
     }
     val (press, pressScale) = rememberPressScale()
-    ListScreen { spec ->
-        item { ListHeader { Text(stringResource(R.string.app_name)) } }
-        item {
+    // One thing to do here, so one large target; History and Settings are rarely needed and stay small.
+    ScreenScaffold { padding ->
+        Column(
+            Modifier.fillMaxSize().padding(padding),
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Button(
                 onClick = ::start,
-                modifier = morph(spec).then(pressScale),
+                // Smaller in Timer-only, so the notice fits without squeezing the 48 dp icon buttons (§4.1.3).
+                modifier = Modifier.size(if (timerOnly) START_SIZE_COMPACT else START_SIZE).then(pressScale),
+                shape = CircleShape,
                 interactionSource = press,
-                transformation = SurfaceTransformation(spec),
-                label = { Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash)) },
-            )
+            ) {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(painterResource(R.drawable.ic_wash), contentDescription = null)
+                    Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash), textAlign = TextAlign.Center)
+                }
+            }
+            if (timerOnly) Notice(stringResource(R.string.timer_only_short))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                FilledTonalIconButton(onHistory) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
+                FilledTonalIconButton(onSettings) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
+            }
         }
-        if (timerOnly) item { Notice(stringResource(R.string.timer_only), morphContent(spec)) }
-        item { FilledTonalButton(onHistory, morph(spec), transformation = SurfaceTransformation(spec), label = { Text(stringResource(R.string.history)) }) }
-        item { FilledTonalButton(onSettings, morph(spec), transformation = SurfaceTransformation(spec), label = { Text(stringResource(R.string.settings)) }) }
     }
 }
 
@@ -285,11 +318,8 @@ private fun SummaryScreen(id: Long?) {
         if (wash == null) return@ListScreen
         val shown = wash.modelVersion != null && wash.coverageShown
         // The takeaway first, so the answer is on screen before any scrolling.
-        item {
-            ListHeader {
-                Text(if (shown) stringResource(R.string.history_hint, wash.coverage.count { it.status == StepStatus.OK }) else duration(wash.durationS))
-            }
-        }
+        if (shown) item { CoverageRing(wash.coverage, { entrance.value }, morphContent(spec)) }
+        else item { ListHeader { Text(duration(wash.durationS)) } }
         when {
             wash.modelVersion == null -> item { Notice(stringResource(R.string.timer_only), morphContent(spec)) }
             !wash.coverageShown -> item { Notice(stringResource(R.string.too_short), morphContent(spec)) }
@@ -301,8 +331,7 @@ private fun SummaryScreen(id: Long?) {
                     // Icon and text, never colour alone (§4.1.10); the glyph is read as the text. Colour only adds emphasis.
                     Row(
                         morphContent(spec).graphicsLayer {
-                            val t = ((entrance.value * ENTRANCE_MS - i * STAGGER_MS) / ROW_MS).coerceIn(0f, 1f)
-                            val p = EaseOutStrong.transform(t)
+                            val p = staggered(entrance.value, i)
                             alpha = p
                             translationY = (1 - p) * rise
                         }.padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -382,6 +411,46 @@ private fun rememberPressScale(): Pair<MutableInteractionSource, Modifier> {
     val pressed by source.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) 0.96f else 1f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium))
     return source to Modifier.graphicsLayer { scaleX = scale; scaleY = scale }
+}
+
+/** Row [i]'s share of the Summary entrance, eased: 0 before its turn, 1 once it has settled. */
+private fun staggered(entrance: Float, i: Int) =
+    EaseOutStrong.transform(((entrance * ENTRANCE_MS - i * STAGGER_MS) / ROW_MS).coerceIn(0f, 1f))
+
+/**
+ * The five Steps as arcs around the takeaway, clockwise from 12 o'clock in list order. Shape
+ * carries the Status, not colour (§4.1.10): Looks covered fills the arc, May have been brief fills
+ * half, Not detected leaves only the track, like the ✓ ◐ ○ glyphs below. The list says it in words.
+ */
+@Composable
+private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, modifier: Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val ok = coverage.count { it.status == StepStatus.OK }
+    val takeaway = stringResource(R.string.history_hint, ok)
+    Box(modifier.height(RING_SIZE).clearAndSetSemantics { contentDescription = takeaway }, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.size(RING_SIZE)) {
+            val stroke = RING_STROKE.toPx()
+            val topLeft = Offset(stroke / 2, stroke / 2)
+            val arc = Size(size.width - stroke, size.height - stroke)
+            val style = Stroke(stroke, cap = StrokeCap.Round)
+            val slot = 360f / coverage.size
+            coverage.forEachIndexed { i, c ->
+                val start = -90f + i * slot + RING_GAP_DEG / 2
+                val sweep = slot - RING_GAP_DEG
+                drawArc(colors.surfaceContainer, start, sweep, false, topLeft, arc, style = style)
+                val share = when (c.status) {
+                    StepStatus.OK -> 1f
+                    StepStatus.BRIEF -> 0.5f
+                    StepStatus.NOT_DETECTED -> 0f
+                }
+                if (share > 0f) drawArc(colors.primary, start, sweep * share * staggered(entrance(), i), false, topLeft, arc, style = style)
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(stringResource(R.string.ring_count, ok), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.ring_caption), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        }
+    }
 }
 
 @Composable

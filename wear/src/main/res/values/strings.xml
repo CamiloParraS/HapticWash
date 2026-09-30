@@ -6,6 +6,8 @@
     <string name="washed_for">Washed for %1$s</string>
     <string name="last_wash">Last wash: %1$s</string>
     <string name="complication_label">Wash</string>
+    <string name="ring_count">%1$d of 5</string>
+    <string name="ring_caption">look covered</string>
     <string name="timer_only">Timer only: step detection unavailable</string>
     <string name="timer_only_short">Timer only</string>
     <string name="channel_session">Wash session</string>
