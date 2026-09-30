@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +41,7 @@ import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.CircularProgressIndicator
+import androidx.wear.compose.material3.CircularProgressIndicatorDefaults
 import androidx.wear.compose.material3.FilledTonalButton
 import androidx.wear.compose.material3.ListHeader
 import androidx.wear.compose.material3.MaterialTheme
@@ -144,7 +146,15 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     val elapsedS by remember { derivedStateOf { if (status.running) ((now - status.startedAtEpochMs) / 1000f).coerceAtLeast(0f) else 0f } }
     ScreenScaffold { padding ->
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (ring) CircularProgressIndicator(progress = { (elapsedS / RING_TARGET_S).coerceAtMost(1f) }, modifier = Modifier.fillMaxSize())
+            // A 60° gap centred on 12 o'clock leaves TimeText clear.
+            if (ring) {
+                CircularProgressIndicator(
+                    progress = { (elapsedS / RING_TARGET_S).coerceAtMost(1f) },
+                    modifier = Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding),
+                    startAngle = 300f,
+                    endAngle = 240f,
+                )
+            }
             Column(
                 Modifier.padding(padding),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -175,7 +185,7 @@ private fun SummaryScreen(id: Long?) {
             else -> items(wash.coverage) { c ->
                 // Icon and text, never colour alone (§4.1.10); the glyph is read as the text.
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(glyph(c.status), Modifier.clearAndSetSemantics {}, style = MaterialTheme.typography.titleMedium)
+                    Text(glyph(c.status), Modifier.width(20.dp).clearAndSetSemantics {}, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                     Column {
                         Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
                         Text(stringResource(statusText(c.status)), style = MaterialTheme.typography.bodySmall)

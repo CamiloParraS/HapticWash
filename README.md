@@ -16,7 +16,7 @@ which appear to have been missed, and keeps a local history of recent washes.
 It is a hygiene coach, not a medical device and not a compliance-verification system. No
 output may be phrased as a guarantee that hands are clean.
 
-## Running it (M3)
+## Running it (M4)
 
 The model and golden files come from `HapticWash-AI/artifacts/` (release `step-classifier`
 0.1.0). To take a new model, copy `model.tflite` + `model_meta.json` into
@@ -26,10 +26,13 @@ Needs `JAVA_HOME` (JDK 17+), `ANDROID_HOME` (or `sdk.dir` in `local.properties`)
 `PATH`, and a running Wear OS AVD for the last three. Run the scripts from Git Bash.
 
 ```sh
-./gradlew :wear:testDebugUnitTest            # preprocessing parity, replay parser, manifest rules
+./gradlew :wear:testDebugUnitTest            # parity, Coverage, History, haptics, manifest and banned-language rules
 ./gradlew :wear:connectedDebugAndroidTest    # inference parity + latency, model-load failure (Wear AVD)
 scripts/replay_demo.sh session.csv [speed]   # replay a canonical CSV on the AVD, stream predictions
+scripts/replay_batch.sh <csv dir> [speed]    # replay 10 held-out sessions, write reports/M4_replay.md
 scripts/release_smoke.sh                     # R8 release build loads the model
 ```
 
-`scripts/replay_demo.sh` documents how to cut a `zhang_who` session CSV from the AI repo.
+`scripts/replay_demo.sh` and `scripts/replay_batch.sh` document how to cut `zhang_who` (and
+held-out `uwash`) session CSVs from the AI repo. Never commit them (licence, D4/D15).
+The M4 UX audit, with screenshots from a round AVD, is in [`docs/UX_AUDIT.md`](docs/UX_AUDIT.md).
