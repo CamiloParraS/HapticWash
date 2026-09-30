@@ -24,14 +24,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** What the UI shows. M3: running or not, plus the raw top-1 label of the latest window. */
+/** What the In-progress screen shows. Never a Step: the app doesn't direct the Wash live. */
 data class WashStatus(
     val running: Boolean = false,
-    val label: String? = null,
-    val windows: Int = 0,
+    val startedAtEpochMs: Long = 0,
     val timerOnly: Boolean = false,
 )
 
@@ -93,7 +91,8 @@ class WashService : Service() {
         val smoother = model?.let { Smoother(it.meta) }
         val coverage = CoverageStateMachine(model?.meta)
         val startedAtEpochMs = System.currentTimeMillis()
-        _status.value = WashStatus(running = true, timerOnly = model == null)
+        _status.value = WashStatus(running = true, startedAtEpochMs = startedAtEpochMs, timerOnly = model == null)
+        Buzzer.play(this, Haptics.onStart(kind, Settings(this).haptics))
         Log.i(TAG, "Session started: source=$kind wrist=$wrist model=${model?.meta?.modelVersion ?: "none (timer-only)"}")
         val latencyNs = ArrayList<Long>()
         var first = -1L
@@ -111,7 +110,6 @@ class WashService : Service() {
                 val top = p.indices.maxBy { p[it] }
                 val label = m.meta.labels[top]
                 Log.i(TAG, "window %d t=%.1fs %s p=%.2f".format(latencyNs.size, (last - first) / 1e9, label, p[top]))
-                _status.update { it.copy(label = label, windows = latencyNs.size) }
             }
         } finally {
             val durationS = (last - first).coerceAtLeast(0) / 1e9f
@@ -121,6 +119,8 @@ class WashService : Service() {
             runCatching {
                 if (kind == "replay") WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash) else History.get(this).add(wash)
             }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
+            _lastWash.value = wash
+            Buzzer.play(this, Haptics.onEnd(wash, Settings(this).haptics))
             Log.i(TAG, "Wash: $wash")
             val sorted = latencyNs.sorted()
             fun pct(q: Double) = if (sorted.isEmpty()) 0.0 else sorted[(q * sorted.size).toInt().coerceAtMost(sorted.size - 1)] / 1e6
@@ -160,6 +160,10 @@ class WashService : Service() {
 
         private val _status = MutableStateFlow(WashStatus())
         val status: StateFlow<WashStatus> = _status
+
+        /** The Wash that just ended, real or replay; the Summary shows it when the app is open. */
+        private val _lastWash = MutableStateFlow<WashSession?>(null)
+        val lastWash: StateFlow<WashSession?> = _lastWash
 
         fun start(context: Context) =
             context.startForegroundService(Intent(context, WashService::class.java))

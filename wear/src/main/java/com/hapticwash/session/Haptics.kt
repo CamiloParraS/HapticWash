@@ -1,0 +1,68 @@
+package com.hapticwash.session
+
+import android.content.Context
+import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/** §4.1.6 patterns as off/on waveform timings (ms). */
+enum class Pulse(vararg val timings: Long) {
+    START(0, 80),
+    END(0, 80, 120, 80),
+    MISSED(0, 600);
+
+    val durationMs get() = timings.sum()
+}
+
+/** Play [pulse] [atMs] after the Wash event. */
+data class Buzz(val atMs: Long, val pulse: Pulse)
+
+/** Which vibrations a Wash event gets. Pure, so the rules are unit-tested. */
+object Haptics {
+    /** Minimum spacing between vibrations (§4.1.6). */
+    const val GAP_MS = 3000L
+
+    fun onStart(source: String, hapticsOn: Boolean) =
+        if (hapticsOn && source == "sensor") listOf(Buzz(0, Pulse.START)) else emptyList()
+
+    fun onEnd(wash: WashSession, hapticsOn: Boolean): List<Buzz> {
+        if (!hapticsOn || wash.source != "sensor") return emptyList()
+        val end = Buzz(0, Pulse.END)
+        val missed = wash.coverageShown && wash.coverage.any { it.status == StepStatus.NOT_DETECTED }
+        return if (missed) listOf(end, Buzz(Pulse.END.durationMs + GAP_MS, Pulse.MISSED)) else listOf(end)
+    }
+}
+
+/**
+ * Plays [Buzz] lists. Process-wide so a pending missed-step pulse outlives the service and a
+ * new Wash cancels it (nothing vibrates mid-Wash). Haptics setting re-read at fire time.
+ */
+object Buzzer {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var pending: Job? = null
+    @Volatile private var lastAt = -Haptics.GAP_MS
+
+    // ponytail: the delayed pulse dies with the process; a WorkManager job if that proves common.
+    @Synchronized
+    fun play(context: Context, buzzes: List<Buzz>) {
+        pending?.cancel()
+        if (buzzes.isEmpty()) return
+        val app = context.applicationContext
+        val vibrator = app.getSystemService(Vibrator::class.java)
+        val t0 = SystemClock.elapsedRealtime()
+        pending = scope.launch {
+            for (b in buzzes) {
+                delay(maxOf(t0 + b.atMs, lastAt + Haptics.GAP_MS) - SystemClock.elapsedRealtime())
+                if (!Settings(app).haptics) return@launch
+                vibrator.vibrate(VibrationEffect.createWaveform(b.pulse.timings, -1))
+                lastAt = SystemClock.elapsedRealtime()
+            }
+        }
+    }
+}
