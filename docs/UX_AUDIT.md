@@ -23,6 +23,8 @@ power) and the `HapticWash` logcat tag.
 | History, with items | [history](ux/history.png) |
 | History, empty | [history_empty](ux/history_empty.png) |
 | Settings | [settings](ux/settings.png), [scrolled](ux/settings_scrolled.png) |
+| Tile | [tile](ux/tile.png) |
+| Complication | [on the watch face](ux/complication.png), [in the picker](ux/complication_picker.png) |
 
 ## Checklist
 
@@ -97,6 +99,34 @@ temporary build with a corrupt `model.tflite` (the log shows `model=none (timer-
 model was restored and confirmed loading (`step-classifier 0.1.0`). Summary (mixed) is the
 zhang_who_6 right-wrist replay at 4× speed. History shows this session's test Washes.
 `./gradlew :wear:testDebugUnitTest`: 32 tests, 0 failures, 1 skipped.
+
+## Tile and complication
+
+Added after the polish pass, on the same AVD, as the first step of the redesign: start a Wash
+without opening the app first (§4.1.4 one-tap start, now from the watch face and the Tile
+carousel too).
+
+- **Tile** (`WashTileService`, ProtoLayout Material3): app name, the last Wash in the same words
+  as History ("Last wash: 0 of 5 look covered", or "No washes yet") and a Start wash edge button.
+  `WashService` asks for a Tile refresh after each real Wash is saved; replays don't.
+- **Complication** (`WashComplicationService`): static `SHORT_TEXT` ("Wash" and a drop icon) or
+  `MONOCHROMATIC_IMAGE`, never polled (`UPDATE_PERIOD_SECONDS` 0).
+- Both open `MainActivity` with a start extra that is handled exactly like a tap on Start wash,
+  including the notification permission on first use. `MainActivity` is `singleTask`, so a tap
+  also reaches an app that is already open.
+
+| Case | Result |
+|---|---|
+| Tile tap, app not running | a Wash starts |
+| Tile tap, app open on History | back to Start, a Wash starts |
+| Tile tap while a Wash runs | rejoins it at its elapsed time; no second `Session started` |
+| Tile after a Wash ends | shows that Wash |
+| Complication picked in the face editor, then tapped | a Wash starts |
+| Plain launch from the app list | Start screen; nothing starts |
+
+The Tile was added with the `DEBUG_SURFACE` broadcast (`add-tile`, `show-tile`); the complication
+through the watch face editor. No new permission: `ManifestTest` passes, and the release build
+(R8) succeeds. `./gradlew :wear:testDebugUnitTest`: 32 tests, 0 failures, 1 skipped.
 
 ## Other M4 checks
 

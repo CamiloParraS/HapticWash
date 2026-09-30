@@ -64,6 +64,9 @@ dependencies {
     implementation(libs.play.services.wearable)
     implementation(libs.litert)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.wear.tiles)
+    implementation(libs.wear.protolayout.material3)
+    implementation(libs.wear.complications.data.source)
     testImplementation(libs.junit)
     testImplementation(libs.org.json) // android.jar's org.json is a stub on the JVM
     androidTestImplementation(libs.androidx.junit)

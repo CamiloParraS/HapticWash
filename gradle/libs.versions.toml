@@ -18,6 +18,9 @@ litert = "1.4.2"
 coroutines = "1.11.0"
 orgJson = "20260814"
 testRunner = "1.7.0"
+tiles = "1.6.2"
+protolayoutMaterial3 = "1.4.2"
+complications = "1.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -45,6 +48,9 @@ litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
+wear-tiles = { group = "androidx.wear.tiles", name = "tiles", version.ref = "tiles" }
+wear-protolayout-material3 = { group = "androidx.wear.protolayout", name = "protolayout-material3", version.ref = "protolayoutMaterial3" }
+wear-complications-data-source = { group = "androidx.wear.watchface", name = "watchface-complications-data-source-ktx", version.ref = "complications" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

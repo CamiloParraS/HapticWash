@@ -22,6 +22,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import androidx.wear.tiles.TileService
+import com.hapticwash.ui.WashTileService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -119,6 +121,8 @@ class WashService : Service() {
             runCatching {
                 if (kind == "replay") WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash) else History.get(this).add(wash)
             }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
+            // The Tile shows the last Wash.
+            if (kind != "replay") TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
             _lastWash.value = wash
             Buzzer.play(this, Haptics.onEnd(wash, Settings(this).haptics))
             Log.i(TAG, "Wash: $wash")

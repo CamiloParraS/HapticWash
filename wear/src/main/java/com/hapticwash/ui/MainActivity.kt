@@ -1,6 +1,10 @@
 package com.hapticwash.ui
 
 import android.Manifest
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.res.Resources
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.format.DateUtils
@@ -31,9 +35,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -96,19 +102,48 @@ private const val ENTRANCE_MS = 360 // ROW_MS + 4 × STAGGER_MS, for five rows
 private val EaseOutStrong = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
 
 class MainActivity : ComponentActivity() {
+    /** Counts Tile and complication taps; each one is answered once, as a tap on Start wash. */
+    private var startRequests by mutableIntStateOf(0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { HapticWashTheme { AppScaffold { App() } } }
+        if (savedInstanceState == null) takeStart(intent)
+        addOnNewIntentListener(::takeStart)
+        setContent { HapticWashTheme { AppScaffold { App(startRequests) } } }
+    }
+
+    private fun takeStart(intent: Intent) {
+        if (intent.getBooleanExtra(EXTRA_START, false)) startRequests++
+    }
+
+    companion object {
+        const val EXTRA_START = "start"
+
+        /** Opens the app and starts a Wash, from outside it (the complication; the Tile builds its own launch action). */
+        fun startIntent(context: Context): PendingIntent = PendingIntent.getActivity(
+            context, 0,
+            Intent(context, MainActivity::class.java).putExtra(EXTRA_START, true),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
     }
 }
 
 /** Max depth 2 (§4.1.5): Start → In-progress → Summary, Start → History → Summary, Start → Settings. */
 @Composable
-fun App() {
+fun App(startRequests: Int = 0) {
     val nav = rememberSwipeDismissableNavController()
+    var answered by rememberSaveable { mutableIntStateOf(0) }
+    // A Tile or complication tap: back to Start, which then starts (or rejoins) the Wash.
+    LaunchedEffect(startRequests) { if (startRequests > answered) nav.popBackStack("start", inclusive = false) }
     SwipeDismissableNavHost(nav, startDestination = "start") {
         composable("start") {
-            StartScreen(onWash = { nav.navigate("wash") }, onHistory = { nav.navigate("history") }, onSettings = { nav.navigate("settings") })
+            StartScreen(
+                onWash = { nav.navigate("wash") },
+                onHistory = { nav.navigate("history") },
+                onSettings = { nav.navigate("settings") },
+                autoStart = startRequests > answered,
+                onAutoStarted = { answered = startRequests },
+            )
         }
         composable("wash") { WashScreen(onEnd = { id -> nav.navigate("summary/$id") { popUpTo("start") } }) }
         composable("history") { HistoryScreen(onOpen = { nav.navigate("summary/$it") }) }
@@ -136,7 +171,7 @@ private fun TransformingLazyColumnItemScope.morphContent(spec: TransformationSpe
     morph(spec).graphicsLayer { with(spec) { applyContainerTransformation(scrollProgress) } }
 
 @Composable
-private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: () -> Unit) {
+private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: () -> Unit, autoStart: Boolean, onAutoStarted: () -> Unit) {
     val context = LocalContext.current
     val status by WashService.status.collectAsState()
     var timerOnly by remember { mutableStateOf(false) }
@@ -146,6 +181,16 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
     }
     // Asked on the first Start, not at launch; the Wash begins whatever the answer.
     val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { begin() }
+    fun start() {
+        if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) begin()
+        else askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+    LaunchedEffect(autoStart) {
+        if (autoStart) {
+            onAutoStarted()
+            start()
+        }
+    }
     LaunchedEffect(Unit) {
         // Loads the model off the main thread; also the release smoke check's log line.
         timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
@@ -155,10 +200,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
         item { ListHeader { Text(stringResource(R.string.app_name)) } }
         item {
             Button(
-                onClick = {
-                    if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) begin()
-                    else askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-                },
+                onClick = ::start,
                 modifier = morph(spec).then(pressScale),
                 interactionSource = press,
                 transformation = SurfaceTransformation(spec),
@@ -295,7 +337,7 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
                 modifier = morph(spec),
                 transformation = SurfaceTransformation(spec),
                 label = { Text(DateUtils.formatDateTime(context, w.startedAtEpochMs, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH)) },
-                secondaryLabel = { Text("${duration(w.durationS)} · ${hint(w)}") },
+                secondaryLabel = { Text("${duration(w.durationS)} · ${hint(LocalContext.current.resources, w)}") },
             )
         }
     }
@@ -346,11 +388,11 @@ private fun rememberPressScale(): Pair<MutableInteractionSource, Modifier> {
 private fun Notice(text: String, modifier: Modifier = Modifier.fillMaxWidth()) =
     Text(text, modifier, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
 
-@Composable
-private fun hint(w: WashSession): String = when {
-    w.modelVersion == null -> stringResource(R.string.timer_only_short)
-    !w.coverageShown -> stringResource(R.string.too_short_short)
-    else -> stringResource(R.string.history_hint, w.coverage.count { it.status == StepStatus.OK })
+/** A Wash in a few words, for History rows and the Tile. */
+internal fun hint(res: Resources, w: WashSession): String = when {
+    w.modelVersion == null -> res.getString(R.string.timer_only_short)
+    !w.coverageShown -> res.getString(R.string.too_short_short)
+    else -> res.getString(R.string.history_hint, w.coverage.count { it.status == StepStatus.OK })
 }
 
 private fun duration(s: Float): String {
