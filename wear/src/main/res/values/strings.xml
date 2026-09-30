@@ -2,6 +2,8 @@
     <string name="app_name">HapticWash</string>
     <string name="start_wash">Start wash</string>
     <string name="stop_wash">Stop</string>
+    <string name="stopping">Stopping…</string>
+    <string name="washed_for">Washed for %1$s</string>
     <string name="timer_only">Timer only: step detection unavailable</string>
     <string name="timer_only_short">Timer only</string>
     <string name="channel_session">Wash session</string>
@@ -32,6 +34,4 @@
     <string name="applies_next_wash">Applies from the next wash</string>
     <string name="haptics">Haptics</string>
     <string name="progress_ring">Progress ring</string>
-    <string name="always_on">Always-on detection</string>
-    <string name="coming_later">Coming later</string>
 </resources>

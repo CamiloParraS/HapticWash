@@ -38,7 +38,7 @@ Columns are the screens: **St** Start, **IP** In-progress, **Su** Summary, **Hi*
 | 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | ✓ | No text fields. The only dialog is the system notification permission (Allow / Don't allow), now asked on the first Start tap. Wrist side is two radio buttons. Deepest paths: Start → In-progress → Summary (In-progress is popped) and Start → History → Summary. Swipe-to-dismiss works from In-progress, Summary, History and Settings. A swipe mid-Wash leaves it running; Start then shows "Wash in progress" and returns to In-progress. |
 | 6 | Haptics, patterns, ≤ 1 per 3 s | — | ✓ | ◐ | — | ✓ | From `dumpsys vibrator_manager`: start 80 ms; end 80 + 120 + 80 ms; missed-step 600 ms, starting 3.2 s after the end pulses start (13 s Wash, all `NOT_DETECTED`). A too-short Wash and a Timer-only Wash each got only start and end. Replays are silent. The Haptics setting is read at fire time (unit-tested in `HapticsTest`). See note A. |
 | 7 | Ambient / screen-off | — | ✓ | — | — | — | `KEYCODE_SLEEP` mid-Wash put the device in `Dozing`: 17 windows logged in 25 s (1.5 s stride), and on wake the Wash was still running at 0:45. No crash in logcat. |
-| 8 | Battery honesty | — | ✓ | — | — | ✓ | After Stop: 0 active `sensorservice` connections for the app, and the `HapticWash:session` wake lock was released in the same ms the Wash ended. Always-on is a disabled switch labelled "Coming later". Its battery warning belongs to M5. |
+| 8 | Battery honesty | — | ✓ | — | — | ✓ | After Stop: 0 active `sensorservice` connections for the app, and the `HapticWash:session` wake lock was released in the same ms the Wash ended. Always-on isn't offered in M4 (the disabled "Coming later" switch was removed in the polish pass below). It arrives with its battery warning in M5. |
 | 9 | No result as certainty | ✓ | ✓ | ✓ | ✓ | ✓ | "Looks covered", "May have been brief", "Not detected", "Too short to estimate", "n of 5 look covered". Enforced by `LanguageTest` (D29). |
 | 10 | Accessibility; status not by colour | ◐ | ◐ | ◐ | ◐ | ◐ | See note B. Every Status is a glyph plus text in the same colour. The glyph is hidden from semantics, so the text is what gets read. Glyphs have a fixed width so Step names line up (fixed in this audit). |
 
@@ -72,6 +72,31 @@ Made the same day on the same AVD, from a UI review. `MainActivity.kt` and `Them
 Screenshots retaken: In-progress (ring off and on), Summary (mixed), History, Settings. Start,
 Summary (too short, Timer-only), History (empty) are unchanged by these edits.
 `in_progress_timer_only.png` shows the old narrow Stop; it needs a corrupt-model build to retake.
+(All screenshots were retaken after the polish pass below.)
+
+## Polish pass
+
+A motion and hierarchy pass the same day, on the same AVD. `MainActivity.kt` and `strings.xml` only.
+
+- **Lists** (Start, Summary, History, Settings) shrink and fade items at the round edge
+  (`rememberTransformationSpec`, `SurfaceTransformation`) instead of cutting them off. Headers
+  are left out, so a header at the top of a screen isn't dimmed.
+- **In-progress:** the timer uses tabular digits, so it doesn't shift sideways as it ticks. The ring
+  fades from `primary` to `tertiary` when it fills at 40 s (colour only; no extra vibration, see §4.1.6).
+  Start and Stop shrink to 96 % while pressed, using a no-bounce spring. Tapping Stop disables it
+  and shows "Stopping…" until the Wash has saved.
+- **Summary:** the duration reads "Washed for m:ss". Status lines use `onSurfaceVariant` and the ✓
+  glyph `primary`; glyph and text still carry the Status on their own (§4.1.10). Rows fade in and
+  rise 6 dp in a 40 ms stagger (about 360 ms in total). Scrolling isn't blocked, and the animation
+  plays instantly when the system animation scale is 0. The cascade was checked by eye, not in a
+  screenshot.
+- **Settings:** the disabled Always-on switch and its strings are removed.
+
+Screenshots retaken for every screen in the table above. The Timer-only ones come from a
+temporary build with a corrupt `model.tflite` (the log shows `model=none (timer-only)`); the real
+model was restored and confirmed loading (`step-classifier 0.1.0`). Summary (mixed) is the
+zhang_who_6 right-wrist replay at 4× speed. History shows this session's test Washes.
+`./gradlew :wear:testDebugUnitTest`: 32 tests, 0 failures, 1 skipped.
 
 ## Other M4 checks
 
