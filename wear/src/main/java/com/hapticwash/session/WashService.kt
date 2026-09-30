@@ -62,8 +62,8 @@ class WashService : Service() {
             .apply { acquire(MAX_SESSION_MS) }
         job = scope.launch {
             try {
-                // Read once at Wash start. ponytail: setting fixed to LEFT until Settings land (M4 slice d).
-                val wrist = Wrist.resolve(wristExtra, Wrist.LEFT)
+                // Read once at Wash start.
+                val wrist = Wrist.resolve(wristExtra, Settings(this@WashService).wrist)
                 if (replay != null) run(ReplaySource(File(replay), speed), "replay", wrist) else run(RealSensorSource(this@WashService), "sensor", wrist)
             } catch (e: CancellationException) {
                 throw e
@@ -116,12 +116,11 @@ class WashService : Service() {
         } finally {
             val durationS = (last - first).coerceAtLeast(0) / 1e9f
             val wash = coverage.finish(durationS, startedAtEpochMs, kind)
-            // Sensor Washes go to History in M4 slice (c). Replay only exists in debug builds.
+            // Real Washes go to History, replay Washes (debug builds only) to their own store.
             // Never masks what ended the Wash; a lost replay Wash fails the report's count check instead.
-            if (kind == "replay") {
-                runCatching { WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash) }
-                    .onFailure { Log.e(TAG, "Replay Wash not stored", it) }
-            }
+            runCatching {
+                if (kind == "replay") WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash) else History.get(this).add(wash)
+            }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
             Log.i(TAG, "Wash: $wash")
             val sorted = latencyNs.sorted()
             fun pct(q: Double) = if (sorted.isEmpty()) 0.0 else sorted[(q * sorted.size).toInt().coerceAtMost(sorted.size - 1)] / 1e6

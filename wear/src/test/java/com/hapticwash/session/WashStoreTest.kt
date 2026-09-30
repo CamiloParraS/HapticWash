@@ -41,6 +41,31 @@ class WashStoreTest {
     }
 
     @Test
+    fun historyKeepsTwentyNewestFirst() {
+        val store = WashStore(File(dir, "history.json"), cap = 20)
+        for (id in 1L..21L) store.add(wash(id))
+        assertEquals((21L downTo 2L).toList(), WashStore(File(dir, "history.json"), cap = 20).read().map { it.id })
+    }
+
+    @Test
+    fun corruptFileIsSetAsideNotOverwritten() {
+        val f = File(dir, "history.json").apply { writeText("{not json") }
+        val store = WashStore(f, cap = 20)
+        assertEquals(emptyList<WashSession>(), store.read())
+        assertEquals("{not json", File(dir, "history.corrupt.json").readText())
+        store.add(wash(1))
+        assertEquals(listOf(wash(1)), WashStore(f, cap = 20).read())
+    }
+
+    @Test
+    fun observableFollowsAdds() {
+        val store = WashStore(File(dir, "history.json"), cap = 20)
+        assertEquals(emptyList<WashSession>(), store.washes.value)
+        store.add(wash(1))
+        assertEquals(listOf(wash(1)), store.washes.value)
+    }
+
+    @Test
     fun wristExtraOverridesTheSettingOnlyWhenPresent() {
         assertEquals(Wrist.RIGHT, Wrist.resolve(null, Wrist.RIGHT))
         assertEquals(Wrist.LEFT, Wrist.resolve("left", Wrist.RIGHT))
