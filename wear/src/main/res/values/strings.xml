@@ -8,6 +8,7 @@
     <string name="session_running">Wash in progress</string>
 
     <string name="too_short">Too short to estimate</string>
+    <string name="too_short_short">Too short</string>
     <string name="status_ok">Looks covered</string>
     <string name="status_brief">May have been brief</string>
     <string name="status_not_detected">Not detected</string>
@@ -28,6 +29,7 @@
     <string name="wrist_side">Wrist side</string>
     <string name="wrist_left">Left</string>
     <string name="wrist_right">Right</string>
+    <string name="applies_next_wash">Applies from the next wash</string>
     <string name="haptics">Haptics</string>
     <string name="progress_ring">Progress ring</string>
     <string name="always_on">Always-on detection</string>

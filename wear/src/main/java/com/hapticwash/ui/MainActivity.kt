@@ -44,7 +44,9 @@ import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.CircularProgressIndicatorDefaults
 import androidx.wear.compose.material3.FilledTonalButton
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.ListSubHeader
 import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.RadioButton
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
@@ -103,19 +105,24 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
     val context = LocalContext.current
     val status by WashService.status.collectAsState()
     var timerOnly by remember { mutableStateOf(false) }
-    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    fun begin() {
+        if (!status.running) WashService.start(context)
+        onWash()
+    }
+    // Asked on the first Start, not at launch; the Wash begins whatever the answer.
+    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { begin() }
     LaunchedEffect(Unit) {
         // Loads the model off the main thread; also the release smoke check's log line.
         timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
-        if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
     }
     ListScreen {
         item { ListHeader { Text(stringResource(R.string.app_name)) } }
         item {
             Button(
-                onClick = { if (!status.running) WashService.start(context); onWash() },
+                onClick = {
+                    if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) begin()
+                    else askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash)) },
             )
@@ -162,7 +169,8 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
             ) {
                 Text(duration(elapsedS), style = MaterialTheme.typography.displayMedium)
                 if (status.timerOnly) Notice(stringResource(R.string.timer_only))
-                Button(onClick = { WashService.stop(context) }, label = { Text(stringResource(R.string.stop_wash)) })
+                // Wide: wet, soapy fingers miss small targets.
+                Button(onClick = { WashService.stop(context) }, modifier = Modifier.fillMaxWidth(0.8f), label = { Text(stringResource(R.string.stop_wash), Modifier.fillMaxWidth(), textAlign = TextAlign.Center) })
             }
         }
     }
@@ -178,17 +186,22 @@ private fun SummaryScreen(id: Long?) {
     val steps = stringArrayResource(R.array.steps)
     ListScreen {
         if (wash == null) return@ListScreen
-        item { ListHeader { Text(duration(wash.durationS)) } }
+        val shown = wash.modelVersion != null && wash.coverageShown
+        // The takeaway first, so the answer is on screen before any scrolling.
+        item { ListHeader { Text(if (shown) stringResource(R.string.history_hint, wash.coverage.count { it.status == StepStatus.OK }) else duration(wash.durationS)) } }
         when {
             wash.modelVersion == null -> item { Notice(stringResource(R.string.timer_only)) }
             !wash.coverageShown -> item { Notice(stringResource(R.string.too_short)) }
-            else -> items(wash.coverage) { c ->
-                // Icon and text, never colour alone (§4.1.10); the glyph is read as the text.
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(glyph(c.status), Modifier.width(20.dp).clearAndSetSemantics {}, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-                    Column {
-                        Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
-                        Text(stringResource(statusText(c.status)), style = MaterialTheme.typography.bodySmall)
+            else -> {
+                item { Notice(duration(wash.durationS)) }
+                items(wash.coverage) { c ->
+                    // Icon and text, never colour alone (§4.1.10); the glyph is read as the text.
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(glyph(c.status), Modifier.width(20.dp).clearAndSetSemantics {}, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                        Column {
+                            Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(statusText(c.status)), style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
@@ -204,7 +217,7 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
         item { ListHeader { Text(stringResource(R.string.history)) } }
         if (washes.isEmpty()) item { Notice(stringResource(R.string.history_empty)) }
         items(washes) { w ->
-            Button(
+            FilledTonalButton(
                 onClick = { onOpen(w.id) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(DateUtils.formatDateTime(context, w.startedAtEpochMs, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH)) },
@@ -223,15 +236,19 @@ private fun SettingsScreen() {
     var ring by remember { mutableStateOf(settings.progressRing) }
     ListScreen {
         item { ListHeader { Text(stringResource(R.string.settings)) } }
-        item {
-            // Two options: a tap toggles, no dialog (§4.1.5). Applies from the next Wash.
-            FilledTonalButton(
-                onClick = { wrist = if (wrist == Wrist.LEFT) Wrist.RIGHT else Wrist.LEFT; settings.wrist = wrist },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.wrist_side)) },
-                secondaryLabel = { Text(stringResource(if (wrist == Wrist.LEFT) R.string.wrist_left else R.string.wrist_right)) },
-            )
+        // Two visible options, no dialog (§4.1.5). Read at Wash start, so a change applies from the next Wash.
+        item { ListSubHeader { Text(stringResource(R.string.wrist_side)) } }
+        for ((side, name) in listOf(Wrist.LEFT to R.string.wrist_left, Wrist.RIGHT to R.string.wrist_right)) {
+            item {
+                RadioButton(
+                    selected = wrist == side,
+                    onSelect = { wrist = side; settings.wrist = side },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(name)) },
+                )
+            }
         }
+        item { Notice(stringResource(R.string.applies_next_wash)) }
         item {
             SwitchButton(haptics, { haptics = it; settings.haptics = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.haptics)) })
         }
@@ -258,7 +275,7 @@ private fun Notice(text: String) =
 @Composable
 private fun hint(w: WashSession): String = when {
     w.modelVersion == null -> stringResource(R.string.timer_only_short)
-    !w.coverageShown -> stringResource(R.string.too_short)
+    !w.coverageShown -> stringResource(R.string.too_short_short)
     else -> stringResource(R.string.history_hint, w.coverage.count { it.status == StepStatus.OK })
 }
 

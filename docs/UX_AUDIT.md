@@ -33,9 +33,9 @@ Columns are the screens: **St** Start, **IP** In-progress, **Su** Summary, **Hi*
 |---|---|---|---|---|---|---|---|
 | 1 | Glanceable < 5 s | ✓ | ✓ | ✓ | ✓ | ✓ | Each screen has one header and short lines. Summary is five rows of a Step name and its Status. |
 | 2 | Round-safe, scaling list, `TimeText` | ✓ | ✓ | ✓ | ✓ | ✓ | Lists use `TransformingLazyColumn`, the Wear Material 3 successor to `ScalingLazyColumn`. `TimeText` comes from `AppScaffold` on every screen. In-progress is centred and not scrollable. The ring leaves a 60° gap at the top for `TimeText` (fixed in this audit: it used to run under the clock). |
-| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | Buttons are 203 × 52 dp; Stop is 62 × 52 dp; History rows are ≥ 52 dp tall. Start's primary action is Start wash (History and Settings are tonal); In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
+| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | Buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start's primary action is Start wash (History and Settings are tonal); In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
 | 4 | One-tap start | ✓ | — | — | — | — | Start wash is the first item. A single tap starts the service and opens In-progress. |
-| 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | ✓ | No text fields. The only dialog is the system notification permission (Allow / Don't allow). Wrist side is a two-state tap toggle. Deepest paths: Start → In-progress → Summary (In-progress is popped) and Start → History → Summary. Swipe-to-dismiss works from In-progress, Summary, History and Settings. A swipe mid-Wash leaves it running; Start then shows "Wash in progress" and returns to In-progress. |
+| 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | ✓ | No text fields. The only dialog is the system notification permission (Allow / Don't allow), now asked on the first Start tap. Wrist side is two radio buttons. Deepest paths: Start → In-progress → Summary (In-progress is popped) and Start → History → Summary. Swipe-to-dismiss works from In-progress, Summary, History and Settings. A swipe mid-Wash leaves it running; Start then shows "Wash in progress" and returns to In-progress. |
 | 6 | Haptics, patterns, ≤ 1 per 3 s | — | ✓ | ◐ | — | ✓ | From `dumpsys vibrator_manager`: start 80 ms; end 80 + 120 + 80 ms; missed-step 600 ms, starting 3.2 s after the end pulses start (13 s Wash, all `NOT_DETECTED`). A too-short Wash and a Timer-only Wash each got only start and end. Replays are silent. The Haptics setting is read at fire time (unit-tested in `HapticsTest`). See note A. |
 | 7 | Ambient / screen-off | — | ✓ | — | — | — | `KEYCODE_SLEEP` mid-Wash put the device in `Dozing`: 17 windows logged in 25 s (1.5 s stride), and on wake the Wash was still running at 0:45. No crash in logcat. |
 | 8 | Battery honesty | — | ✓ | — | — | ✓ | After Stop: 0 active `sensorservice` connections for the app, and the `HapticWash:session` wake lock was released in the same ms the Wash ended. Always-on is a disabled switch labelled "Coming later". Its battery warning belongs to M5. |
@@ -54,6 +54,24 @@ label (`uiautomator dump`: each clickable node wraps exactly its label and secon
 label). Compose uses that text as the spoken name, so there is no separate
 `contentDescription` to set. A live TalkBack pass on the AVD got stuck in its tutorial,
 which also doesn't log what it speaks. Hence ◐: the labels are checked structurally, the spoken output is not. Repeat it on hardware (M6).
+
+## Changes after the audit
+
+Made the same day on the same AVD, from a UI review. `MainActivity.kt` and `Theme.kt` only.
+
+- **Stop** is wider (162 × 52 dp) so wet, soapy fingers hit it.
+- **Summary** leads with "n of 5 look covered", then the duration, then the five rows.
+- **History** rows are tonal buttons, and a too-short Wash reads "Too short".
+- **Wrist side** is two radio buttons with "Applies from the next wash" under them.
+- **Notification permission** is asked on the first Start tap, not at launch. The Wash starts
+  whatever the answer.
+- **Theme** follows the device's Material You colours (`dynamicColorScheme`) and falls back to
+  the default palette. This AVD returns no dynamic scheme, so only the fallback was seen; the
+  dynamic path is unchecked until a watch that has it (M6).
+
+Screenshots retaken: In-progress (ring off and on), Summary (mixed), History, Settings. Start,
+Summary (too short, Timer-only), History (empty) are unchanged by these edits.
+`in_progress_timer_only.png` shows the old narrow Stop; it needs a corrupt-model build to retake.
 
 ## Other M4 checks
 
