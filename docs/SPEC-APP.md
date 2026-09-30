@@ -76,7 +76,8 @@ These are non-negotiable and apply to every screen.
    than two levels.**
 6. **Haptics over sound.** Feedback is vibration. Use short, distinct patterns:
    session start (one short pulse), session end (two short pulses), missed-step
-   notice (one long pulse). Never vibrate more than once per 3 seconds.
+   notice (one long pulse), time reached at the 40 s target (three quick ticks; see
+   [SPEC-CHANGELOG](SPEC-CHANGELOG.md) C1). Never vibrate more than once per 3 seconds.
 7. **Ambient mode.** During an active wash the app must handle ambient/always-on
    transitions without stopping sensor collection or crashing.
 8. **Battery honesty.** Continuous 50 Hz accelerometer + gyroscope is expensive. Manual
@@ -174,9 +175,10 @@ harness replaces it.
 - Thresholds in a single configuration object, not scattered constants. Defaults:
   `OK` ≥ 4 s cumulative, `BRIEF` ≥ 1.5 s, otherwise `NOT_DETECTED`; minimum session
   duration 10 s for coverage to be shown at all.
-- Compose screens: Start, In-progress (elapsed time + subtle progress), Summary
-  (per-step status), History (last 20 washes), Settings (wrist side, haptics, always-on
-  toggle placeholder).
+- Compose screens: Start, In-progress (time left to the 40 s target, then elapsed time;
+  subtle progress), Summary (per-step status), History (last 20 washes), Settings (wrist
+  side, haptics, progress ring). Always-on gets its setting with M5. See
+  [SPEC-CHANGELOG](SPEC-CHANGELOG.md) C2, C3.
 - Room persistence of sessions and per-step durations.
 - Haptic patterns per §4.1 item 6.
 - Wrist-side setting wired through to the mirroring transform.

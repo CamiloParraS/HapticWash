@@ -18,12 +18,13 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.geometry.Offset
@@ -34,6 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.wear.compose.material3.FilledTonalIconButton
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.IconButtonDefaults
 import com.hapticwash.session.StepCoverage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -92,6 +94,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.hapticwash.R
 import com.hapticwash.inference.StepModel
+import com.hapticwash.session.Haptics
 import com.hapticwash.session.History
 import com.hapticwash.session.Settings
 import com.hapticwash.session.StepStatus
@@ -102,18 +105,21 @@ import com.hapticwash.ui.theme.HapticWashTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.math.ceil
 
 /** Progress ring target. A UI constant: nothing in Coverage reads it. */
-private const val RING_TARGET_S = 40f
+private const val RING_TARGET_S = Haptics.TARGET_MS / 1000f
 
 /** Summary entrance: each row fades and rises over [ROW_MS], [STAGGER_MS] after the one above. */
 private const val ROW_MS = 200f
 private const val STAGGER_MS = 40f
 private const val ENTRANCE_MS = 360 // ROW_MS + 4 × STAGGER_MS, for five rows
 
-/** Start wash: the one large target on the Start screen. */
-private val START_SIZE = 104.dp
-private val START_SIZE_COMPACT = 92.dp
+/** Start wash: the one large target on the Start screen, a pill whose corners tighten while pressed. */
+private val START_HEIGHT = 76.dp
+private val START_HEIGHT_COMPACT = 64.dp
+private const val START_CORNER_PCT = 50
+private const val START_CORNER_PRESSED_PCT = 30
 
 /** Summary ring: diameter, stroke, and the gap between Step arcs. */
 private val RING_SIZE = 124.dp
@@ -217,7 +223,10 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
         // Loads the model off the main thread; also the release smoke check's log line.
         timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
     }
-    val (press, pressScale) = rememberPressScale()
+    val press = remember { MutableInteractionSource() }
+    val pressed by press.collectIsPressedAsState()
+    // Material 3 Expressive press feedback: the pill's corners tighten under the finger and spring back.
+    val corner by animateIntAsState(if (pressed) START_CORNER_PRESSED_PCT else START_CORNER_PCT, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium))
     // One thing to do here, so one large target; History and Settings are rarely needed and stay small.
     ScreenScaffold { padding ->
         Column(
@@ -227,20 +236,20 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
         ) {
             Button(
                 onClick = ::start,
-                // Smaller in Timer-only, so the notice fits without squeezing the 48 dp icon buttons (§4.1.3).
-                modifier = Modifier.size(if (timerOnly) START_SIZE_COMPACT else START_SIZE).then(pressScale),
-                shape = CircleShape,
+                // Shorter in Timer-only, so the notice fits without squeezing the 48 dp icon buttons (§4.1.3).
+                modifier = Modifier.fillMaxWidth(0.8f).height(if (timerOnly) START_HEIGHT_COMPACT else START_HEIGHT),
+                shape = RoundedCornerShape(corner),
                 interactionSource = press,
             ) {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                     Icon(painterResource(R.drawable.ic_wash), contentDescription = null)
-                    Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash), textAlign = TextAlign.Center)
+                    Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash), style = MaterialTheme.typography.titleMedium)
                 }
             }
             if (timerOnly) Notice(stringResource(R.string.timer_only_short))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FilledTonalIconButton(onHistory) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
-                FilledTonalIconButton(onSettings) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
+                FilledTonalIconButton(onHistory, shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
+                FilledTonalIconButton(onSettings, shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
             }
         }
     }
@@ -286,8 +295,16 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Tabular digits, so the time doesn't shift sideways as it ticks.
-                Text(duration(elapsedS), style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"))
+                // Counts down to the target, then shows the total. Tabular digits, so the time doesn't shift sideways as it ticks.
+                Text(
+                    duration(if (full) elapsedS else ceil(RING_TARGET_S - elapsedS)),
+                    style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
+                )
+                Text(
+                    if (full) stringResource(R.string.target_reached, RING_TARGET_S.toInt()) else stringResource(R.string.time_left),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
                 if (status.timerOnly) Notice(stringResource(R.string.timer_only))
                 // Wide: wet, soapy fingers miss small targets. Answers the tap at once, before the Wash has finished saving.
                 Button(

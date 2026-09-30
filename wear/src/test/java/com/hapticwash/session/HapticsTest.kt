@@ -35,6 +35,14 @@ class HapticsTest {
         assertEquals(emptyList<Buzz>(), Haptics.onEnd(missed.copy(source = "replay"), hapticsOn = true))
         assertEquals(emptyList<Buzz>(), Haptics.onStart("sensor", hapticsOn = false))
         assertEquals(emptyList<Buzz>(), Haptics.onStart("replay", hapticsOn = true))
-        assertEquals(listOf(Buzz(0, Pulse.START)), Haptics.onStart("sensor", hapticsOn = true))
+        assertEquals(listOf(Pulse.START, Pulse.TARGET), Haptics.onStart("sensor", hapticsOn = true).map { it.pulse })
+    }
+
+    @Test
+    fun timeReachedTicksAtTheTargetAndIsItsOwnPattern() {
+        val (start, target) = Haptics.onStart("sensor", hapticsOn = true)
+        assertEquals(Haptics.TARGET_MS, target.atMs)
+        assertTrue(target.atMs >= start.atMs + Pulse.START.durationMs + Haptics.GAP_MS)
+        assertEquals(Pulse.entries.size, Pulse.entries.map { it.timings.toList() }.toSet().size)
     }
 }

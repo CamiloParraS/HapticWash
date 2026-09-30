@@ -35,10 +35,10 @@ Columns are the screens: **St** Start, **IP** In-progress, **Su** Summary, **Hi*
 |---|---|---|---|---|---|---|---|
 | 1 | Glanceable < 5 s | ✓ | ✓ | ✓ | ✓ | ✓ | Each screen has one header and short lines. Summary is five rows of a Step name and its Status. |
 | 2 | Round-safe, scaling list, `TimeText` | ✓ | ✓ | ✓ | ✓ | ✓ | Lists use `TransformingLazyColumn`, the Wear Material 3 successor to `ScalingLazyColumn`. `TimeText` comes from `AppScaffold` on every screen. Start and In-progress are centred and not scrollable. The ring leaves a 60° gap at the top for `TimeText` (fixed in this audit: it used to run under the clock). |
-| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | List buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start wash is a 104 dp round button (92 dp in Timer-only), History and Settings 52 dp tonal icon buttons (redesign, below). Start's primary action is Start wash; In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
+| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | List buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start wash is a 162 × 76 dp pill (162 × 64 dp in Timer-only), History and Settings 52 dp tonal icon buttons (redesign, below). Start's primary action is Start wash; In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
 | 4 | One-tap start | ✓ | — | — | — | — | Start wash is the large centre button. A single tap starts the service and opens In-progress. The Tile and the complication start a Wash from outside the app (below). |
 | 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | ✓ | No text fields. The only dialog is the system notification permission (Allow / Don't allow), now asked on the first Start tap. Wrist side is two radio buttons. Deepest paths: Start → In-progress → Summary (In-progress is popped) and Start → History → Summary. Swipe-to-dismiss works from In-progress, Summary, History and Settings. A swipe mid-Wash leaves it running; Start then shows "Wash in progress" and returns to In-progress. |
-| 6 | Haptics, patterns, ≤ 1 per 3 s | — | ✓ | ◐ | — | ✓ | From `dumpsys vibrator_manager`: start 80 ms; end 80 + 120 + 80 ms; missed-step 600 ms, starting 3.2 s after the end pulses start (13 s Wash, all `NOT_DETECTED`). A too-short Wash and a Timer-only Wash each got only start and end. Replays are silent. The Haptics setting is read at fire time (unit-tested in `HapticsTest`). See note A. |
+| 6 | Haptics, patterns, ≤ 1 per 3 s | — | ✓ | ◐ | — | ✓ | Since C1 (below) a fourth pattern, time reached, ticks at 40 s. From `dumpsys vibrator_manager`: start 80 ms; end 80 + 120 + 80 ms; missed-step 600 ms, starting 3.2 s after the end pulses start (13 s Wash, all `NOT_DETECTED`). A too-short Wash and a Timer-only Wash each got only start and end. Replays are silent. The Haptics setting is read at fire time (unit-tested in `HapticsTest`). See note A. |
 | 7 | Ambient / screen-off | — | ✓ | — | — | — | `KEYCODE_SLEEP` mid-Wash put the device in `Dozing`: 17 windows logged in 25 s (1.5 s stride), and on wake the Wash was still running at 0:45. No crash in logcat. |
 | 8 | Battery honesty | — | ✓ | — | — | ✓ | After Stop: 0 active `sensorservice` connections for the app, and the `HapticWash:session` wake lock was released in the same ms the Wash ended. Always-on isn't offered in M4 (the disabled "Coming later" switch was removed in the polish pass below). It arrives with its battery warning in M5. |
 | 9 | No result as certainty | ✓ | ✓ | ✓ | ✓ | ✓ | "Looks covered", "May have been brief", "Not detected", "Too short to estimate", "n of 5 look covered". Enforced by `LanguageTest` (D29). |
@@ -135,7 +135,7 @@ through the watch face editor. No new permission: `ManifestTest` passes, and the
 Same day, same AVD, after the Tile and complication. `MainActivity.kt`, `strings.xml` and two
 icons.
 
-- **Start** is one large round Start wash button with a drop icon, and History and Settings as
+- **Start** is one large Start wash button with a drop icon (first round, now a pill: see below), and History and Settings as
   52 dp tonal icon buttons under it. The screen no longer scrolls. In Timer-only the button is
   92 dp and the notice reads "Timer only", so the icon buttons keep 52 dp (first try squeezed
   them to about 33 dp). While a Wash runs the button reads "Wash in progress".
@@ -149,14 +149,31 @@ Screenshots retaken: Start, Start (Timer-only, corrupt-model build again; the re
 restored and loads), Summary (mixed) and scrolled. `./gradlew :wear:testDebugUnitTest`: 32 tests,
 0 failures, 1 skipped.
 
-**Not done, needs a spec decision:**
-- Countdown and a completion tap: M4 asks for elapsed time on In-progress, and §4.1.6 defines
-  exactly three vibration patterns.
+**Not done:**
 - A five-segment pacing ring on In-progress: may read as naming a Step during the Wash.
 - A weekly strip on History: History keeps the last 20 Washes (M4), so weekly counts would
   undercount.
-- **Always-on placeholder:** M4 lists "always-on toggle placeholder" under Settings. The polish
-  pass removed the disabled switch; restore it or amend M4.
+
+## Spec changes C1–C3 and the Start pill
+
+The countdown, the time-reached ticks and the always-on placeholder needed SPEC-APP changes;
+they are recorded in [SPEC-CHANGELOG](SPEC-CHANGELOG.md) as C1–C3.
+
+- **In-progress (C2)** counts down to the 40 s target ("0:35 / to go"), then shows the total
+  ("0:43 / 40 s reached"). The ring, when on, is unchanged.
+- **Time reached (C1)**, from `dumpsys vibrator_manager` on a 43 s Wash that ended with a Step not
+  detected: start 07:49:23.05; ticks (40 ms on, 80 ms off, three times) 07:50:03.05, 40.0 s after
+  the start; end pulses 07:50:06.83, 3.8 s after the ticks; missed-step pulse 07:50:10.11. Every
+  gap is ≥ 3 s. `HapticsTest` also checks the tick time and that all four patterns differ.
+- **Settings (C3):** no always-on placeholder, as already built.
+- **Start wash is a pill** with the drop icon and label side by side, 80 % of the width. On press
+  its corners tighten from 50 % to 30 % and spring back with no bounce (Material 3 Expressive shape
+  morph); History and Settings use Wear's own `IconButtonDefaults.animatedShapes()`. In Timer-only
+  the pill is 64 dp tall; `uiautomator` bounds: pill 162 × 64 dp, icon buttons 52 × 52 dp.
+
+Screenshots retaken: Start, Start (Timer-only), In-progress (ring off, ring on, Timer-only). The
+Timer-only ones come from the corrupt-model build again; the real model was restored.
+`./gradlew :wear:testDebugUnitTest`: 33 tests, 0 failures, 1 skipped.
 
 ## Other M4 checks
 

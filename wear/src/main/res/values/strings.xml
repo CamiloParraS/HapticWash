@@ -8,6 +8,8 @@
     <string name="complication_label">Wash</string>
     <string name="ring_count">%1$d of 5</string>
     <string name="ring_caption">look covered</string>
+    <string name="time_left">to go</string>
+    <string name="target_reached">%1$d s reached</string>
     <string name="timer_only">Timer only: step detection unavailable</string>
     <string name="timer_only_short">Timer only</string>
     <string name="channel_session">Wash session</string>

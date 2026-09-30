@@ -15,7 +15,8 @@ import kotlinx.coroutines.launch
 enum class Pulse(vararg val timings: Long) {
     START(0, 80),
     END(0, 80, 120, 80),
-    MISSED(0, 600);
+    MISSED(0, 600),
+    TARGET(0, 40, 80, 40, 80, 40);
 
     val durationMs get() = timings.sum()
 }
@@ -28,8 +29,12 @@ object Haptics {
     /** Minimum spacing between vibrations (§4.1.6). */
     const val GAP_MS = 3000L
 
+    /** Time-reached target (WHO: wash for 40–60 s). In-progress counts down to it. */
+    const val TARGET_MS = 40_000L
+
+    /** The start pulse, then the time-reached ticks; a Wash that ends first cancels the ticks. */
     fun onStart(source: String, hapticsOn: Boolean) =
-        if (hapticsOn && source == "sensor") listOf(Buzz(0, Pulse.START)) else emptyList()
+        if (hapticsOn && source == "sensor") listOf(Buzz(0, Pulse.START), Buzz(TARGET_MS, Pulse.TARGET)) else emptyList()
 
     fun onEnd(wash: WashSession, hapticsOn: Boolean): List<Buzz> {
         if (!hapticsOn || wash.source != "sensor") return emptyList()
@@ -41,7 +46,9 @@ object Haptics {
 
 /**
  * Plays [Buzz] lists. Process-wide so a pending missed-step pulse outlives the service and a
- * new Wash cancels it (nothing vibrates mid-Wash). Haptics setting re-read at fire time.
+ * new Wash cancels it; the end of a Wash likewise cancels its pending time-reached ticks. If a
+ * Wash ends within 3 s of the ticks, the end pulses wait for the gap. Haptics setting re-read at
+ * fire time.
  */
 object Buzzer {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
