@@ -88,9 +88,7 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.EdgeButton
-import androidx.wear.compose.material3.EdgeButtonSize
-import androidx.wear.compose.material3.CircularProgressIndicator
+import androidx.wear.compose.material3.drawCircularProgressIndicator
 import androidx.wear.compose.material3.CircularProgressIndicatorDefaults
 import androidx.wear.compose.material3.FilledTonalButton
 import androidx.wear.compose.material3.FilledTonalIconButton
@@ -344,13 +342,21 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             // A 60° gap centred on 12 o'clock leaves TimeText clear.
+            // Drawn, not CircularProgressIndicator: that one restarts its own animation on every new value,
+            // so fed every frame it never moves until the value stops changing at 100 %.
             if (ring) {
-                CircularProgressIndicator(
-                    progress = { (elapsedS / RING_TARGET_S).coerceAtMost(1f) },
-                    modifier = Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding),
-                    startAngle = 300f,
-                    endAngle = 240f,
-                    colors = ProgressIndicatorDefaults.colors(indicatorColor = ringColor),
+                val colors = ProgressIndicatorDefaults.colors(indicatorColor = ringColor)
+                val stroke = CircularProgressIndicatorDefaults.largeStrokeWidth
+                Spacer(
+                    Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding).drawBehind {
+                        drawCircularProgressIndicator(
+                            progress = (elapsedS / RING_TARGET_S).coerceAtMost(1f),
+                            colors = colors,
+                            strokeWidth = stroke,
+                            startAngle = 300f,
+                            endAngle = 240f,
+                        )
+                    },
                 )
             }
             Column(
@@ -370,7 +376,8 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 )
                 if (status.timerOnly) Notice(stringResource(R.string.timer_only))
                 // Wide: wet, soapy fingers miss small targets. Answers the tap at once, before the Wash has finished saving.
-                Button(
+                // Tonal, so the countdown leads and Stop stays easy to hit.
+                FilledTonalButton(
                     onClick = { stopping = true; WashService.stop(context) },
                     modifier = Modifier.fillMaxWidth(0.8f).then(pressScale),
                     enabled = !stopping,
