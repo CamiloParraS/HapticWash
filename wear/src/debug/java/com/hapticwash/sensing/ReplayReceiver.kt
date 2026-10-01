@@ -19,6 +19,6 @@ class ReplayReceiver : BroadcastReceiver() {
             Log.w(WashService.TAG, "REPLAY without --es path")
             return
         }
-        WashService.replay(context, path, intent.getFloatExtra("speed", 1f), intent.getStringExtra("wrist"))
+        WashService.replay(context, path, intent.getFloatExtra("speed", 1f), intent.getStringExtra("wrist"), intent.getBooleanExtra("persist", false))
     }
 }
