@@ -6,6 +6,7 @@ import androidx.wear.protolayout.ActionBuilders.launchAction
 import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders.degrees
 import androidx.wear.protolayout.DimensionBuilders.dp
+import androidx.wear.protolayout.DimensionBuilders.expand
 import androidx.wear.protolayout.LayoutElementBuilders.ARC_ANCHOR_START
 import androidx.wear.protolayout.LayoutElementBuilders.Arc
 import androidx.wear.protolayout.LayoutElementBuilders.ArcLine
@@ -14,6 +15,7 @@ import androidx.wear.protolayout.LayoutElementBuilders.Box
 import androidx.wear.protolayout.LayoutElementBuilders.Column
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
 import androidx.wear.protolayout.LayoutElementBuilders.STROKE_CAP_ROUND
+import androidx.wear.protolayout.LayoutElementBuilders.Spacer
 import androidx.wear.protolayout.LayoutElementBuilders.StrokeCapProp
 import androidx.wear.protolayout.types.LayoutColor
 import com.hapticwash.session.StepCoverage
@@ -46,9 +48,16 @@ class WashTileService : Material3TileService() {
                         val takeaway = text((last?.let { hint(resources, it) } ?: getString(R.string.history_empty)).layoutString, typography = Typography.TITLE_MEDIUM, color = colorScheme.onSurface, maxLines = 2)
                         if (last == null) takeaway
                         else Column.Builder()
-                            .apply { if (last.modelVersion != null && last.coverageShown) addContent(ring(last.coverage)) }
+                            .apply {
+                                // The ring takes the slot's spare height and centres in it: midway between the title and the words.
+                                if (last.modelVersion != null && last.coverageShown) setHeight(expand()).addContent(
+                                    Box.Builder().setWidth(expand()).setHeight(expand()).addContent(ring(last.coverage)).build(),
+                                )
+                            }
                             .addContent(text(lastWashLabel(this@WashTileService, last).layoutString, typography = Typography.LABEL_SMALL, color = colorScheme.onSurfaceVariant))
                             .addContent(takeaway)
+                            // Breathing room above the EdgeButton once the ring pushes the words down.
+                            .apply { if (last.modelVersion != null && last.coverageShown) addContent(Spacer.Builder().setHeight(dp(10f)).build()) }
                             .build()
                     },
                     bottomSlot = {
