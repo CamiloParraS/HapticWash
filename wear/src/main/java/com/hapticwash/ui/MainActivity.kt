@@ -150,19 +150,26 @@ class MainActivity : ComponentActivity() {
     /** Counts Tile and complication taps; each one is answered once, as a tap on Start wash. */
     private var startRequests by mutableIntStateOf(0)
 
+    /** A Wash the Tile asked to show, until the Summary is open. */
+    private var openRequest by mutableStateOf<Long?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) takeStart(intent)
         addOnNewIntentListener(::takeStart)
-        setContent { HapticWashTheme { AppScaffold { App { startRequests } } } }
+        setContent { HapticWashTheme { AppScaffold { App({ startRequests }, { openRequest }, { openRequest = null }) } } }
     }
 
     private fun takeStart(intent: Intent) {
         if (intent.getBooleanExtra(EXTRA_START, false)) startRequests++
+        intent.getLongExtra(EXTRA_OPEN, -1).takeIf { it >= 0 }?.let { openRequest = it }
     }
 
     companion object {
         const val EXTRA_START = "start"
+
+        /** A Wash id: opens that Wash's Summary (the Tile's ring and words). */
+        const val EXTRA_OPEN = "open"
 
         /** Opens the app and starts a Wash, from outside it (the complication; the Tile builds its own launch action). */
         fun startIntent(context: Context): PendingIntent = PendingIntent.getActivity(
@@ -179,11 +186,18 @@ class MainActivity : ComponentActivity() {
  * Int would stay at its first value and a Tile tap on an already-open Start would be missed.
  */
 @Composable
-fun App(startRequests: () -> Int = { 0 }) {
+fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, onOpened: () -> Unit = {}) {
     val nav = rememberSwipeDismissableNavController()
     var answered by rememberSaveable { mutableIntStateOf(0) }
     // A Tile or complication tap: back to Start, which then starts (or rejoins) the Wash.
     LaunchedEffect(startRequests()) { if (startRequests() > answered) nav.popBackStack("start", inclusive = false) }
+    // A tap on the Tile's ring or words: that Wash's Summary, over Start, as if opened from History.
+    LaunchedEffect(openRequest()) {
+        val id = openRequest() ?: return@LaunchedEffect
+        nav.popBackStack("start", inclusive = false)
+        nav.navigate("summary/$id")
+        onOpened()
+    }
     SwipeDismissableNavHost(nav, startDestination = "start") {
         composable("start") {
             StartScreen(
@@ -538,8 +552,9 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
         pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 2f)
     }
     Box(modifier.height(RING_SIZE).clearAndSetSemantics { contentDescription = takeaway }, contentAlignment = Alignment.Center) {
+        val ink = ink(coverage)
         Canvas(Modifier.size(RING_SIZE).graphicsLayer { scaleX = pop.value; scaleY = pop.value }) {
-            coverageArcs(coverage, RING_STROKE.toPx(), colors.surfaceContainer, colors.primary) { staggered(entrance(), it) }
+            coverageArcs(coverage, RING_STROKE.toPx(), colors.surfaceContainer, ink) { staggered(entrance(), it) }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(R.string.ring_count, ok), style = MaterialTheme.typography.titleLarge)
@@ -552,8 +567,9 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
 @Composable
 private fun MiniRing(coverage: List<StepCoverage>) {
     val colors = MaterialTheme.colorScheme
+    val ink = ink(coverage)
     Canvas(Modifier.size(MINI_RING_SIZE).clearAndSetSemantics {}) {
-        coverageArcs(coverage, MINI_RING_STROKE.toPx(), colors.surfaceContainer, colors.primary)
+        coverageArcs(coverage, MINI_RING_STROKE.toPx(), colors.surfaceContainer, ink)
     }
 }
 
@@ -574,6 +590,13 @@ private fun DrawScope.coverageArcs(coverage: List<StepCoverage>, stroke: Float, 
         if (share > 0f) drawArc(ink, start, sweep * share * fill(i), false, topLeft, arc, style = style)
     }
 }
+
+/** The ring's fill: tertiary when all five look covered, the colour the Wash ring turns at the target. */
+@Composable
+private fun ink(coverage: List<StepCoverage>) =
+    if (allCovered(coverage)) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+
+internal fun allCovered(coverage: List<StepCoverage>) = coverage.all { it.status == StepStatus.OK }
 
 /** How much of a Step's arc is filled: shape carries the Status, not colour (§4.1.10). */
 internal fun share(s: StepStatus) = when (s) {
