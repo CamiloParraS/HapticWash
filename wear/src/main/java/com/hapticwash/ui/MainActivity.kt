@@ -25,6 +25,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -296,9 +297,22 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                     if (timerOnly) Text(stringResource(R.string.timer_only_short), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                 }
             }
-            // Rarely needed, so small and secondary to the EdgeButton; 48 dp targets (§4.1.3).
+            // The one primary action, in the middle with the secondary actions below it.
             item {
-                Row(morphContent(spec).padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+                val (press, pressScale) = rememberPressScale()
+                Button(
+                    ::start,
+                    morph(spec).then(pressScale),
+                    interactionSource = press,
+                    transformation = SurfaceTransformation(spec),
+                    icon = { Icon(painterResource(R.drawable.ic_wash), null) },
+                    label = { Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash), Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                )
+            }
+            // Rarely needed, so small and secondary to Start; 48 dp targets (§4.1.3).
+            // Not edge-scaled: this low on the screen the transformation would shrink them below 48 dp.
+            item {
+                Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
                     FilledTonalIconButton(onHistory, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
                     FilledTonalIconButton(onSettings, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
                 }
@@ -529,7 +543,7 @@ private fun SettingsScreen() {
     }
 }
 
-/** Press feedback for Stop: a slight, critically damped shrink while the finger is down. */
+/** Press feedback for Start and Stop: a slight, critically damped shrink while the finger is down. */
 @Composable
 private fun rememberPressScale(): Pair<MutableInteractionSource, Modifier> {
     val source = remember { MutableInteractionSource() }
