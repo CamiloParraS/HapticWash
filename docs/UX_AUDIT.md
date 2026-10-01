@@ -8,7 +8,8 @@ power) and the `HapticWash` logcat tag.
 
 ## Screens
 
-`screencap` saves the full square frame. The watch shows only the inscribed circle.
+`screencap` saves the full square frame. The watch shows only the inscribed circle. Screenshots
+replaced by the EdgeButton redesign (below) are kept as `ux/old_*.png`.
 
 | Screen | Screenshot |
 |---|---|
@@ -20,9 +21,9 @@ power) and the `HapticWash` logcat tag.
 | Summary, mixed Statuses (zhang_who_6 replay, right wrist) | [summary_mixed](ux/summary_mixed.png), [scrolled](ux/summary_mixed_scrolled.png) |
 | Summary, too short (5 s) | [summary_too_short](ux/summary_too_short.png) |
 | Summary, Timer-only | [summary_timer_only](ux/summary_timer_only.png) |
-| History, with items | [history](ux/history.png) |
+| History, with items | [history](ux/history.png), [scrolled to the end](ux/history_scrolled.png) |
 | History, empty | [history_empty](ux/history_empty.png) |
-| Settings | [settings](ux/settings.png), [scrolled](ux/settings_scrolled.png) |
+| Settings | [settings](ux/settings.png), [scrolled to the end](ux/settings_scrolled.png) |
 | Tile | [tile](ux/tile.png) |
 | Complication | [on the watch face](ux/complication.png), [in the picker](ux/complication_picker.png) |
 
@@ -34,10 +35,10 @@ Columns are the screens: **St** Start, **IP** In-progress, **Su** Summary, **Hi*
 | § | Item | St | IP | Su | Hi | Se | Notes |
 |---|---|---|---|---|---|---|---|
 | 1 | Glanceable < 5 s | ✓ | ✓ | ✓ | ✓ | ✓ | Each screen has one header and short lines. Summary is five rows of a Step name and its Status. |
-| 2 | Round-safe, scaling list, `TimeText` | ✓ | ✓ | ✓ | ✓ | ✓ | Lists use `TransformingLazyColumn`, the Wear Material 3 successor to `ScalingLazyColumn`. `TimeText` comes from `AppScaffold` on every screen. Start and In-progress are centred and not scrollable. The ring leaves a 60° gap at the top for `TimeText` (fixed in this audit: it used to run under the clock). |
-| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | List buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start wash is a 162 × 76 dp pill (162 × 64 dp in Timer-only), History and Settings 52 dp tonal icon buttons (redesign, below). Start's primary action is Start wash; In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
-| 4 | One-tap start | ✓ | — | — | — | — | Start wash is the large centre button. A single tap starts the service and opens In-progress. The Tile and the complication start a Wash from outside the app (below). |
-| 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | ✓ | No text fields. The only dialog is the system notification permission (Allow / Don't allow), now asked on the first Start tap. Wrist side is two radio buttons. Deepest paths: Start → In-progress → Summary (In-progress is popped) and Start → History → Summary. Swipe-to-dismiss works from In-progress, Summary, History and Settings. A swipe mid-Wash leaves it running; Start then shows "Wash in progress" and returns to In-progress. |
+| 2 | Round-safe, scaling list, `TimeText` | ✓ | ✓ | ✓ | ✓ | ✓ | Lists use `TransformingLazyColumn`, the Wear Material 3 successor to `ScalingLazyColumn`. `TimeText` comes from `AppScaffold` on every screen. Start is a short list above its EdgeButton; In-progress is centred and not scrollable. Settings and History can scroll their last row up to the centre of the screen. The ring leaves a 60° gap at the top for `TimeText` (fixed in this audit: it used to run under the clock). |
+| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | List buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start wash is an `EdgeButton` (bounds 227 × 70 dp; its shape follows the bottom curve), History and Settings 48 × 48 dp tonal icon buttons, Settings rows 203 × 52 dp (EdgeButton redesign, below). Start's primary action is Start wash; In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
+| 4 | One-tap start | ✓ | — | — | — | — | Start wash is the EdgeButton at the bottom of Start, shown at full size without scrolling. A single tap starts the service and opens In-progress. The Tile and the complication start a Wash from outside the app (below). |
+| 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | ✓ | No text fields. The only dialog is the system notification permission (Allow / Don't allow), now asked on the first Start tap. Wrist side is one row that flips between Left and Right on a tap. Deepest paths: Start → In-progress → Summary (In-progress is popped) and Start → History → Summary. Swipe-to-dismiss works from In-progress, Summary, History and Settings. A swipe mid-Wash leaves it running; Start then shows "Wash in progress" and returns to In-progress. |
 | 6 | Haptics, patterns, ≤ 1 per 3 s | — | ✓ | ◐ | — | ✓ | Since C1 (below) a fourth pattern, time reached, ticks at 40 s. From `dumpsys vibrator_manager`: start 80 ms; end 80 + 120 + 80 ms; missed-step 600 ms, starting 3.2 s after the end pulses start (13 s Wash, all `NOT_DETECTED`). A too-short Wash and a Timer-only Wash each got only start and end. Replays are silent. The Haptics setting is read at fire time (unit-tested in `HapticsTest`). See note A. |
 | 7 | Ambient / screen-off | — | ✓ | — | — | — | `KEYCODE_SLEEP` mid-Wash put the device in `Dozing`: 17 windows logged in 25 s (1.5 s stride), and on wake the Wash was still running at 0:45. No crash in logcat. |
 | 8 | Battery honesty | — | ✓ | — | — | ✓ | After Stop: 0 active `sensorservice` connections for the app, and the `HapticWash:session` wake lock was released in the same ms the Wash ended. Always-on isn't offered in M4 (the disabled "Coming later" switch was removed in the polish pass below). It arrives with its battery warning in M5. |
@@ -55,7 +56,7 @@ pulses" wording in M4-PLAN is read strictly.
 node read as "n of 5 look covered". Every other interactive element is a Material 3
 `Button`/`FilledTonalButton`/`SwitchButton`, and its accessible label is its merged text
 label (`uiautomator dump`: each clickable node wraps exactly its label and secondary
-label). Compose uses that text as the spoken name, so there is no separate
+label). The Settings icons are decorative (`contentDescription` null), so each row is read by its text. Compose uses that text as the spoken name, so there is no separate
 `contentDescription` to set. A live TalkBack pass on the AVD got stuck in its tutorial,
 which also doesn't log what it speaks. Hence ◐: the labels are checked structurally, the spoken output is not. Repeat it on hardware (M6).
 
@@ -173,6 +174,38 @@ they are recorded in [SPEC-CHANGELOG](SPEC-CHANGELOG.md) as C1–C3.
 
 Screenshots retaken: Start, Start (Timer-only), In-progress (ring off, ring on, Timer-only). The
 Timer-only ones come from the corrupt-model build again; the real model was restored.
+`./gradlew :wear:testDebugUnitTest`: 33 tests, 0 failures, 1 skipped.
+
+## Redesign: EdgeButton Start, Settings and Tile
+
+Same AVD, after the Start pill. `MainActivity.kt`, `WashTileService.kt`, `strings.xml` and three
+icons. The pill put a large button and two icon buttons above the middle of the round screen,
+left the bottom third empty, and said nothing until tapped.
+
+- **Start** is built on Wear Material 3's `EdgeButton`: Start wash hugs the bottom curve, where
+  the Tile puts it. Above it, centred: "Last wash · 7:15 AM" (the date once it is not today) over
+  "n of 5 look covered" (or "Too short", "No washes yet"), "Timer only" when the model is
+  unavailable, then the History and Settings icon buttons. The list is kept short on purpose:
+  a longer one shrinks the EdgeButton until scrolled to the end, which would hide one-tap start
+  (§4.1.4). The label alone, no icon, so it fits on one line; "Wash in progress" wraps to two.
+  The pill and its press-shape morph are gone; the EdgeButton's own press feedback remains.
+- **Settings** fits on one screen. Wrist side is one row showing its value, flipped by a tap: two
+  options, no dialog, and a second tap undoes it (§4.1.5). Wrist side, Haptics and Progress ring
+  have icons. "Applies from the next wash" shows only while a Wash runs, when it matters.
+- **Settings and History** can scroll their last row up to the centre of the screen, with black
+  below it, like the watch's own Settings.
+- **Tile** uses Start's words and hierarchy: a small "Last wash · 7:15 AM" over the takeaway in
+  `TITLE_MEDIUM`, in place of one wrapped "Last wash: …" line. It also refreshes hourly, so the
+  time turns into a date.
+
+| Screen | Clickable bounds (`uiautomator`) |
+|---|---|
+| Start | Start wash 227 × 70 dp (EdgeButton), History 48 × 48 dp, Settings 48 × 48 dp |
+| Settings | Wrist side 203 × 52 dp, Haptics 203 × 52 dp, Progress ring 156 × 40 dp while scaled at the bottom edge, 203 × 52 dp scrolled into view |
+| History | rows 203 × 52 dp |
+
+Screenshots retaken: Start, Start (Timer-only, corrupt-model build again; the real model was
+restored and is byte-identical), Settings and scrolled, History and scrolled (new), Tile.
 `./gradlew :wear:testDebugUnitTest`: 33 tests, 0 failures, 1 skipped.
 
 ## Other M4 checks
