@@ -26,6 +26,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.util.lerp
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -55,6 +60,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.first
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -157,7 +165,7 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Max depth 2 (§4.1.5): Start → In-progress → Summary, Start → History → Summary, Start → Settings.
+ * Max depth 2 (§4.1.5): Start → In-progress → Summary (`result`, the one just ended), Start → History → Summary, Start → Settings.
  * [startRequests] is a provider, not an Int: the nav graph keeps its destination lambdas, so a captured
  * Int would stay at its first value and a Tile tap on an already-open Start would be missed.
  */
@@ -177,7 +185,8 @@ fun App(startRequests: () -> Int = { 0 }) {
                 onAutoStarted = { answered = startRequests() },
             )
         }
-        composable("wash") { WashScreen(onEnd = { id -> nav.navigate("summary/$id") { popUpTo("start") } }) }
+        composable("wash") { WashScreen(onEnd = { id -> nav.navigate("result/$id") { popUpTo("start") } }) }
+        composable("result/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull(), fromWash = true) }
         composable("history") { HistoryScreen(onOpen = { nav.navigate("summary/$it") }) }
         composable("summary/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull()) }
         composable("settings") { SettingsScreen() }
@@ -287,16 +296,20 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     val ring = remember { Settings(context).progressRing }
     var stopping by remember { mutableStateOf(false) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            now = System.currentTimeMillis()
-            delay(250)
-        }
-    }
     // Derived state, so the ring's progress lambda reads the live value at draw time.
     val elapsedS by remember { derivedStateOf { if (status.running) ((now - status.startedAtEpochMs) / 1000f).coerceAtLeast(0f) else 0f } }
     // The ring changes colour once it fills, so reaching the target is visible at a glance.
     val full by remember { derivedStateOf { elapsedS >= RING_TARGET_S } }
+    // The whole seconds on screen: the text recomposes once a second, not every frame.
+    val shownS by remember { derivedStateOf { if (full) elapsedS.toInt().toFloat() else ceil(RING_TARGET_S - elapsedS) } }
+    LaunchedEffect(Unit) {
+        while (true) {
+            // Every frame while the ring moves, so it glides and turns colour on the same frame as the time-reached ticks.
+            // Four times a second once only the text changes.
+            if (ring && !full) withFrameMillis {} else delay(250)
+            now = System.currentTimeMillis()
+        }
+    }
     val ringColor by animateColorAsState(if (full) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, tween(300))
     val (press, pressScale) = rememberPressScale()
     ScreenScaffold { padding ->
@@ -318,7 +331,7 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
             ) {
                 // Counts down to the target, then shows the total. Tabular digits, so the time doesn't shift sideways as it ticks.
                 Text(
-                    duration(if (full) elapsedS else ceil(RING_TARGET_S - elapsedS)),
+                    duration(shownS),
                     style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
                 )
                 Text(
@@ -340,9 +353,9 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     }
 }
 
-/** A Wash's Summary: the one just ended, or one from History. */
+/** A Wash's Summary: the one just ended ([fromWash]), or one from History. */
 @Composable
-private fun SummaryScreen(id: Long?) {
+private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
     val context = LocalContext.current
     val wash = remember(id) {
         WashService.lastWash.value?.takeIf { it.id == id } ?: History.get(context).read().find { it.id == id }
@@ -352,42 +365,77 @@ private fun SummaryScreen(id: Long?) {
     // Rows arrive in a short cascade as the end pulses play. Decorative: scrolling is never blocked.
     val entrance = remember { Animatable(0f) }
     LaunchedEffect(Unit) { entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing)) }
-    ListScreen { spec ->
-        if (wash == null) return@ListScreen
-        val shown = wash.modelVersion != null && wash.coverageShown
-        // The takeaway first, so the answer is on screen before any scrolling.
-        if (shown) item { CoverageRing(wash.coverage, { entrance.value }, morphContent(spec)) }
-        else item { ListHeader { Text(duration(wash.durationS)) } }
-        when {
-            wash.modelVersion == null -> item { Notice(stringResource(R.string.timer_only), morphContent(spec)) }
-            !wash.coverageShown -> item { Notice(stringResource(R.string.too_short), morphContent(spec)) }
-            else -> {
-                item { Notice(stringResource(R.string.washed_for, duration(wash.durationS)), morphContent(spec)) }
-                items(wash.coverage.size) { i ->
-                    val c = wash.coverage[i]
-                    val rise = with(LocalDensity.current) { 6.dp.toPx() }
-                    // Icon and text, never colour alone (§4.1.10); the glyph is read as the text. Colour only adds emphasis.
-                    Row(
-                        morphContent(spec).graphicsLayer {
-                            val p = staggered(entrance.value, i)
-                            alpha = p
-                            translationY = (1 - p) * rise
-                        }.padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            glyph(c.status),
-                            Modifier.width(20.dp).clearAndSetSemantics {},
-                            color = if (c.status == StepStatus.OK) colors.primary else colors.onSurfaceVariant,
-                            style = MaterialTheme.typography.titleMedium,
-                            textAlign = TextAlign.Center,
-                        )
-                        Column {
-                            Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
-                            Text(stringResource(statusText(c.status)), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+    // C6: straight from a Wash with the live ring on, that ring shrinks into the Coverage ring (0 = live, 1 = landed).
+    val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true && wash.modelVersion != null && Settings(context).progressRing) 0f else 1f) }
+    LaunchedEffect(Unit) { morph.animateTo(1f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)) }
+    // The Coverage ring's centre in this screen's space, so a moving nav transition doesn't throw the morph off.
+    var ringCentre by remember { mutableStateOf(Offset.Unspecified) }
+    var screen by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    Box(Modifier.onGloballyPositioned { screen = it }) {
+        ListScreen { spec ->
+            if (wash == null) return@ListScreen
+            val shown = wash.modelVersion != null && wash.coverageShown
+            // The takeaway first, so the answer is on screen before any scrolling.
+            if (shown) item {
+                CoverageRing(wash.coverage, { entrance.value }, morphContent(spec)
+                    .onGloballyPositioned { ring -> screen?.let { ringCentre = it.localBoundingBoxOf(ring).center } }
+                    .graphicsLayer { alpha = morph.value })
+            }
+            else item { ListHeader { Text(duration(wash.durationS)) } }
+            when {
+                wash.modelVersion == null -> item { Notice(stringResource(R.string.timer_only), morphContent(spec)) }
+                !wash.coverageShown -> item { Notice(stringResource(R.string.too_short), morphContent(spec)) }
+                else -> {
+                    item { Notice(stringResource(R.string.washed_for, duration(wash.durationS)), morphContent(spec)) }
+                    items(wash.coverage.size) { i ->
+                        val c = wash.coverage[i]
+                        val rise = with(LocalDensity.current) { 6.dp.toPx() }
+                        // Icon and text, never colour alone (§4.1.10); the glyph is read as the text. Colour only adds emphasis.
+                        Row(
+                            morphContent(spec).graphicsLayer {
+                                val p = staggered(entrance.value, i)
+                                alpha = p
+                                translationY = (1 - p) * rise
+                            }.padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                glyph(c.status),
+                                Modifier.width(20.dp).clearAndSetSemantics {},
+                                color = if (c.status == StepStatus.OK) colors.primary else colors.onSurfaceVariant,
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center,
+                            )
+                            Column {
+                                Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
+                                Text(stringResource(statusText(c.status)), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }
             }
         }
+        if (morph.value < 1f) LiveRing(wash!!.durationS, { morph.value }, { ringCentre })
+    }
+}
+
+/**
+ * The In-progress ring as it was when the Wash ended, drawn over the Summary and shrinking into the
+ * Coverage ring at [centre] as [morph] goes 0 → 1, fading as it goes. Same geometry as WashScreen's.
+ */
+@Composable
+private fun LiveRing(durationS: Float, morph: () -> Float, centre: () -> Offset) {
+    val color = if (durationS >= RING_TARGET_S) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+    val liveStroke = CircularProgressIndicatorDefaults.largeStrokeWidth
+    Canvas(Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding)) {
+        val p = morph()
+        val stroke = lerp(liveStroke.toPx(), RING_STROKE.toPx(), p)
+        val r = lerp(size.minDimension / 2 - liveStroke.toPx() / 2, RING_SIZE.toPx() / 2 - RING_STROKE.toPx() / 2, p)
+        // Canvas space is inset by the padding; the target centre is in the screen's.
+        val pad = CircularProgressIndicatorDefaults.FullScreenPadding.toPx()
+        val c = lerp(center, centre().takeIf { it.isSpecified }?.minus(Offset(pad, pad)) ?: center, p)
+        drawArc(
+            color, 300f, 300f * (durationS / RING_TARGET_S).coerceAtMost(1f), false,
+            Offset(c.x - r, c.y - r), Size(2 * r, 2 * r), alpha = 1 - p, style = Stroke(stroke, cap = StrokeCap.Round),
+        )
     }
 }
 
@@ -468,8 +516,14 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
     val colors = MaterialTheme.colorScheme
     val ok = coverage.count { it.status == StepStatus.OK }
     val takeaway = stringResource(R.string.history_hint, ok)
+    // All five covered: once the last arc lands, the ring gives one small spring pop. The only bounce in the app.
+    val pop = remember { Animatable(1f) }
+    if (ok == coverage.size) LaunchedEffect(Unit) {
+        snapshotFlow(entrance).first { it >= 1f } // follows the system animation scale, unlike a fixed delay
+        pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 2f)
+    }
     Box(modifier.height(RING_SIZE).clearAndSetSemantics { contentDescription = takeaway }, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(RING_SIZE)) {
+        Canvas(Modifier.size(RING_SIZE).graphicsLayer { scaleX = pop.value; scaleY = pop.value }) {
             val stroke = RING_STROKE.toPx()
             val topLeft = Offset(stroke / 2, stroke / 2)
             val arc = Size(size.width - stroke, size.height - stroke)
