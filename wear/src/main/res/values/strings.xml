@@ -14,6 +14,12 @@
     <string name="timer_only_short">Timer only</string>
     <string name="channel_session">Wash session</string>
     <string name="session_running">Wash in progress</string>
+    <!-- The Tile's narrower EdgeButton during a Wash: what a tap does. -->
+    <string name="tile_running">Open wash</string>
+    <plurals name="washes_today">
+        <item quantity="one">%d wash today</item>
+        <item quantity="other">%d washes today</item>
+    </plurals>
 
     <string name="too_short">Too short to estimate</string>
     <string name="too_short_short">Too short</string>

@@ -98,6 +98,8 @@ class WashService : Service() {
         val startedAtEpochMs = System.currentTimeMillis()
         _status.value = WashStatus(running = true, startedAtEpochMs = startedAtEpochMs, timerOnly = model == null)
         Buzzer.play(this, Haptics.onStart(kind, Settings(this).haptics))
+        // The Tile's button says a Wash is in progress.
+        if (kind != "replay") TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
         Log.i(TAG, "Session started: source=$kind wrist=$wrist model=${model?.meta?.modelVersion ?: "none (timer-only)"}")
         val latencyNs = ArrayList<Long>()
         var first = -1L

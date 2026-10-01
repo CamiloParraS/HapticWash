@@ -1,6 +1,10 @@
 package com.hapticwash.ui
 
 import android.content.ComponentName
+import android.text.format.DateUtils
+import androidx.wear.protolayout.ActionBuilders.AndroidLongExtra
+import androidx.wear.protolayout.ModifiersBuilders.Modifiers
+import com.hapticwash.session.WashService
 import androidx.wear.protolayout.ActionBuilders.booleanExtra
 import androidx.wear.protolayout.ActionBuilders.launchAction
 import androidx.wear.protolayout.ColorBuilders.argb
@@ -35,19 +39,33 @@ import com.hapticwash.R
 import com.hapticwash.session.History
 import kotlin.time.Duration.Companion.hours
 
-/** Start a Wash from the Tile carousel, with the last Wash's takeaway. WashService refreshes it when a Wash is saved. */
+/**
+ * Start a Wash from the Tile carousel, with today's count and the last Wash's takeaway; tapping the
+ * takeaway opens its Summary. WashService refreshes it when a Wash starts and when one is saved.
+ */
 class WashTileService : Material3TileService() {
     override suspend fun MaterialScope.tileResponse(requestParams: TileRequest) = tile(
         timeline(
             timelineEntry(
                 primaryLayout(
-                    titleSlot = { text(getString(R.string.app_name).layoutString) },
+                    // A daily habit number, like Apple Health's handwashing count. The app's name until the first Wash of the day.
+                    titleSlot = {
+                        // ponytail: History keeps 20 Washes, so the count tops out at 20 a day.
+                        val today = History.get(this@WashTileService).read().count { DateUtils.isToday(it.startedAtEpochMs) }
+                        text((if (today > 0) resources.getQuantityString(R.plurals.washes_today, today, today) else getString(R.string.app_name)).layoutString)
+                    },
                     // Start's words and hierarchy: a small grey label over the takeaway, so the Tile and the app read as one.
                     mainSlot = {
                         val last = History.get(this@WashTileService).read().firstOrNull()
                         val takeaway = text((last?.let { hint(resources, it) } ?: getString(R.string.history_empty)).layoutString, typography = Typography.TITLE_MEDIUM, color = colorScheme.onSurface, maxLines = 2)
                         if (last == null) takeaway
                         else Column.Builder()
+                            // Tapping the ring or the words opens that Wash's Summary, as History does.
+                            .setWidth(expand())
+                            .setModifiers(Modifiers.Builder().setClickable(clickable(launchAction(
+                                ComponentName(this@WashTileService, MainActivity::class.java),
+                                mapOf(MainActivity.EXTRA_OPEN to AndroidLongExtra.Builder().setValue(last.id).build()),
+                            ))).build())
                             .apply {
                                 // The ring takes the slot's spare height and centres in it: midway between the title and the words.
                                 if (last.modelVersion != null && last.coverageShown) setHeight(expand()).addContent(
@@ -68,7 +86,7 @@ class WashTileService : Material3TileService() {
                                     mapOf(MainActivity.EXTRA_START to booleanExtra(true)),
                                 ),
                             ),
-                            labelContent = { text(getString(R.string.start_wash).layoutString) },
+                            labelContent = { text(getString(if (WashService.status.value.running) R.string.tile_running else R.string.start_wash).layoutString) },
                         )
                     },
                 ),
@@ -96,7 +114,7 @@ class WashTileService : Material3TileService() {
             tracks.addContent(gap(RING_GAP_DEG / 2)).addContent(line(sweep, colorScheme.surfaceContainer)).addContent(gap(RING_GAP_DEG / 2))
             val filled = sweep * share(c.status)
             fills.addContent(gap(RING_GAP_DEG / 2))
-            if (filled > 0f) fills.addContent(line(filled, colorScheme.primary))
+            if (filled > 0f) fills.addContent(line(filled, if (allCovered(coverage)) colorScheme.tertiary else colorScheme.primary))
             fills.addContent(gap(sweep - filled + RING_GAP_DEG / 2))
         }
         return Box.Builder().setWidth(dp(40f)).setHeight(dp(40f)).addContent(tracks.build()).addContent(fills.build()).build()
