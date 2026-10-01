@@ -137,7 +137,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) takeStart(intent)
         addOnNewIntentListener(::takeStart)
-        setContent { HapticWashTheme { AppScaffold { App(startRequests) } } }
+        setContent { HapticWashTheme { AppScaffold { App { startRequests } } } }
     }
 
     private fun takeStart(intent: Intent) {
@@ -156,21 +156,25 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/** Max depth 2 (§4.1.5): Start → In-progress → Summary, Start → History → Summary, Start → Settings. */
+/**
+ * Max depth 2 (§4.1.5): Start → In-progress → Summary, Start → History → Summary, Start → Settings.
+ * [startRequests] is a provider, not an Int: the nav graph keeps its destination lambdas, so a captured
+ * Int would stay at its first value and a Tile tap on an already-open Start would be missed.
+ */
 @Composable
-fun App(startRequests: Int = 0) {
+fun App(startRequests: () -> Int = { 0 }) {
     val nav = rememberSwipeDismissableNavController()
     var answered by rememberSaveable { mutableIntStateOf(0) }
     // A Tile or complication tap: back to Start, which then starts (or rejoins) the Wash.
-    LaunchedEffect(startRequests) { if (startRequests > answered) nav.popBackStack("start", inclusive = false) }
+    LaunchedEffect(startRequests()) { if (startRequests() > answered) nav.popBackStack("start", inclusive = false) }
     SwipeDismissableNavHost(nav, startDestination = "start") {
         composable("start") {
             StartScreen(
                 onWash = { nav.navigate("wash") },
                 onHistory = { nav.navigate("history") },
                 onSettings = { nav.navigate("settings") },
-                autoStart = startRequests > answered,
-                onAutoStarted = { answered = startRequests },
+                autoStart = startRequests() > answered,
+                onAutoStarted = { answered = startRequests() },
             )
         }
         composable("wash") { WashScreen(onEnd = { id -> nav.navigate("summary/$id") { popUpTo("start") } }) }
