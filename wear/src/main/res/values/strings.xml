@@ -4,7 +4,7 @@
     <string name="stop_wash">Stop</string>
     <string name="stopping">Stopping…</string>
     <string name="washed_for">Washed for %1$s</string>
-    <string name="last_wash">Last wash: %1$s</string>
+    <string name="last_wash_title">Last wash</string>
     <string name="complication_label">Wash</string>
     <string name="ring_count">%1$d of 5</string>
     <string name="ring_caption">look covered</string>

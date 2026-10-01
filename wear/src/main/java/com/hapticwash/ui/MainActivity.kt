@@ -18,13 +18,11 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.geometry.Offset
@@ -33,12 +31,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.wear.compose.material3.FilledTonalIconButton
 import androidx.wear.compose.material3.Icon
-import androidx.wear.compose.material3.IconButtonDefaults
 import com.hapticwash.session.StepCoverage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,6 +60,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -74,14 +75,16 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.EdgeButton
+import androidx.wear.compose.material3.EdgeButtonSize
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.CircularProgressIndicatorDefaults
 import androidx.wear.compose.material3.FilledTonalButton
+import androidx.wear.compose.material3.FilledTonalIconButton
+import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.ListHeader
-import androidx.wear.compose.material3.ListSubHeader
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ProgressIndicatorDefaults
-import androidx.wear.compose.material3.RadioButton
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.SwitchButton
@@ -115,11 +118,8 @@ private const val ROW_MS = 200f
 private const val STAGGER_MS = 40f
 private const val ENTRANCE_MS = 360 // ROW_MS + 4 × STAGGER_MS, for five rows
 
-/** Start wash: the one large target on the Start screen, a pill whose corners tighten while pressed. */
-private val START_HEIGHT = 76.dp
-private val START_HEIGHT_COMPACT = 64.dp
-private const val START_CORNER_PCT = 50
-private const val START_CORNER_PRESSED_PCT = 30
+/** Half a list button's 52 dp, so [ListScreen] can centre the last row. */
+private val ROW_HALF_HEIGHT = 26.dp
 
 /** Summary ring: diameter, stroke, and the gap between Step arcs. */
 private val RING_SIZE = 124.dp
@@ -182,11 +182,21 @@ fun App(startRequests: Int = 0) {
 
 /** A scrollable, round-safe screen with [TimeText][AppScaffold] on top. Items shrink and fade at the round edge via [spec]. */
 @Composable
-private fun ListScreen(content: TransformingLazyColumnScope.(spec: TransformationSpec) -> Unit) {
+private fun ListScreen(endAtCentre: Boolean = false, content: TransformingLazyColumnScope.(spec: TransformationSpec) -> Unit) {
     val state = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
+    // Like the watch's own Settings: the last row can scroll up to the middle of the screen, with black below it.
+    val centre = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() / 2 } - ROW_HALF_HEIGHT
     ScreenScaffold(state) { padding ->
-        TransformingLazyColumn(state = state, contentPadding = padding) { content(spec) }
+        TransformingLazyColumn(
+            state = state,
+            contentPadding = if (endAtCentre) PaddingValues(
+                start = padding.calculateStartPadding(LayoutDirection.Ltr),
+                top = padding.calculateTopPadding(),
+                end = padding.calculateEndPadding(LayoutDirection.Ltr),
+                bottom = centre,
+            ) else padding,
+        ) { content(spec) }
     }
 }
 
@@ -202,6 +212,7 @@ private fun TransformingLazyColumnItemScope.morphContent(spec: TransformationSpe
 private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: () -> Unit, autoStart: Boolean, onAutoStarted: () -> Unit) {
     val context = LocalContext.current
     val status by WashService.status.collectAsState()
+    val washes by remember { History.get(context).washes }.collectAsState()
     var timerOnly by remember { mutableStateOf(false) }
     fun begin() {
         if (!status.running) WashService.start(context)
@@ -223,33 +234,39 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
         // Loads the model off the main thread; also the release smoke check's log line.
         timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
     }
-    val press = remember { MutableInteractionSource() }
-    val pressed by press.collectIsPressedAsState()
-    // Material 3 Expressive press feedback: the pill's corners tighten under the finger and spring back.
-    val corner by animateIntAsState(if (pressed) START_CORNER_PRESSED_PCT else START_CORNER_PCT, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium))
-    // One thing to do here, so one large target; History and Settings are rarely needed and stay small.
-    ScreenScaffold { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding),
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(
-                onClick = ::start,
-                // Shorter in Timer-only, so the notice fits without squeezing the 48 dp icon buttons (§4.1.3).
-                modifier = Modifier.fillMaxWidth(0.8f).height(if (timerOnly) START_HEIGHT_COMPACT else START_HEIGHT),
-                shape = RoundedCornerShape(corner),
-                interactionSource = press,
-            ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(R.drawable.ic_wash), contentDescription = null)
-                    Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash), style = MaterialTheme.typography.titleMedium)
+    val state = rememberTransformingLazyColumnState()
+    val spec = rememberTransformationSpec()
+    // The one primary action hugs the bottom curve, where the Tile puts it too, so app and Tile read as one (§4.1.3).
+    ScreenScaffold(state, edgeButton = {
+        EdgeButton(::start, buttonSize = EdgeButtonSize.Medium) {
+            Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash))
+        }
+    }) { padding ->
+        // Short enough to fit above the full-size EdgeButton: a longer list would shrink it until scrolled (§4.1.4).
+        TransformingLazyColumn(state = state, contentPadding = padding, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
+            // The last takeaway in the Tile's words, so the screen says something at a glance. Weight and size make the hierarchy, not a container.
+            item {
+                val last = washes.firstOrNull()
+                Column(morphContent(spec).semantics(mergeDescendants = true) {}, horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (last != null) Text(
+                        lastWashLabel(context, last),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    Text(
+                        last?.let { hint(context.resources, it) } ?: stringResource(R.string.history_empty),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                    if (timerOnly) Text(stringResource(R.string.timer_only_short), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                 }
             }
-            if (timerOnly) Notice(stringResource(R.string.timer_only_short))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FilledTonalIconButton(onHistory, shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
-                FilledTonalIconButton(onSettings, shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
+            // Rarely needed, so small and secondary to the EdgeButton; 48 dp targets (§4.1.3).
+            item {
+                Row(morphContent(spec).padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+                    FilledTonalIconButton(onHistory, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
+                    FilledTonalIconButton(onSettings, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
+                }
             }
         }
     }
@@ -374,7 +391,7 @@ private fun SummaryScreen(id: Long?) {
 private fun HistoryScreen(onOpen: (Long) -> Unit) {
     val context = LocalContext.current
     val washes by remember { History.get(context).washes }.collectAsState()
-    ListScreen { spec ->
+    ListScreen(endAtCentre = true) { spec ->
         item { ListHeader { Text(stringResource(R.string.history)) } }
         if (washes.isEmpty()) item { Notice(stringResource(R.string.history_empty), morphContent(spec)) }
         items(washes) { w ->
@@ -393,35 +410,38 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
 private fun SettingsScreen() {
     val context = LocalContext.current
     val settings = remember { Settings(context) }
+    val status by WashService.status.collectAsState()
     var wrist by remember { mutableStateOf(settings.wrist) }
     var haptics by remember { mutableStateOf(settings.haptics) }
     var ring by remember { mutableStateOf(settings.progressRing) }
-    ListScreen { spec ->
+    // Three settings, three rows, one screen: each row names the setting, and its current value, with an icon to scan by.
+    ListScreen(endAtCentre = true) { spec ->
         item { ListHeader { Text(stringResource(R.string.settings)) } }
-        // Two visible options, no dialog (§4.1.5). Read at Wash start, so a change applies from the next Wash.
-        item { ListSubHeader(morph(spec), transformation = SurfaceTransformation(spec)) { Text(stringResource(R.string.wrist_side)) } }
-        for ((side, name) in listOf(Wrist.LEFT to R.string.wrist_left, Wrist.RIGHT to R.string.wrist_right)) {
-            item {
-                RadioButton(
-                    selected = wrist == side,
-                    onSelect = { wrist = side; settings.wrist = side },
-                    modifier = morph(spec),
-                    transformation = SurfaceTransformation(spec),
-                    label = { Text(stringResource(name)) },
-                )
-            }
-        }
-        item { Notice(stringResource(R.string.applies_next_wash), morphContent(spec)) }
+        // Two values, so a tap flips it and the row shows the new one: no dialog, and a second tap undoes it (§4.1.5).
         item {
-            SwitchButton(haptics, { haptics = it; settings.haptics = it }, morph(spec), transformation = SurfaceTransformation(spec), label = { Text(stringResource(R.string.haptics)) })
+            FilledTonalButton(
+                onClick = { wrist = if (wrist == Wrist.LEFT) Wrist.RIGHT else Wrist.LEFT; settings.wrist = wrist },
+                modifier = morph(spec),
+                transformation = SurfaceTransformation(spec),
+                icon = { Icon(painterResource(R.drawable.ic_watch), contentDescription = null) },
+                label = { Text(stringResource(R.string.wrist_side)) },
+                secondaryLabel = { Text(stringResource(if (wrist == Wrist.LEFT) R.string.wrist_left else R.string.wrist_right)) },
+            )
         }
         item {
-            SwitchButton(ring, { ring = it; settings.progressRing = it }, morph(spec), transformation = SurfaceTransformation(spec), label = { Text(stringResource(R.string.progress_ring)) })
+            SwitchButton(haptics, { haptics = it; settings.haptics = it }, morph(spec), transformation = SurfaceTransformation(spec),
+                icon = { Icon(painterResource(R.drawable.ic_vibration), contentDescription = null) }, label = { Text(stringResource(R.string.haptics)) })
         }
+        item {
+            SwitchButton(ring, { ring = it; settings.progressRing = it }, morph(spec), transformation = SurfaceTransformation(spec),
+                icon = { Icon(painterResource(R.drawable.ic_ring), contentDescription = null) }, label = { Text(stringResource(R.string.progress_ring)) })
+        }
+        // Only said when it matters: Wrist side and the ring are read at Wash start.
+        if (status.running) item { Notice(stringResource(R.string.applies_next_wash), morphContent(spec)) }
     }
 }
 
-/** Press feedback for Start and Stop: a slight, critically damped shrink while the finger is down. */
+/** Press feedback for Stop: a slight, critically damped shrink while the finger is down. */
 @Composable
 private fun rememberPressScale(): Pair<MutableInteractionSource, Modifier> {
     val source = remember { MutableInteractionSource() }
@@ -480,6 +500,10 @@ internal fun hint(res: Resources, w: WashSession): String = when {
     !w.coverageShown -> res.getString(R.string.too_short_short)
     else -> res.getString(R.string.history_hint, w.coverage.count { it.status == StepStatus.OK })
 }
+
+/** "Last wash · 7:15 AM", or the date once it is not today. Start and the Tile. */
+internal fun lastWashLabel(context: Context, w: WashSession) =
+    "${context.getString(R.string.last_wash_title)} · ${DateUtils.getRelativeTimeSpanString(context, w.startedAtEpochMs)}"
 
 private fun duration(s: Float): String {
     val t = s.toInt()
