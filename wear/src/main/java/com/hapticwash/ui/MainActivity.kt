@@ -25,7 +25,12 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import com.hapticwash.ui.theme.rounded
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -132,7 +137,11 @@ private val ROW_HALF_HEIGHT = 26.dp
 /** Summary ring: diameter, stroke, and the gap between Step arcs. */
 private val RING_SIZE = 124.dp
 private val RING_STROKE = 8.dp
-private const val RING_GAP_DEG = 14f
+internal const val RING_GAP_DEG = 14f
+
+/** Start's ring for the last Wash. */
+private val MINI_RING_SIZE = 40.dp
+private val MINI_RING_STROKE = 4.dp
 
 /** Strong ease-out: moves at once, settles gently. */
 private val EaseOutStrong = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
@@ -261,6 +270,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
             item {
                 val last = washes.firstOrNull()
                 Column(morphContent(spec).semantics(mergeDescendants = true) {}, horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (last != null && last.modelVersion != null && last.coverageShown) MiniRing(last.coverage)
                     if (last != null) Text(
                         lastWashLabel(context, last),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -312,8 +322,13 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     }
     val ringColor by animateColorAsState(if (full) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, tween(300))
     val (press, pressScale) = rememberPressScale()
+    // A dark wash of the ring's colour behind everything, like watchOS's app gradients; it brightens once the target is reached.
+    val glow by animateFloatAsState(if (full) 0.32f else 0.18f, tween(300))
     ScreenScaffold { padding ->
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.fillMaxSize().drawBehind { drawRect(Brush.radialGradient(listOf(ringColor.copy(alpha = glow), Color.Transparent))) },
+            contentAlignment = Alignment.Center,
+        ) {
             // A 60° gap centred on 12 o'clock leaves TimeText clear.
             if (ring) {
                 CircularProgressIndicator(
@@ -332,7 +347,7 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 // Counts down to the target, then shows the total. Tabular digits, so the time doesn't shift sideways as it ticks.
                 Text(
                     duration(shownS),
-                    style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
+                    style = MaterialTheme.typography.displayMedium.rounded().copy(fontFeatureSettings = "tnum"),
                 )
                 Text(
                     if (full) stringResource(R.string.target_reached, RING_TARGET_S.toInt()) else stringResource(R.string.time_left),
@@ -524,28 +539,47 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
     }
     Box(modifier.height(RING_SIZE).clearAndSetSemantics { contentDescription = takeaway }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(RING_SIZE).graphicsLayer { scaleX = pop.value; scaleY = pop.value }) {
-            val stroke = RING_STROKE.toPx()
-            val topLeft = Offset(stroke / 2, stroke / 2)
-            val arc = Size(size.width - stroke, size.height - stroke)
-            val style = Stroke(stroke, cap = StrokeCap.Round)
-            val slot = 360f / coverage.size
-            coverage.forEachIndexed { i, c ->
-                val start = -90f + i * slot + RING_GAP_DEG / 2
-                val sweep = slot - RING_GAP_DEG
-                drawArc(colors.surfaceContainer, start, sweep, false, topLeft, arc, style = style)
-                val share = when (c.status) {
-                    StepStatus.OK -> 1f
-                    StepStatus.BRIEF -> 0.5f
-                    StepStatus.NOT_DETECTED -> 0f
-                }
-                if (share > 0f) drawArc(colors.primary, start, sweep * share * staggered(entrance(), i), false, topLeft, arc, style = style)
-            }
+            coverageArcs(coverage, RING_STROKE.toPx(), colors.surfaceContainer, colors.primary) { staggered(entrance(), it) }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(R.string.ring_count, ok), style = MaterialTheme.typography.titleLarge)
             Text(stringResource(R.string.ring_caption), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
     }
+}
+
+/** Start's small copy of [CoverageRing], so the last Wash reads at a glance in the app's one shape. */
+@Composable
+private fun MiniRing(coverage: List<StepCoverage>) {
+    val colors = MaterialTheme.colorScheme
+    Canvas(Modifier.size(MINI_RING_SIZE).clearAndSetSemantics {}) {
+        coverageArcs(coverage, MINI_RING_STROKE.toPx(), colors.surfaceContainer, colors.primary)
+    }
+}
+
+/**
+ * The five Steps as arcs, clockwise from 12 o'clock in list order, filling this canvas. [fill] is the
+ * drawn part of each arc's [share], for the Summary's entrance. The Tile draws the same ring ([WashTileService]).
+ */
+private fun DrawScope.coverageArcs(coverage: List<StepCoverage>, stroke: Float, track: Color, ink: Color, fill: (Int) -> Float = { 1f }) {
+    val topLeft = Offset(stroke / 2, stroke / 2)
+    val arc = Size(size.width - stroke, size.height - stroke)
+    val style = Stroke(stroke, cap = StrokeCap.Round)
+    val slot = 360f / coverage.size
+    coverage.forEachIndexed { i, c ->
+        val start = -90f + i * slot + RING_GAP_DEG / 2
+        val sweep = slot - RING_GAP_DEG
+        drawArc(track, start, sweep, false, topLeft, arc, style = style)
+        val share = share(c.status)
+        if (share > 0f) drawArc(ink, start, sweep * share * fill(i), false, topLeft, arc, style = style)
+    }
+}
+
+/** How much of a Step's arc is filled: shape carries the Status, not colour (§4.1.10). */
+internal fun share(s: StepStatus) = when (s) {
+    StepStatus.OK -> 1f
+    StepStatus.BRIEF -> 0.5f
+    StepStatus.NOT_DETECTED -> 0f
 }
 
 @Composable
