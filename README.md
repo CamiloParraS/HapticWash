@@ -16,20 +16,21 @@ which appear to have been missed, and keeps a local history of recent washes.
 It is a hygiene coach, not a medical device and not a compliance-verification system. No
 output may be phrased as a guarantee that hands are clean.
 
-## Running it (M4)
+## Running it
 
 The model and golden files come from `HapticWash-AI/artifacts/` (release `step-classifier`
 0.1.0). To take a new model, copy `model.tflite` + `model_meta.json` into
 `wear/src/main/assets/model/` and `golden/*.npy` into `wear/src/androidTest/assets/golden/`.
 
 Needs `JAVA_HOME` (JDK 17+), `ANDROID_HOME` (or `sdk.dir` in `local.properties`), `adb` on
-`PATH`, and a running Wear OS AVD for the last three. Run the scripts from Git Bash.
+`PATH`, and a running Wear OS AVD for the last four. Run the scripts from Git Bash.
 
 ```sh
 ./gradlew :wear:testDebugUnitTest            # parity, Coverage, History, haptics, manifest and banned-language rules
 ./gradlew :wear:connectedDebugAndroidTest    # inference parity + latency, model-load failure (Wear AVD)
 scripts/replay_demo.sh session.csv [speed]   # replay a canonical CSV on the AVD, stream predictions
 scripts/replay_batch.sh <csv dir> [speed]    # replay 10 held-out sessions, write reports/M4_replay.md
+scripts/showcase.sh [good|mixed|right|csv] [speed]  # demo: replay a Wash with the screens following along
 scripts/release_smoke.sh                     # R8 release build loads the model
 ```
 

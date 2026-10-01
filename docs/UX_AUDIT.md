@@ -9,7 +9,8 @@ power) and the `HapticWash` logcat tag.
 ## Screens
 
 `screencap` saves the full square frame. The watch shows only the inscribed circle. Screenshots
-replaced by the EdgeButton redesign (below) are kept as `ux/old_*.png`.
+replaced by the EdgeButton redesign (below) are kept as `ux/old_*.png`; the EdgeButton Start is
+`ux/old_start_edge.png`.
 
 | Screen | Screenshot |
 |---|---|
@@ -35,9 +36,9 @@ Columns are the screens: **St** Start, **IP** In-progress, **Su** Summary, **Hi*
 | § | Item | St | IP | Su | Hi | Se | Notes |
 |---|---|---|---|---|---|---|---|
 | 1 | Glanceable < 5 s | ✓ | ✓ | ✓ | ✓ | ✓ | Each screen has one header and short lines. Summary is five rows of a Step name and its Status. |
-| 2 | Round-safe, scaling list, `TimeText` | ✓ | ✓ | ✓ | ✓ | ✓ | Lists use `TransformingLazyColumn`, the Wear Material 3 successor to `ScalingLazyColumn`. `TimeText` comes from `AppScaffold` on every screen. Start is a short list above its EdgeButton; In-progress is centred and not scrollable. Settings and History can scroll their last row up to the centre of the screen. The ring leaves a 60° gap at the top for `TimeText` (fixed in this audit: it used to run under the clock). |
-| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | List buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start wash is an `EdgeButton` (bounds 227 × 70 dp; its shape follows the bottom curve), History and Settings 48 × 48 dp tonal icon buttons, Settings rows 203 × 52 dp (EdgeButton redesign, below). Start's primary action is Start wash; In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
-| 4 | One-tap start | ✓ | — | — | — | — | Start wash is the EdgeButton at the bottom of Start, shown at full size without scrolling. A single tap starts the service and opens In-progress. The Tile and the complication start a Wash from outside the app (below). |
+| 2 | Round-safe, scaling list, `TimeText` | ✓ | ✓ | ✓ | ✓ | ✓ | Lists use `TransformingLazyColumn`, the Wear Material 3 successor to `ScalingLazyColumn`. `TimeText` comes from `AppScaffold` on every screen. Start is a short list centred on its Start wash button; In-progress is centred and not scrollable. Settings and History can scroll their last row up to the centre of the screen. The ring leaves a 60° gap at the top for `TimeText` (fixed in this audit: it used to run under the clock). |
+| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | — | ✓ | ✓ | List buttons are 203 × 52 dp; Stop is 162 × 52 dp (widened after review); History rows are ≥ 52 dp tall. Start wash is a 203 × 52 dp button in the middle of Start, History and Settings 48 × 48 dp tonal icon buttons below it, Settings rows 203 × 52 dp (centred Start, below). Start's primary action is Start wash; In-progress's is Stop. Summary, History and Settings are lists with no primary action, so none has more than one. |
+| 4 | One-tap start | ✓ | — | — | — | — | Start wash is the button in the middle of Start, shown at full size without scrolling. A single tap starts the service and opens In-progress. The Tile and the complication start a Wash from outside the app (below). |
 | 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | ✓ | No text fields. The only dialog is the system notification permission (Allow / Don't allow), now asked on the first Start tap. Wrist side is one row that flips between Left and Right on a tap. Deepest paths: Start → In-progress → Summary (In-progress is popped) and Start → History → Summary. Swipe-to-dismiss works from In-progress, Summary, History and Settings. A swipe mid-Wash leaves it running; Start then shows "Wash in progress" and returns to In-progress. |
 | 6 | Haptics, patterns, ≤ 1 per 3 s | — | ✓ | ◐ | — | ✓ | Since C1 (below) a fourth pattern, time reached, ticks at 40 s. From `dumpsys vibrator_manager`: start 80 ms; end 80 + 120 + 80 ms; missed-step 600 ms, starting 3.2 s after the end pulses start (13 s Wash, all `NOT_DETECTED`). A too-short Wash and a Timer-only Wash each got only start and end. Replays are silent. The Haptics setting is read at fire time (unit-tested in `HapticsTest`). See note A. |
 | 7 | Ambient / screen-off | — | ✓ | — | — | — | `KEYCODE_SLEEP` mid-Wash put the device in `Dozing`: 17 windows logged in 25 s (1.5 s stride), and on wake the Wash was still running at 0:45. No crash in logcat. |
@@ -207,6 +208,39 @@ left the bottom third empty, and said nothing until tapped.
 Screenshots retaken: Start, Start (Timer-only, corrupt-model build again; the real model was
 restored and is byte-identical), Settings and scrolled, History and scrolled (new), Tile.
 `./gradlew :wear:testDebugUnitTest`: 33 tests, 0 failures, 1 skipped.
+
+## Centred Start, tonal Stop and the live ring fix
+
+Same AVD, 2026-10-01. `MainActivity.kt` only.
+
+- **Start wash moves to the middle of Start**, with History and Settings below it, so the screen
+  stops reading as a face: the Coverage ring and text as eyes over the EdgeButton as a mouth.
+  The order, top to bottom: the last Wash's ring and takeaway, Start wash, then the two icon
+  buttons. The button is centred with the group rather than on the exact centre of the screen:
+  the takeaway above it is taller than the icon row below, and pinning the button to the centre
+  would leave too little room for it on small screens. Start wash has the drop icon again and
+  shrinks slightly on press, like Stop. The History and Settings row is no longer edge-scaled:
+  this low on the screen the transformation shrank them to 45 × 45 dp.
+- **The Tile keeps its EdgeButton.** The ring is the Tile's hero and the edge slot is where
+  every Tile puts its action, so app and Tile no longer share Start's position; they still share
+  its words, ring and colours.
+- **Stop is tonal** (`FilledTonalButton`), so the countdown leads; same 162 × 52 dp target.
+
+| Screen | Clickable bounds (`uiautomator`) |
+|---|---|
+| Start | Start wash 203 × 52 dp, History 48 × 48 dp, Settings 48 × 48 dp |
+
+- **Fix: the live ring stood still.** Since the frame-smooth ring (C5), the ring stayed empty
+  through a Wash started from Start and jumped to full at 40 s. Wear's `CircularProgressIndicator`
+  restarts its own progress animation on every new value; fed a new value every frame, it never
+  got past the animation's first frame, and only caught up once the value stopped changing at
+  100 %. A replayed Wash hid it. The ring is now drawn with `drawCircularProgressIndicator`, the
+  same arc without the animation; the frame loop already makes it smooth. Checked on a Wash
+  started from Start: about an eighth full at "0:35 to go", half at "0:20", full in the reached
+  colour at "40 s reached".
+
+Screenshots retaken: Start, In-progress (ring on). Not retaken: Start (Timer-only, needs the
+corrupt-model build), In-progress (ring off and Timer-only), which still show the filled Stop.
 
 ## Other M4 checks
 

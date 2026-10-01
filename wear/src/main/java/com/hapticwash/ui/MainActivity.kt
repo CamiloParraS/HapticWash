@@ -271,13 +271,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
     }
     val state = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
-    // The one primary action hugs the bottom curve, where the Tile puts it too, so app and Tile read as one (§4.1.3).
-    ScreenScaffold(state, edgeButton = {
-        EdgeButton(::start, buttonSize = EdgeButtonSize.Medium) {
-            Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash))
-        }
-    }) { padding ->
-        // Short enough to fit above the full-size EdgeButton: a longer list would shrink it until scrolled (§4.1.4).
+    ScreenScaffold(state) { padding ->
         TransformingLazyColumn(state = state, contentPadding = padding, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
             // The last takeaway in the Tile's words, so the screen says something at a glance. Weight and size make the hierarchy, not a container.
             item {
