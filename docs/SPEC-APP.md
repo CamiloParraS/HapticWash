@@ -75,9 +75,9 @@ These are non-negotiable and apply to every screen.
 5. **No text entry, no dialogs with more than two options, no nested navigation deeper
    than two levels.**
 6. **Haptics over sound.** Feedback is vibration. Use short, distinct patterns:
-   session start (one short pulse), session end (two short pulses), missed-step
-   notice (one long pulse), time reached at the 40 s target (three quick ticks; see
-   [SPEC-CHANGELOG](SPEC-CHANGELOG.md) C1). Never vibrate more than once per 3 seconds.
+   session start (one short pulse), session end (two short pulses, the second rising
+   when all five Steps look covered), missed-step notice (three short taps), time reached
+   at the 40 s target (three quick ticks; see [SPEC-CHANGELOG](SPEC-CHANGELOG.md) C1, C4, C5). Never vibrate more than once per 3 seconds.
 7. **Ambient mode.** During an active wash the app must handle ambient/always-on
    transitions without stopping sensor collection or crashing.
 8. **Battery honesty.** Continuous 50 Hz accelerometer + gyroscope is expensive. Manual
