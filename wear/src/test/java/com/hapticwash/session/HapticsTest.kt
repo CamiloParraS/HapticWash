@@ -15,15 +15,15 @@ class HapticsTest {
     private val allOk = wash(*Array(5) { StepStatus.OK })
 
     @Test
-    fun missedStepAddsALongPulseAtLeast3sAfterTheEndPulses() {
+    fun missedStepAddsTapsAtLeast3sAfterTheEndPulses() {
         val b = Haptics.onEnd(missed, hapticsOn = true)
         assertEquals(listOf(Pulse.END, Pulse.MISSED), b.map { it.pulse })
         assertTrue(b[1].atMs >= b[0].atMs + Pulse.END.durationMs + 3000)
     }
 
     @Test
-    fun noLongPulseWhenAllCoveredTooShortOrTimerOnly() {
-        assertEquals(listOf(Buzz(0, Pulse.END)), Haptics.onEnd(allOk, hapticsOn = true))
+    fun noMissedTapsWhenAllCoveredTooShortOrTimerOnly() {
+        assertEquals(listOf(Buzz(0, Pulse.SUCCESS)), Haptics.onEnd(allOk, hapticsOn = true))
         assertEquals(listOf(Buzz(0, Pulse.END)), Haptics.onEnd(missed.copy(coverageShown = false), hapticsOn = true))
         val timerOnly = wash(*Array(5) { StepStatus.NOT_DETECTED }, shown = false, model = null)
         assertEquals(listOf(Buzz(0, Pulse.END)), Haptics.onEnd(timerOnly, hapticsOn = true))
