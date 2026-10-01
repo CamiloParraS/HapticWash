@@ -6,12 +6,18 @@ import androidx.wear.watchface.complications.data.ComplicationType
 import androidx.wear.watchface.complications.data.MonochromaticImage
 import androidx.wear.watchface.complications.data.MonochromaticImageComplicationData
 import androidx.wear.watchface.complications.data.PlainComplicationText
+import androidx.wear.watchface.complications.data.RangedValueComplicationData
+import com.hapticwash.session.History
+import com.hapticwash.session.StepStatus
 import androidx.wear.watchface.complications.data.ShortTextComplicationData
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
 import com.hapticwash.R
 
-/** A static watch-face shortcut: one tap starts a Wash (see [MainActivity.startIntent]). */
+/**
+ * A watch-face shortcut: one tap starts a Wash (see [MainActivity.startIntent]). As a ranged value it
+ * also fills with the last Wash's covered Steps, out of five; WashService refreshes it when a Wash is saved.
+ */
 class WashComplicationService : SuspendingComplicationDataSourceService() {
     override suspend fun onComplicationRequest(request: ComplicationRequest) = data(request.complicationType)
 
@@ -25,6 +31,16 @@ class WashComplicationService : SuspendingComplicationDataSourceService() {
             ComplicationType.SHORT_TEXT ->
                 ShortTextComplicationData.Builder(PlainComplicationText.Builder(getString(R.string.complication_label)).build(), description)
                     .setMonochromaticImage(icon).setTapAction(tap).build()
+            ComplicationType.RANGED_VALUE -> {
+                // Timer-only, too short or no Wash yet: an empty gauge with the plain label.
+                val last = History.get(this).read().firstOrNull()?.takeIf { it.modelVersion != null && it.coverageShown }
+                val ok = last?.coverage?.count { it.status == StepStatus.OK } ?: 0
+                val text = if (last == null) getString(R.string.complication_label) else "$ok/5"
+                val said = last?.let { PlainComplicationText.Builder(hint(resources, it)).build() } ?: description
+                RangedValueComplicationData.Builder(ok.toFloat(), 0f, 5f, said)
+                    .setText(PlainComplicationText.Builder(text).build())
+                    .setMonochromaticImage(icon).setTapAction(tap).build()
+            }
             ComplicationType.MONOCHROMATIC_IMAGE ->
                 MonochromaticImageComplicationData.Builder(icon, description).setTapAction(tap).build()
             else -> null

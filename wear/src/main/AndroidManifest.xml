@@ -70,8 +70,8 @@
             </intent-filter>
             <meta-data
                 android:name="android.support.wearable.complications.SUPPORTED_TYPES"
-                android:value="SHORT_TEXT,MONOCHROMATIC_IMAGE" />
-            <!-- Static: never polled. -->
+                android:value="SHORT_TEXT,MONOCHROMATIC_IMAGE,RANGED_VALUE" />
+            <!-- Never polled: WashService pushes an update when a Wash is saved. -->
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
                 android:value="0" />

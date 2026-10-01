@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -24,6 +25,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import androidx.wear.tiles.TileService
 import com.hapticwash.ui.WashTileService
+import com.hapticwash.ui.WashComplicationService
+import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -121,8 +124,11 @@ class WashService : Service() {
             runCatching {
                 if (kind == "replay") WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash) else History.get(this).add(wash)
             }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
-            // The Tile shows the last Wash.
-            if (kind != "replay") TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
+            // The Tile and the complication show the last Wash.
+            if (kind != "replay") {
+                TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
+                ComplicationDataSourceUpdateRequester.create(this, ComponentName(this, WashComplicationService::class.java)).requestUpdateAll()
+            }
             _lastWash.value = wash
             Buzzer.play(this, Haptics.onEnd(wash, Settings(this).haptics))
             Log.i(TAG, "Wash: $wash")
