@@ -9,7 +9,7 @@
 #   mixed  zhang_who_5, left   4 "looks covered", Between fingers "may have been brief"
 #   right  zhang_who_10, right wrist mirroring, 4 covered + 1 brief
 # The Wash is saved to History and shows on the Tile and complication like a real one.
-# scripts/showcase_nosave.sh does the same without saving (the old behaviour).
+# PERSIST=false scripts/showcase.sh does the same without saving.
 # A number 1-10 picks that subject (zhang_who_<n>). The wrist comes from the CSV, not the app
 # setting; WRIST=left|right overrides it, e.g. WRIST=right scripts/showcase.sh good
 # w00-w06 pick a UWash wash (uwash_library_2). INSTALL=1 rebuilds and installs the app first (needed after code changes).
