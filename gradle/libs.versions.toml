@@ -11,8 +11,6 @@ kotlin = "2.2.10"
 composeBom = "2026.02.01"
 composeMaterial3 = "1.5.6"
 composeFoundation = "1.5.6"
-composeUiTooling = "1.5.6"
-wearToolingPreview = "1.0.0"
 coreSplashscreen = "1.2.0"
 litert = "1.4.2"
 coroutines = "1.11.0"
@@ -41,8 +39,6 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "composeMaterial3" }
 androidx-compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "composeFoundation" }
 wear-compose-navigation = { group = "androidx.wear.compose", name = "compose-navigation", version.ref = "composeFoundation" }
-compose-ui-tooling = { group = "androidx.wear.compose", name = "compose-ui-tooling", version.ref = "composeUiTooling" }
-androidx-wear-tooling-preview = { group = "androidx.wear", name = "wear-tooling-preview", version.ref = "wearToolingPreview" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
