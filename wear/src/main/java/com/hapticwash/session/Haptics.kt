@@ -48,7 +48,7 @@ object Haptics {
 
     fun onEnd(wash: WashSession, hapticsOn: Boolean): List<Buzz> {
         if (!hapticsOn || wash.source != "sensor") return emptyList()
-        val allOk = wash.coverageShown && wash.coverage.all { it.status == StepStatus.OK }
+        val allOk = wash.coverageShown && allCovered(wash.coverage)
         val end = Buzz(0, if (allOk) Pulse.SUCCESS else Pulse.END)
         val missed = wash.coverageShown && wash.coverage.any { it.status == StepStatus.NOT_DETECTED }
         return if (missed) listOf(end, Buzz(Pulse.END.durationMs + GAP_MS, Pulse.MISSED)) else listOf(end)

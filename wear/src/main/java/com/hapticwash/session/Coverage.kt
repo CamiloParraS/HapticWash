@@ -7,6 +7,8 @@ enum class StepStatus { NOT_DETECTED, BRIEF, OK }
 /** [label] is the Step's §1.3 number, 1..5. */
 data class StepCoverage(val label: Int, val seconds: Float, val status: StepStatus)
 
+fun allCovered(coverage: List<StepCoverage>) = coverage.all { it.status == StepStatus.OK }
+
 /**
  * SPEC 8.6, plus two fields the Summary needs so it never recomputes thresholds:
  * [modelVersion] is null in Timer-only mode, and [coverageShown] is false in Timer-only

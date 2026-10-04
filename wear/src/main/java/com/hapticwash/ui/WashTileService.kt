@@ -5,6 +5,7 @@ import android.text.format.DateUtils
 import androidx.wear.protolayout.ActionBuilders.AndroidLongExtra
 import androidx.wear.protolayout.ModifiersBuilders.Modifiers
 import com.hapticwash.session.WashService
+import com.hapticwash.session.allCovered
 import androidx.wear.protolayout.ActionBuilders.booleanExtra
 import androidx.wear.protolayout.ActionBuilders.launchAction
 import androidx.wear.protolayout.ColorBuilders.argb
@@ -68,14 +69,14 @@ class WashTileService : Material3TileService() {
                             ))).build())
                             .apply {
                                 // The ring takes the slot's spare height and centres in it: midway between the title and the words.
-                                if (last.modelVersion != null && last.coverageShown) setHeight(expand()).addContent(
+                                if (last.coverageShown) setHeight(expand()).addContent(
                                     Box.Builder().setWidth(expand()).setHeight(expand()).addContent(ring(last.coverage)).build(),
                                 )
                             }
                             .addContent(text(lastWashLabel(this@WashTileService, last).layoutString, typography = Typography.LABEL_SMALL, color = colorScheme.onSurfaceVariant))
                             .addContent(takeaway)
                             // Breathing room above the EdgeButton once the ring pushes the words down.
-                            .apply { if (last.modelVersion != null && last.coverageShown) addContent(Spacer.Builder().setHeight(dp(10f)).build()) }
+                            .apply { if (last.coverageShown) addContent(Spacer.Builder().setHeight(dp(10f)).build()) }
                             .build()
                     },
                     bottomSlot = {

@@ -33,7 +33,7 @@ class WashComplicationService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(icon).setTapAction(tap).build()
             ComplicationType.RANGED_VALUE -> {
                 // Timer-only, too short or no Wash yet: an empty gauge with the plain label.
-                val last = History.get(this).read().firstOrNull()?.takeIf { it.modelVersion != null && it.coverageShown }
+                val last = History.get(this).read().firstOrNull()?.takeIf { it.coverageShown }
                 val ok = last?.coverage?.count { it.status == StepStatus.OK } ?: 0
                 val text = if (last == null) getString(R.string.complication_label) else "$ok/5"
                 val said = last?.let { PlainComplicationText.Builder(hint(resources, it)).build() } ?: description

@@ -114,6 +114,7 @@ import com.hapticwash.session.History
 import com.hapticwash.session.Settings
 import com.hapticwash.session.StepStatus
 import com.hapticwash.session.WashService
+import com.hapticwash.session.allCovered
 import com.hapticwash.session.WashSession
 import com.hapticwash.session.Wrist
 import com.hapticwash.ui.theme.HapticWashTheme
@@ -217,7 +218,7 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
 
 /** A scrollable, round-safe screen with [TimeText][AppScaffold] on top. Items shrink and fade at the round edge via [spec]. */
 @Composable
-private fun ListScreen(endAtCentre: Boolean = false, content: TransformingLazyColumnScope.(spec: TransformationSpec) -> Unit) {
+private fun ListScreen(content: TransformingLazyColumnScope.(spec: TransformationSpec) -> Unit) {
     val state = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
     // Like the watch's own Settings: the last row can scroll up to the middle of the screen, with black below it.
@@ -225,12 +226,12 @@ private fun ListScreen(endAtCentre: Boolean = false, content: TransformingLazyCo
     ScreenScaffold(state) { padding ->
         TransformingLazyColumn(
             state = state,
-            contentPadding = if (endAtCentre) PaddingValues(
+            contentPadding = PaddingValues(
                 start = padding.calculateStartPadding(LayoutDirection.Ltr),
                 top = padding.calculateTopPadding(),
                 end = padding.calculateEndPadding(LayoutDirection.Ltr),
                 bottom = centre,
-            ) else padding,
+            ),
         ) { content(spec) }
     }
 }
@@ -271,13 +272,15 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
     }
     val state = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
+    // ponytail: scrolls only on small screens, where the buttons sit below the fold; 220 dp is a guess, tune on a device.
+    val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 220.dp
     ScreenScaffold(state) { padding ->
-        TransformingLazyColumn(state = state, contentPadding = padding, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
+        TransformingLazyColumn(state = state, contentPadding = padding, userScrollEnabled = compact, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
             // The last takeaway in the Tile's words, so the screen says something at a glance. Weight and size make the hierarchy, not a container.
             item {
                 val last = washes.firstOrNull()
                 Column(morphContent(spec).semantics(mergeDescendants = true) {}, horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (last != null && last.modelVersion != null && last.coverageShown) MiniRing(last.coverage)
+                    if (last?.coverageShown == true) MiniRing(last.coverage)
                     if (last != null) Text(
                         lastWashLabel(context, last),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -410,7 +413,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
     val entrance = remember { Animatable(0f) }
     LaunchedEffect(Unit) { entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing)) }
     // C6: straight from a Wash with the live ring on, that ring shrinks into the Coverage ring (0 = live, 1 = landed).
-    val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true && wash.modelVersion != null && Settings(context).progressRing) 0f else 1f) }
+    val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true && Settings(context).progressRing) 0f else 1f) }
     LaunchedEffect(Unit) { morph.animateTo(1f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)) }
     // The Coverage ring's centre in this screen's space, so a moving nav transition doesn't throw the morph off.
     var ringCentre by remember { mutableStateOf(Offset.Unspecified) }
@@ -418,9 +421,8 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
     Box(Modifier.onGloballyPositioned { screen = it }) {
         ListScreen { spec ->
             if (wash == null) return@ListScreen
-            val shown = wash.modelVersion != null && wash.coverageShown
             // The takeaway first, so the answer is on screen before any scrolling.
-            if (shown) item {
+            if (wash.coverageShown) item {
                 CoverageRing(wash.coverage, { entrance.value }, morphContent(spec)
                     .onGloballyPositioned { ring -> screen?.let { ringCentre = it.localBoundingBoxOf(ring).center } }
                     .graphicsLayer { alpha = morph.value })
@@ -487,7 +489,7 @@ private fun LiveRing(durationS: Float, morph: () -> Float, centre: () -> Offset)
 private fun HistoryScreen(onOpen: (Long) -> Unit) {
     val context = LocalContext.current
     val washes by remember { History.get(context).washes }.collectAsState()
-    ListScreen(endAtCentre = true) { spec ->
+    ListScreen { spec ->
         item { ListHeader { Text(stringResource(R.string.history)) } }
         if (washes.isEmpty()) item { Notice(stringResource(R.string.history_empty), morphContent(spec)) }
         items(washes) { w ->
@@ -511,7 +513,7 @@ private fun SettingsScreen() {
     var haptics by remember { mutableStateOf(settings.haptics) }
     var ring by remember { mutableStateOf(settings.progressRing) }
     // Three settings, three rows, one screen: each row names the setting, and its current value, with an icon to scan by.
-    ListScreen(endAtCentre = true) { spec ->
+    ListScreen { spec ->
         item { ListHeader { Text(stringResource(R.string.settings)) } }
         // Two values, so a tap flips it and the row shows the new one: no dialog, and a second tap undoes it (§4.1.5).
         item {
@@ -610,8 +612,6 @@ private fun DrawScope.coverageArcs(coverage: List<StepCoverage>, stroke: Float, 
 @Composable
 private fun ink(coverage: List<StepCoverage>) =
     if (allCovered(coverage)) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
-
-internal fun allCovered(coverage: List<StepCoverage>) = coverage.all { it.status == StepStatus.OK }
 
 /** How much of a Step's arc is filled: shape carries the Status, not colour (§4.1.10). */
 internal fun share(s: StepStatus) = when (s) {
