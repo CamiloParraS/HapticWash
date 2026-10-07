@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.compose.material3)
+    implementation(libs.wear)
     implementation(libs.wear.compose.navigation)
     implementation(libs.litert)
     implementation(libs.kotlinx.coroutines.android)

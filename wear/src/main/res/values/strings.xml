@@ -4,11 +4,15 @@
     <string name="stop_wash">Stop</string>
     <string name="stopping">Stopping…</string>
     <string name="washed_for">Washed for %1$s</string>
+    <!-- When all five Steps look covered. Warm, still an estimate (§4.1.9). -->
+    <string name="washed_for_all">Nice work. Washed for %1$s</string>
     <string name="last_wash_title">Last wash</string>
     <string name="complication_label">Wash</string>
-    <string name="ring_count">%1$d of 5</string>
-    <string name="ring_caption">look covered</string>
+    <!-- Two lines: the ring is too narrow for one. -->
+    <string name="ring_caption">of 5 look\ncovered</string>
     <string name="time_left">to go</string>
+    <!-- Ambient mode, mid-Wash: the one thing it says. -->
+    <string name="ambient_washing">Washing</string>
     <string name="target_reached">%1$d s reached</string>
     <string name="timer_only">Timer only: step detection unavailable</string>
     <string name="timer_only_short">Timer only</string>

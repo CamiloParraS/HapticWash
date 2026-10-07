@@ -39,6 +39,49 @@ Accepted on the same rule as C1–C3.
   answer, so the Summary reads as the end of the same moment, not a new page.
 - **How:** `SummaryScreen(fromWash = true)` on the `result/{id}` route, in `MainActivity.kt`.
 
+### C7 — M4 In-progress: the ring blooms from the Start button
+
+- **Was:** Start → In-progress is a plain screen change.
+- **Now:** the ring and the countdown grow from where the Start button was. Critically damped, no
+  bounce; with the ring setting off, the countdown fades in alone.
+- **Why:** same as C6: things should come from somewhere. Start's button becomes the ring it started.
+- **How:** `StartOrigin` (Start writes its button's place, `WashScreen` reads it) and the `enter`
+  animation in `MainActivity.kt`.
+
+### C8 — M4 In-progress and Summary: the big moments are seen as well as felt
+
+- **Was:** the ring changed colour at the 40 s target; an all-covered Summary gave one ring pop.
+- **Now:** at the target a thin ripple travels in from the screen's edge and the number pops, on the
+  frame of C1's three ticks. When all five Steps look covered, droplets leave the Coverage ring as
+  it pops (C5). Neither plays for a target that passed while the screen was away.
+- **Why:** sight and touch should agree. The ripple and burst are the visual half of C1 and C5.
+- **How:** `ripple`/`pop` in `WashScreen`; `burst` in `CoverageRing`. The Wash loop now wakes exactly
+  at the target when the ring is off, so the ripple is not up to 250 ms late. The Summary burst
+  follows the last arc landing (as the C5 pop does), so it trails the rising pulse by about 250 ms.
+
+### C9 — M4 Summary: one big number, a glyph per Step, a warmer line
+
+- **Was:** "2 of 5" in title type; ✓ ◐ ○ as the row's leading mark; "Washed for 1:07".
+- **Now:** the count is one large rounded numeral with "of 5 look covered" under it. Each row leads
+  with its Step's own glyph; the Status mark sits beside the Status words. All five covered reads
+  "Nice work. Washed for 1:07". Language stays within §4.1.9 (`LanguageTest`).
+- **Why:** the answer should be readable at arm's length, and rows should be found by shape.
+- **How:** `CoverageRing`, `STEP_ICONS` and `res/drawable/ic_step_*.xml`, from Material Symbols (Apache 2.0): folded hands, back hand, handshake (closest to interlaced fingers), thumb up, fingerprint. The arcs carry no glyphs:
+  at 124 dp they are too thin and the ring's centre is full.
+
+### C10 — §4.1.7: an ambient display for the Wash (replaces M4's "no ambient UI")
+
+- **Was:** "No ambient UI. The screen may turn off normally; the service keeps sensing."
+- **Now:** while a Wash runs and the watch goes ambient, the app shows outlines on black: the ring's
+  circle and "Washing". No time is shown: ambient redraws about once a minute, and a Wash is about
+  that long. Waking returns to the live screen as it was. At any other time the app is not
+  ambient-aware, so the system handles ambient as for any app.
+- **Why:** mid-Wash the wrist is often down, and the first thing the screen should show on a glance is
+  that the Wash is still on.
+- **How:** `AmbientLifecycleObserver` (`androidx.wear:wear`), registered only while a Wash runs
+  (`MainActivity.watchAmbient`); `AmbientWash`. Burn-in protection moves the outline each update.
+  Not handled: low-bit ambient displays (no anti-aliasing change).
+
 ## 2026-09-30 — UX redesign (branch `feat/ui-haptics`)
 
 Accepted on the rule "spec changes are welcome when they give better functionality and UX".

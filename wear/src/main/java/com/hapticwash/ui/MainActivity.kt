@@ -12,6 +12,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
@@ -20,6 +22,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
@@ -32,14 +35,17 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.hapticwash.ui.theme.rounded
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.wear.compose.material3.Icon
@@ -53,21 +59,27 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,13 +87,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnItemScope
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnScope
@@ -120,8 +135,11 @@ import com.hapticwash.session.Wrist
 import com.hapticwash.ui.theme.HapticWashTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.sin
 
 /** Progress ring target. A UI constant: nothing in Coverage reads it. */
 private const val RING_TARGET_S = Haptics.TARGET_MS / 1000f
@@ -143,6 +161,18 @@ internal const val RING_GAP_DEG = 14f
 private val MINI_RING_SIZE = 40.dp
 private val MINI_RING_STROKE = 4.dp
 
+/** Start → Wash: the ring blooms from the Start button, from this fraction of its size up to 1. */
+private const val BLOOM_FROM = 0.2f
+
+/** The 40 s target reached: a thin ring travels in from the screen's edge to [RIPPLE_TO] of its radius, fading. */
+private const val RIPPLE_MS = 700
+private const val RIPPLE_TO = 0.45f
+
+/** All five Steps covered: [BURST_DROPS] droplets leave the Coverage ring over [BURST_MS]. */
+private const val BURST_DROPS = 10
+private const val BURST_MS = 650
+private val BURST_REACH = 20.dp
+
 /** Strong ease-out: moves at once, settles gently. */
 private val EaseOutStrong = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
 
@@ -153,11 +183,45 @@ class MainActivity : ComponentActivity() {
     /** A Wash the Tile asked to show, until the Summary is open. */
     private var openRequest by mutableStateOf<Long?>(null)
 
+    /** Null while the screen is interactive. */
+    private var ambient by mutableStateOf<Ambient?>(null)
+
+    private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
+        override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) { ambient = Ambient(ambientDetails.burnInProtectionRequired) }
+
+        override fun onUpdateAmbient() { ambient = ambient?.let { it.copy(updates = it.updates + 1) } }
+
+        override fun onExitAmbient() { ambient = null }
+    }
+    private var ambientObserver: AmbientLifecycleObserver? = null
+
+    /**
+     * Ambient-aware only while a Wash runs: that is when the app has something to show in ambient mode. At any
+     * other time the system handles ambient for it, as for any app, rather than leaving a bright Start on the display.
+     */
+    private fun watchAmbient(washing: Boolean) {
+        if (washing == (ambientObserver != null)) return
+        if (washing) {
+            ambientObserver = AmbientLifecycleObserver(this, ambientCallback).also { lifecycle.addObserver(it) }
+            return
+        }
+        val observer = ambientObserver ?: return
+        lifecycle.removeObserver(observer)
+        // Removing it skips the lifecycle's remaining steps, which are how it lets go of ambient mode.
+        val state = lifecycle.currentState
+        if (state.isAtLeast(Lifecycle.State.RESUMED)) observer.onPause(this)
+        if (state.isAtLeast(Lifecycle.State.STARTED)) observer.onStop(this)
+        observer.onDestroy(this)
+        ambientObserver = null
+        ambient = null
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) takeStart(intent)
         addOnNewIntentListener(::takeStart)
-        setContent { HapticWashTheme { AppScaffold { App({ startRequests }, { openRequest }, { openRequest = null }) } } }
+        lifecycleScope.launch { WashService.status.map { it.running }.distinctUntilChanged().collect(::watchAmbient) }
+        setContent { HapticWashTheme { AppScaffold { App({ startRequests }, { openRequest }, { openRequest = null }, { ambient }) } } }
     }
 
     private fun takeStart(intent: Intent) {
@@ -181,13 +245,27 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
+ * Ambient mode: [burnIn] is whether the display needs its image moved about, [updates] counts the once-a-minute
+ * redraws the system allows, which is what moves it.
+ */
+data class Ambient(val burnIn: Boolean, val updates: Int = 0)
+
+/** True while ambient mode has the screen and a Wash is running, for the Wash screen beneath to stand still. */
+private val LocalAmbient = compositionLocalOf { false }
+
+/** Where Start's button sat in the window, so the Wash ring can bloom from it. Written by Start, read by Wash. */
+private object StartOrigin { var centre = Offset.Unspecified }
+
+/**
  * Max depth 2 (§4.1.5): Start → In-progress → Summary (`result`, the one just ended), Start → History → Summary, Start → Settings.
  * [startRequests] is a provider, not an Int: the nav graph keeps its destination lambdas, so a captured
  * Int would stay at its first value and a Tile tap on an already-open Start would be missed.
  */
 @Composable
-fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, onOpened: () -> Unit = {}) {
+fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, onOpened: () -> Unit = {}, ambient: () -> Ambient? = { null }) {
     val nav = rememberSwipeDismissableNavController()
+    val running by WashService.status.collectAsState()
+    val ambientNow = ambient().takeIf { running.running }
     var answered by rememberSaveable { mutableIntStateOf(0) }
     // A Tile or complication tap: back to Start, which then starts (or rejoins) the Wash.
     LaunchedEffect(startRequests()) { if (startRequests() > answered) nav.popBackStack("start", inclusive = false) }
@@ -198,21 +276,57 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
         nav.navigate("summary/$id")
         onOpened()
     }
-    SwipeDismissableNavHost(nav, startDestination = "start") {
-        composable("start") {
-            StartScreen(
-                onWash = { nav.navigate("wash") },
-                onHistory = { nav.navigate("history") },
-                onSettings = { nav.navigate("settings") },
-                autoStart = startRequests() > answered,
-                onAutoStarted = { answered = startRequests() },
+    // The Wash screen stays composed under ambient mode, so waking returns to it as it was; ambient only covers it.
+    Box {
+        CompositionLocalProvider(LocalAmbient provides (ambientNow != null)) {
+            SwipeDismissableNavHost(nav, startDestination = "start") {
+                composable("start") {
+                    StartScreen(
+                        onWash = { nav.navigate("wash") },
+                        onHistory = { nav.navigate("history") },
+                        onSettings = { nav.navigate("settings") },
+                        autoStart = startRequests() > answered,
+                        onAutoStarted = { answered = startRequests() },
+                    )
+                }
+                composable("wash") { WashScreen(onEnd = { id -> nav.navigate("result/$id") { popUpTo("start") } }) }
+                composable("result/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull(), fromWash = true) }
+                composable("history") { HistoryScreen(onOpen = { nav.navigate("summary/$it") }) }
+                composable("summary/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull()) }
+                composable("settings") { SettingsScreen() }
+            }
+        }
+        ambientNow?.let { AmbientWash(shift = if (it.burnIn) (it.updates % 3 - 1).dp * 2 else 0.dp) }
+    }
+}
+
+/**
+ * What ambient mode shows during a Wash: outlines on black, nothing that moves or counts. The system redraws
+ * ambient once a minute, so a time here would be wrong; a Wash is about a minute long. [shift] moves the outline
+ * about on displays that need burn-in protection.
+ */
+@Composable
+private fun AmbientWash(shift: Dp) {
+    val colors = MaterialTheme.colorScheme
+    val line = with(LocalDensity.current) { 1.5.dp.toPx() }
+    val liveStroke = CircularProgressIndicatorDefaults.largeStrokeWidth
+    ScreenScaffold {
+        Box(
+            Modifier.fillMaxSize().background(Color.Black).offset(shift, shift).drawBehind {
+                // The live ring's circle and its 60° gap at the top, as a thin outline.
+                val inset = CircularProgressIndicatorDefaults.FullScreenPadding.toPx() + liveStroke.toPx() / 2
+                drawArc(
+                    colors.onSurfaceVariant, 300f, 300f, false, Offset(inset, inset),
+                    Size(size.width - 2 * inset, size.height - 2 * inset), style = Stroke(line, cap = StrokeCap.Round),
+                )
+            },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                stringResource(R.string.ambient_washing),
+                style = MaterialTheme.typography.displaySmall.rounded().copy(color = colors.onBackground, drawStyle = Stroke(line)),
             )
         }
-        composable("wash") { WashScreen(onEnd = { id -> nav.navigate("result/$id") { popUpTo("start") } }) }
-        composable("result/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull(), fromWash = true) }
-        composable("history") { HistoryScreen(onOpen = { nav.navigate("summary/$it") }) }
-        composable("summary/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull()) }
-        composable("settings") { SettingsScreen() }
     }
 }
 
@@ -299,7 +413,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                 val (press, pressScale) = rememberPressScale()
                 Button(
                     ::start,
-                    morph(spec).then(pressScale),
+                    morph(spec).then(pressScale).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f) },
                     interactionSource = press,
                     transformation = SurfaceTransformation(spec),
                     icon = { Icon(painterResource(R.drawable.ic_wash), null) },
@@ -335,13 +449,33 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     val full by remember { derivedStateOf { elapsedS >= RING_TARGET_S } }
     // The whole seconds on screen: the text recomposes once a second, not every frame.
     val shownS by remember { derivedStateOf { if (full) elapsedS.toInt().toFloat() else ceil(RING_TARGET_S - elapsedS) } }
-    LaunchedEffect(Unit) {
+    val ambient = LocalAmbient.current
+    LaunchedEffect(ambient) {
+        // Ambient mode covers this screen and draws once a minute: nothing here needs to tick. Waking catches up at once.
+        if (ambient) return@LaunchedEffect
         while (true) {
-            // Every frame while the ring moves, so it glides and turns colour on the same frame as the time-reached ticks.
-            // Four times a second once only the text changes.
-            if (ring && !full) withFrameMillis {} else delay(250)
             now = System.currentTimeMillis()
+            // Every frame while the ring moves, so it glides and turns colour on the same frame as the time-reached ticks.
+            // Otherwise four times a second, but never past the target: the ripple and pop land with the ticks.
+            if (ring && !full) withFrameMillis {}
+            else delay(if (status.running && !full) (Haptics.TARGET_MS - (now - status.startedAtEpochMs)).coerceIn(1L, 250L) else 250L)
         }
+    }
+    // Start → Wash: the ring and the countdown bloom from where the Start button was (0 = at the button, 1 = settled).
+    val enter = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { enter.animateTo(1f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)) }
+    var screen by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    // Reaching the target, seen as well as felt: a ripple in from the edge and a small pop on the number, on the frame
+    // the three ticks play. Only for a target reached while watching, not one that passed while the screen was away.
+    val ripple = remember { Animatable(1f) }
+    val pop = remember { Animatable(1f) }
+    val startedFull = remember { full }
+    val watching by rememberUpdatedState(!ambient)
+    LaunchedEffect(full) {
+        if (!full || startedFull || !watching) return@LaunchedEffect
+        launch { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 2f) }
+        ripple.snapTo(0f)
+        ripple.animateTo(1f, tween(RIPPLE_MS, easing = EaseOutStrong))
     }
     val ringColor by animateColorAsState(if (full) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, tween(300))
     val (press, pressScale) = rememberPressScale()
@@ -349,7 +483,14 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     val glow by animateFloatAsState(if (full) 0.32f else 0.18f, tween(300))
     ScreenScaffold { padding ->
         Box(
-            Modifier.fillMaxSize().drawBehind { drawRect(Brush.radialGradient(listOf(ringColor.copy(alpha = glow), Color.Transparent))) },
+            Modifier.fillMaxSize().onGloballyPositioned { screen = it }.drawBehind {
+                drawRect(Brush.radialGradient(listOf(ringColor.copy(alpha = glow * enter.value), Color.Transparent)))
+                val r = ripple.value
+                if (r < 1f) {
+                    val edge = size.minDimension / 2
+                    drawCircle(ringColor, lerp(edge, edge * RIPPLE_TO, r), alpha = (1 - r) * 0.7f, style = Stroke(3.dp.toPx()))
+                }
+            },
             contentAlignment = Alignment.Center,
         ) {
             // A 60° gap centred on 12 o'clock leaves TimeText clear.
@@ -359,25 +500,38 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 val colors = ProgressIndicatorDefaults.colors(indicatorColor = ringColor)
                 val stroke = CircularProgressIndicatorDefaults.largeStrokeWidth
                 Spacer(
-                    Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding).drawBehind {
-                        drawCircularProgressIndicator(
-                            progress = (elapsedS / RING_TARGET_S).coerceAtMost(1f),
-                            colors = colors,
-                            strokeWidth = stroke,
-                            startAngle = 300f,
-                            endAngle = 240f,
-                        )
+                    Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding).graphicsLayer { alpha = enter.value }.drawBehind {
+                        // Scaled up about its centre and slid from the Start button's place, so one shape grows into the next.
+                        val pad = CircularProgressIndicatorDefaults.FullScreenPadding.toPx()
+                        val centre = size.center
+                        val from = screen?.takeIf { it.isAttached && StartOrigin.centre.isSpecified }
+                            ?.windowToLocal(StartOrigin.centre)?.minus(Offset(pad, pad)) ?: centre
+                        val p = enter.value
+                        withTransform({
+                            translate((1 - p) * (from.x - centre.x), (1 - p) * (from.y - centre.y))
+                            val s = lerp(BLOOM_FROM, 1f, p)
+                            scale(s, s, centre)
+                        }) {
+                            drawCircularProgressIndicator(
+                                progress = (elapsedS / RING_TARGET_S).coerceAtMost(1f),
+                                colors = colors,
+                                strokeWidth = stroke,
+                                startAngle = 300f,
+                                endAngle = 240f,
+                            )
+                        }
                     },
                 )
             }
             Column(
-                Modifier.padding(padding),
+                Modifier.graphicsLayer { val p = enter.value; alpha = p; scaleX = lerp(0.9f, 1f, p); scaleY = scaleX }.padding(padding),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Counts down to the target, then shows the total. Tabular digits, so the time doesn't shift sideways as it ticks.
                 Text(
                     duration(shownS),
+                    Modifier.graphicsLayer { scaleX = pop.value; scaleY = pop.value },
                     style = MaterialTheme.typography.displayMedium.rounded().copy(fontFeatureSettings = "tnum"),
                 )
                 Text(
@@ -432,27 +586,29 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
                 wash.modelVersion == null -> item { Notice(stringResource(R.string.timer_only), morphContent(spec)) }
                 !wash.coverageShown -> item { Notice(stringResource(R.string.too_short), morphContent(spec)) }
                 else -> {
-                    item { Notice(stringResource(R.string.washed_for, duration(wash.durationS)), morphContent(spec)) }
+                    item { Notice(stringResource(if (allCovered(wash.coverage)) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec)) }
                     items(wash.coverage.size) { i ->
                         val c = wash.coverage[i]
                         val rise = with(LocalDensity.current) { 6.dp.toPx() }
-                        // Icon and text, never colour alone (§4.1.10); the glyph is read as the text. Colour only adds emphasis.
+                        // Each Step has its own glyph, so a row is found by shape; colour only adds emphasis.
                         Row(
                             morphContent(spec).graphicsLayer {
                                 val p = staggered(entrance.value, i)
                                 alpha = p
                                 translationY = (1 - p) * rise
                             }.padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                glyph(c.status),
-                                Modifier.width(20.dp).clearAndSetSemantics {},
-                                color = if (c.status == StepStatus.OK) colors.primary else colors.onSurfaceVariant,
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center,
+                            Icon(
+                                painterResource(STEP_ICONS[c.label - 1]), null,
+                                Modifier.size(20.dp).clearAndSetSemantics {},
+                                tint = if (c.status == StepStatus.OK) colors.primary else colors.onSurfaceVariant,
                             )
                             Column {
                                 Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
-                                Text(stringResource(statusText(c.status)), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                                // The Status as a mark and in words, never colour alone (§4.1.10); the mark is read as the words.
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(glyph(c.status), Modifier.clearAndSetSemantics {}, color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                                    Text(stringResource(statusText(c.status)), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                                }
                             }
                         }
                     }
@@ -562,10 +718,12 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
     val colors = MaterialTheme.colorScheme
     val ok = coverage.count { it.status == StepStatus.OK }
     val takeaway = stringResource(R.string.history_hint, ok)
-    // All five covered: once the last arc lands, the ring gives one small spring pop. The only bounce in the app.
+    // All five covered: once the last arc lands, the ring gives one small spring pop and a burst of droplets.
     val pop = remember { Animatable(1f) }
+    val burst = remember { Animatable(1f) }
     if (ok == coverage.size) LaunchedEffect(Unit) {
         snapshotFlow(entrance).first { it >= 1f } // follows the system animation scale, unlike a fixed delay
+        launch { burst.snapTo(0f); burst.animateTo(1f, tween(BURST_MS, easing = EaseOutStrong)) }
         pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 2f)
     }
     Box(modifier.height(RING_SIZE).clearAndSetSemantics { contentDescription = takeaway }, contentAlignment = Alignment.Center) {
@@ -573,9 +731,23 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
         Canvas(Modifier.size(RING_SIZE).graphicsLayer { scaleX = pop.value; scaleY = pop.value }) {
             coverageArcs(coverage, RING_STROKE.toPx(), colors.surfaceContainer, ink) { staggered(entrance(), it) }
         }
+        // Drawn past the ring's bounds: the droplets leave from its outer edge.
+        Canvas(Modifier.size(RING_SIZE)) {
+            val b = burst.value
+            if (b < 1f) repeat(BURST_DROPS) { i ->
+                val a = Math.toRadians(-90.0 + i * 360.0 / BURST_DROPS)
+                val r = size.minDimension / 2 + BURST_REACH.toPx() * b
+                val drop = (if (i % 2 == 0) 4.dp else 3.dp).toPx() * (1 - b)
+                drawCircle(ink, drop, center + Offset(cos(a).toFloat(), sin(a).toFloat()) * r, alpha = 1 - b)
+            }
+        }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.ring_count, ok), style = MaterialTheme.typography.titleLarge)
-            Text(stringResource(R.string.ring_caption), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            // The answer as one big rounded numeral: tabular, and tracked tighter the larger it is.
+            Text(
+                ok.toString(),
+                style = MaterialTheme.typography.displayMedium.rounded().copy(fontFeatureSettings = "tnum", letterSpacing = (-0.02).em),
+            )
+            Text(stringResource(R.string.ring_caption), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
         }
     }
 }
@@ -612,6 +784,9 @@ private fun DrawScope.coverageArcs(coverage: List<StepCoverage>, stroke: Float, 
 @Composable
 private fun ink(coverage: List<StepCoverage>) =
     if (allCovered(coverage)) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+
+/** One glyph per Step, in canonical order (labels 1..5). */
+private val STEP_ICONS = intArrayOf(R.drawable.ic_step_palms, R.drawable.ic_step_backs, R.drawable.ic_step_between, R.drawable.ic_step_thumbs, R.drawable.ic_step_tips)
 
 /** How much of a Step's arc is filled: shape carries the Status, not colour (§4.1.10). */
 internal fun share(s: StepStatus) = when (s) {
