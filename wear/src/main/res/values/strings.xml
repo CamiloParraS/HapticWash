@@ -43,6 +43,8 @@
 
     <string name="history">History</string>
     <string name="history_empty">No washes yet</string>
+    <string name="steps_covered">steps covered</string>
+    <string name="coverage_count">%1$d of 5</string>
     <string name="history_hint">%1$d of 5 look covered</string>
 
     <string name="settings">Settings</string>

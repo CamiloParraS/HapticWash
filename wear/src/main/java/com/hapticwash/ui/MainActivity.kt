@@ -191,6 +191,8 @@ private val MINI_RING_SIZE = 40.dp
 private val MINI_RING_STROKE = 4.dp
 private val START_RING_SIZE = 60.dp
 private val START_RING_STROKE = 5.dp
+private val START_RING_SIZE_COMPACT = 36.dp
+private val START_RING_STROKE_COMPACT = 4.dp
 
 /** The stop symbol drawn at the centre while holding, and how much of the hold the countdown stays readable for. */
 private val STOP_MARK = 28.dp
@@ -501,20 +503,43 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
     val glow by animateColorAsState(if (lastShown?.let { allCovered(it.coverage) } == true) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, tween(300))
     Box(Modifier.fillMaxSize().accentGlow(glow)) {
     ScreenScaffold(state, scrollIndicator = { ScrollIndicatorUnlessCapturing(state) }) { padding ->
-        TransformingLazyColumn(state = state, contentPadding = padding, userScrollEnabled = compact, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
+        // Small screens: the stack sits ~10 dp lower, under the clock. The scaffold's bottom inset is generous, so trimming it keeps the stack from overflowing into a scroll.
+        val inset = if (compact) PaddingValues(start = padding.calculateStartPadding(LayoutDirection.Ltr), top = padding.calculateTopPadding() + 6.dp, end = padding.calculateEndPadding(LayoutDirection.Ltr), bottom = (padding.calculateBottomPadding() - 14.dp).coerceAtLeast(0.dp)) else padding
+        TransformingLazyColumn(state = state, contentPadding = inset, userScrollEnabled = compact, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
             // The last takeaway as one hero: the ring with its count inside, the time under it. Other results (too short,
             // Timer-only, none yet) have no ring and keep the sentence.
             item {
                 val last = washes.firstOrNull()
                 val label = last?.let { lastWashLabel(context, it) }
                 val sentence = last?.let { hint(context.resources, it) } ?: stringResource(R.string.history_empty)
-                Column(morphContent(spec).rise({ entrance.value }, 0).clearAndSetSemantics { contentDescription = listOfNotNull(label, sentence).joinToString(". ") }, horizontalAlignment = Alignment.CenterHorizontally) {
+                val description = listOfNotNull(label, sentence).joinToString(". ")
+                val ok = last?.coverage?.count { it.status == StepStatus.OK } ?: 0
+                // Only recomposes when the shown digit changes.
+                val shown by remember(ok) { derivedStateOf { (ok * fillIn.value).roundToInt() } }
+                if (compact) {
+                    // Small screens: the ring beside its text, centred and inset so the ring clears the round edge.
+                    Row(
+                        morphContent(spec).rise({ entrance.value }, 0).clearAndSetSemantics { contentDescription = description }
+                            .fillMaxWidth().padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (last?.coverageShown == true) {
+                            MiniRing(last.coverage, START_RING_SIZE_COMPACT, START_RING_STROKE_COMPACT, MaterialTheme.colorScheme.surfaceContainerHigh) { staggered(fillIn.value, it) }
+                            Column {
+                                Text(stringResource(R.string.coverage_count, shown), style = MaterialTheme.typography.titleMedium.rounded().copy(fontFeatureSettings = "tnum"))
+                                // Steps, not when: "Last wash · Oct 1" read as a daily habit. The time stays in the spoken description.
+                                Text(stringResource(R.string.steps_covered), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                            }
+                        } else Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(sentence, style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
+                            if (label != null) Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                            if (timerOnly) Text(stringResource(R.string.timer_only_short), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                } else Column(morphContent(spec).rise({ entrance.value }, 0).clearAndSetSemantics { contentDescription = description }, horizontalAlignment = Alignment.CenterHorizontally) {
                     if (last?.coverageShown == true) {
                         Box(contentAlignment = Alignment.Center) {
                             MiniRing(last.coverage, START_RING_SIZE, START_RING_STROKE, MaterialTheme.colorScheme.surfaceContainerHigh) { staggered(fillIn.value, it) }
-                            val ok = last.coverage.count { it.status == StepStatus.OK }
-                            // Only recomposes when the shown digit changes.
-                            val shown by remember(ok) { derivedStateOf { (ok * fillIn.value).roundToInt() } }
                             Text(
                                 shown.toString(),
                                 style = MaterialTheme.typography.titleLarge.rounded().copy(fontFeatureSettings = "tnum"),
@@ -536,7 +561,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                     .animateFloat(0f, 1f, infiniteRepeatable(tween(12000, easing = LinearEasing)), label = "drift")
                 Button(
                     ::start,
-                    morph(spec).rise({ entrance.value }, 1).then(pressScale).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f); StartOrigin.size = it.size }
+                    morph(spec).rise({ entrance.value }, 1).then(pressScale).then(if (compact) Modifier.height(48.dp) else Modifier).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f); StartOrigin.size = it.size }
                         .clip(CircleShape)
                         .drawBehind {
                             // Water: the colours flow one way, never reversing. Mirrored tiles repeat every two bands, so sliding
@@ -551,7 +576,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onPrimary),
                     interactionSource = press,
                     transformation = SurfaceTransformation(spec),
-                    icon = { Icon(painterResource(R.drawable.ic_wash), null) },
+                    icon = if (compact) null else ({ Icon(painterResource(R.drawable.ic_wash), null) }),
                     label = { Text(stringResource(if (status.running) R.string.session_running else R.string.start_wash), Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
                 )
             }
