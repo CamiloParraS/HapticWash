@@ -165,6 +165,7 @@ import kotlinx.coroutines.withContext
 import kotlin.math.ceil
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /** Progress ring target. A UI constant: nothing in Coverage reads it. */
@@ -483,8 +484,11 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
         timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
     }
     val entrance = remember { Animatable(if (StartEntrance.played) 1f else 0f) }
+    // The ring's arcs fill in just after the rows start rising, and the count climbs with them.
+    val fillIn = remember { Animatable(if (StartEntrance.played) 1f else 0f) }
     LaunchedEffect(Unit) {
         StartEntrance.played = true
+        launch { delay(120); fillIn.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing)) }
         entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing))
     }
     val state = rememberTransformingLazyColumnState()
@@ -506,9 +510,12 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                 Column(morphContent(spec).rise({ entrance.value }, 0).clearAndSetSemantics { contentDescription = listOfNotNull(label, sentence).joinToString(". ") }, horizontalAlignment = Alignment.CenterHorizontally) {
                     if (last?.coverageShown == true) {
                         Box(contentAlignment = Alignment.Center) {
-                            MiniRing(last.coverage, START_RING_SIZE, START_RING_STROKE, MaterialTheme.colorScheme.surfaceContainerHigh)
+                            MiniRing(last.coverage, START_RING_SIZE, START_RING_STROKE, MaterialTheme.colorScheme.surfaceContainerHigh) { staggered(fillIn.value, it) }
+                            val ok = last.coverage.count { it.status == StepStatus.OK }
+                            // Only recomposes when the shown digit changes.
+                            val shown by remember(ok) { derivedStateOf { (ok * fillIn.value).roundToInt() } }
                             Text(
-                                last.coverage.count { it.status == StepStatus.OK }.toString(),
+                                shown.toString(),
                                 style = MaterialTheme.typography.titleLarge.rounded().copy(fontFeatureSettings = "tnum"),
                             )
                         }
@@ -1025,10 +1032,10 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
 
 /** Start's small copy of [CoverageRing], so the last Wash reads at a glance in the app's one shape. A [track] that contrasts with its surface keeps an all-empty ring visible. */
 @Composable
-private fun MiniRing(coverage: List<StepCoverage>, size: Dp = MINI_RING_SIZE, stroke: Dp = MINI_RING_STROKE, track: Color = MaterialTheme.colorScheme.surfaceContainer) {
+private fun MiniRing(coverage: List<StepCoverage>, size: Dp = MINI_RING_SIZE, stroke: Dp = MINI_RING_STROKE, track: Color = MaterialTheme.colorScheme.surfaceContainer, fill: (Int) -> Float = { 1f }) {
     val ink = ink(coverage)
     Canvas(Modifier.size(size).clearAndSetSemantics {}) {
-        coverageArcs(coverage, stroke.toPx(), track, ink)
+        coverageArcs(coverage, stroke.toPx(), track, ink, fill)
     }
 }
 
