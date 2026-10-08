@@ -202,6 +202,12 @@ private const val RING_SWEEP_DEG = 300f
 private const val HOLD_MS = 700
 private const val HINT_MS = 3000L
 
+/** The sweep's share drawn on the press itself, so touch-down is answered before the first frame of the hold. */
+private const val PRESS_HEAD = 0.03f
+
+/** A hold that ended the Wash, until its Summary has taken over: the ring carries the stop colour across. */
+private object StopHold { var committed = false }
+
 /** Start → Wash: the ring blooms from the Start button, from this fraction of its size up to 1. */
 private const val BLOOM_FROM = 0.2f
 
@@ -559,8 +565,10 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     // Hold anywhere to stop (0 = not held, 1 = committed). Wet, soapy fingers miss a button, and a hold survives water
     // on the glass. Press responds at once; the sweep is linear while the user decides, and release snaps back fast.
     val hold = remember { Animatable(0f) }
+    // The commit: the stop square and the ring's stroke spring past their size and settle (1 = at rest).
+    val commitPop = remember { Animatable(1f) }
     val hint = remember { Animatable(1f) }
-    LaunchedEffect(Unit) { delay(HINT_MS); hint.animateTo(0f, tween(400)) }
+    LaunchedEffect(Unit) { StopHold.committed = false; delay(HINT_MS); hint.animateTo(0f, tween(400)) }
     val stopInk = MaterialTheme.colorScheme.error
     val scope = rememberCoroutineScope()
     val feedback = LocalHapticFeedback.current
@@ -587,8 +595,12 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                         if (stopping) return@awaitEachGesture
                         scope.launch {
                             hint.snapTo(0f)
+                            // Answers the press on the first frame: a sliver of the sweep and the colour, then the rest.
+                            hold.snapTo(PRESS_HEAD)
                             hold.animateTo(1f, tween(HOLD_MS, easing = LinearEasing))
                             feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            StopHold.committed = true
+                            launch { commitPop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 3f) }
                             stop()
                         }
                         waitForUpOrCancellation()
@@ -598,8 +610,7 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 }.drawBehind {
                 val ramp = if (full) 0f else ((elapsedS - (RING_TARGET_S - GLOW_RAMP_S)) / GLOW_RAMP_S).coerceIn(0f, 1f)
                 val alpha = glow + (breath.value - 0.5f) * 0.08f + 0.08f * ramp
-                // The whole screen warms toward the stop colour as the hold fills.
-                // Fully the stop colour by half way, and brighter than the Wash's own glow, so the change is seen from a glance.
+                // The whole screen warms toward the stop colour as the hold fills: fully the stop colour by half way, and brighter than the Wash's own glow, so the change is seen from a glance.
                 val h = hold.value
                 val shift = EaseOutStrong.transform((h * 2).coerceAtMost(1f))
                 drawRect(Brush.radialGradient(listOf(androidx.compose.ui.graphics.lerp(ringColor, stopInk, shift).copy(alpha = (alpha + 0.3f * h) * enter.value), Color.Transparent)))
@@ -611,8 +622,7 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
             },
             contentAlignment = Alignment.Center,
         ) {
-            // A 60° gap centred on 12 o'clock leaves TimeText clear, and one at 6 o'clock leaves Stop clear: two arcs,
-            // down the right then up the left, filled one after the other.
+            // One arc from 300° round to 240°: the 60° gap at 12 o'clock leaves TimeText clear.
             // Drawn, not CircularProgressIndicator: that one restarts its own animation on every new value,
             // so fed every frame it never moves until the value stops changing at 100 %.
             if (ring) {
@@ -643,9 +653,9 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
             Spacer(Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding).drawBehind {
                 val h = hold.value
                 if (h <= 0f) return@drawBehind
-                drawCircularProgressIndicator(h, holdColors, holdStroke, startAngle = RING_START_DEG, endAngle = RING_START_DEG + RING_SWEEP_DEG)
+                drawCircularProgressIndicator(h, holdColors, holdStroke * commitPop.value, startAngle = RING_START_DEG, endAngle = RING_START_DEG + RING_SWEEP_DEG)
                 // The stop symbol grows in at the centre as the countdown gives way to it.
-                val side = STOP_MARK.toPx() * lerp(0.6f, 1f, swap(h))
+                val side = STOP_MARK.toPx() * lerp(0.6f, 1f, swap(h)) * commitPop.value
                 drawRoundRect(stopInk, center - Offset(side / 2, side / 2), Size(side, side), CornerRadius(side * 0.22f), alpha = swap(h))
             })
             Column(
@@ -696,6 +706,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
     val entrance = remember { Animatable(0f) }
     LaunchedEffect(Unit) { entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing)) }
     // C6: straight from a Wash with the live ring on, that ring shrinks into the Coverage ring (0 = live, 1 = landed).
+    val stoppedByHold = remember { fromWash && StopHold.committed.also { StopHold.committed = false } }
     val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true && Settings(context).progressRing) 0f else 1f) }
     LaunchedEffect(Unit) { morph.animateTo(1f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)) }
     // The Coverage ring's centre in this screen's space, so a moving nav transition doesn't throw the morph off.
@@ -746,7 +757,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
                 }
             }
         }
-        if (morph.value < 1f) LiveRing(wash!!.durationS, { morph.value }, { ringCentre })
+        if (morph.value < 1f) LiveRing(wash!!.durationS, { morph.value }, { ringCentre }, stoppedByHold)
     }
 }
 
@@ -755,8 +766,9 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
  * Coverage ring at [centre] as [morph] goes 0 → 1, fading as it goes. Same geometry as WashScreen's.
  */
 @Composable
-private fun LiveRing(durationS: Float, morph: () -> Float, centre: () -> Offset) {
-    val color = if (durationS >= RING_TARGET_S) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+private fun LiveRing(durationS: Float, morph: () -> Float, centre: () -> Offset, stopped: Boolean) {
+    val base = if (durationS >= RING_TARGET_S) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+    val stop = MaterialTheme.colorScheme.error
     val liveStroke = CircularProgressIndicatorDefaults.largeStrokeWidth
     Canvas(Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding)) {
         val p = morph()
@@ -765,7 +777,10 @@ private fun LiveRing(durationS: Float, morph: () -> Float, centre: () -> Offset)
         // Canvas space is inset by the padding; the target centre is in the screen's.
         val pad = CircularProgressIndicatorDefaults.FullScreenPadding.toPx()
         val c = lerp(center, centre().takeIf { it.isSpecified }?.minus(Offset(pad, pad)) ?: center, p)
-        val progress = (durationS / RING_TARGET_S).coerceAtMost(1f)
+        val reached = (durationS / RING_TARGET_S).coerceAtMost(1f)
+        // Ended by a hold, the ring leaves full and in the stop colour, then settles into the Wash's own.
+        val progress = if (stopped) lerp(1f, reached, p) else reached
+        val color = if (stopped) androidx.compose.ui.graphics.lerp(stop, base, (p * 1.5f).coerceAtMost(1f)) else base
         if (progress > 0f) drawArc(color, RING_START_DEG, RING_SWEEP_DEG * progress, false, Offset(c.x - r, c.y - r), Size(2 * r, 2 * r), alpha = 1 - p, style = Stroke(stroke, cap = StrokeCap.Round))
     }
 }
