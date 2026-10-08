@@ -742,7 +742,7 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
                 onClick = { onOpen(w.id) },
                 modifier = morph(spec),
                 transformation = SurfaceTransformation(spec),
-                icon = if (w.coverageShown) ({ MiniRing(w.coverage, 28.dp, 3.dp) }) else null,
+                icon = if (w.coverageShown) ({ MiniRing(w.coverage, 28.dp, 3.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)) }) else null,
                 label = { Text(DateUtils.formatDateTime(context, w.startedAtEpochMs, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH)) },
                 secondaryLabel = { Text("${duration(w.durationS)} · ${hint(LocalContext.current.resources, w)}") },
             )
@@ -842,13 +842,12 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
     }
 }
 
-/** Start's small copy of [CoverageRing], so the last Wash reads at a glance in the app's one shape. */
+/** Start's small copy of [CoverageRing], so the last Wash reads at a glance in the app's one shape. A [track] that contrasts with its surface keeps an all-empty ring visible. */
 @Composable
-private fun MiniRing(coverage: List<StepCoverage>, size: Dp = MINI_RING_SIZE, stroke: Dp = MINI_RING_STROKE) {
-    val colors = MaterialTheme.colorScheme
+private fun MiniRing(coverage: List<StepCoverage>, size: Dp = MINI_RING_SIZE, stroke: Dp = MINI_RING_STROKE, track: Color = MaterialTheme.colorScheme.surfaceContainer) {
     val ink = ink(coverage)
     Canvas(Modifier.size(size).clearAndSetSemantics {}) {
-        coverageArcs(coverage, stroke.toPx(), colors.surfaceContainer, ink)
+        coverageArcs(coverage, stroke.toPx(), track, ink)
     }
 }
 
