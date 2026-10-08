@@ -96,6 +96,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.res.stringArrayResource
@@ -202,6 +204,12 @@ private const val RING_SWEEP_DEG = 300f
 private const val HOLD_MS = 700
 private const val HINT_MS = 3000L
 
+/** Start's ghost button is gone by this share of the bloom. */
+private const val GHOST_FADE = 0.4f
+
+/** "Hold to stop" waits this long after the bloom before it fades in, so it doesn't compete with it. */
+private const val HINT_DELAY_MS = 700L
+
 /** The sweep's share drawn on the press itself, so touch-down is answered before the first frame of the hold. */
 private const val PRESS_HEAD = 0.03f
 
@@ -301,7 +309,10 @@ data class Ambient(val burnIn: Boolean, val updates: Int = 0)
 private val LocalAmbient = compositionLocalOf { false }
 
 /** Where Start's button sat in the window, so the Wash ring can bloom from it. Written by Start, read by Wash. */
-private object StartOrigin { var centre = Offset.Unspecified }
+private object StartOrigin {
+    var centre = Offset.Unspecified
+    var size = IntSize.Zero
+}
 
 /**
  * Max depth 2 (§4.1.5): Start → In-progress → Summary (`result`, the one just ended), Start → History → Summary, Start → Settings.
@@ -485,7 +496,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                     .animateFloat(0f, 1f, infiniteRepeatable(tween(12000, easing = LinearEasing)), label = "drift")
                 Button(
                     ::start,
-                    morph(spec).then(pressScale).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f) }
+                    morph(spec).then(pressScale).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f); StartOrigin.size = it.size }
                         .clip(CircleShape)
                         .drawBehind {
                             // Water: the colours flow one way, never reversing. Mirrored tiles repeat every two bands, so sliding
@@ -567,8 +578,14 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     val hold = remember { Animatable(0f) }
     // The commit: the stop square and the ring's stroke spring past their size and settle (1 = at rest).
     val commitPop = remember { Animatable(1f) }
-    val hint = remember { Animatable(1f) }
-    LaunchedEffect(Unit) { StopHold.committed = false; delay(HINT_MS); hint.animateTo(0f, tween(400)) }
+    val hint = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        StopHold.committed = false
+        delay(HINT_DELAY_MS)
+        if (hold.value == 0f) hint.animateTo(1f, tween(300))
+        delay(HINT_MS)
+        hint.animateTo(0f, tween(400))
+    }
     val stopInk = MaterialTheme.colorScheme.error
     val scope = rememberCoroutineScope()
     val feedback = LocalHapticFeedback.current
@@ -688,6 +705,30 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.labelSmall,
                 )
+            }
+            // Start's button, left where it was: it shrinks and fades in the first moments of the bloom, so the ring
+            // reads as coming out of it. Only while the ring blooms, which is when Start's place is known.
+            val at = screen?.takeIf { it.isAttached && ring && StartOrigin.centre.isSpecified }?.windowToLocal(StartOrigin.centre)
+            if (at != null && enter.value < 0.999f) {
+                val size = StartOrigin.size
+                Row(
+                    Modifier.size(with(LocalDensity.current) { size.width.toDp() }, with(LocalDensity.current) { size.height.toDp() })
+                        .offset { IntOffset((at.x - size.width / 2f).toInt(), (at.y - size.height / 2f).toInt()) }
+                        .graphicsLayer {
+                            val p = enter.value
+                            alpha = 1f - (p / GHOST_FADE).coerceAtMost(1f)
+                            scaleX = lerp(1f, 0.6f, p)
+                            scaleY = scaleX
+                        }
+                        .clip(CircleShape)
+                        .background(Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.primaryDim, MaterialTheme.colorScheme.primary))),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(painterResource(R.drawable.ic_wash), null, tint = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.start_wash), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     }
