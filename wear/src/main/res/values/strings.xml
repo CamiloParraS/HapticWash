@@ -27,6 +27,7 @@
     </plurals>
 
     <string name="too_short">Too short to estimate</string>
+    <string name="too_short_to_save">Too short to save</string>
     <string name="too_short_short">Too short</string>
     <string name="status_ok">Looks covered</string>
     <string name="status_brief">May have been brief</string>

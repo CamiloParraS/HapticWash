@@ -156,6 +156,7 @@ import com.hapticwash.session.StepStatus
 import com.hapticwash.session.WashService
 import com.hapticwash.session.allCovered
 import com.hapticwash.session.WashSession
+import com.hapticwash.session.worthSaving
 import com.hapticwash.session.Wrist
 import com.hapticwash.ui.theme.HapticWashTheme
 import kotlinx.coroutines.Dispatchers
@@ -879,6 +880,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
                     }
                 }
             }
+            if (!wash.worthSaving()) item { Notice(stringResource(R.string.too_short_to_save), morphContent(spec)) }
         }
         if (morph.value < 1f) LiveRing(wash!!.durationS, { morph.value }, { ringCentre }, stoppedByHold)
         if (stoppedByHold && morph.value < 1f) {
