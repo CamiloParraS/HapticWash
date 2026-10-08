@@ -187,6 +187,8 @@ internal const val RING_GAP_DEG = 14f
 /** Start's ring for the last Wash. */
 private val MINI_RING_SIZE = 40.dp
 private val MINI_RING_STROKE = 4.dp
+private val START_RING_SIZE = 60.dp
+private val START_RING_STROKE = 5.dp
 
 /** The stop symbol drawn at the centre while holding, and how much of the hold the countdown stays readable for. */
 private val STOP_MARK = 28.dp
@@ -403,11 +405,7 @@ private fun ListScreen(backdrop: Boolean = true, content: TransformingLazyColumn
     val spec = rememberTransformationSpec()
     // Like the watch's own Settings: the last row can scroll up to the middle of the screen, with black below it.
     val centre = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() / 2 } - ROW_HALF_HEIGHT
-    val accent = MaterialTheme.colorScheme.primary
-    // A dark wash of the accent behind the list, like watchOS's app gradients.
-    Box(Modifier.fillMaxSize().drawBehind {
-        if (backdrop) drawRect(Brush.radialGradient(listOf(accent.copy(alpha = 0.18f), Color.Transparent), Offset(size.width / 2, size.height * 0.3f), size.maxDimension * 0.6f))
-    }) {
+    Box(Modifier.fillMaxSize().then(if (backdrop) Modifier.accentGlow(MaterialTheme.colorScheme.primary) else Modifier)) {
         ScreenScaffold(state, scrollIndicator = { ScrollIndicatorUnlessCapturing(state) }) { padding ->
             TransformingLazyColumn(
                 state = state,
@@ -420,6 +418,11 @@ private fun ListScreen(backdrop: Boolean = true, content: TransformingLazyColumn
             ) { content(spec) }
         }
     }
+}
+
+/** A dark wash of [accent] behind a screen, like watchOS's app gradients. */
+private fun Modifier.accentGlow(accent: Color) = drawBehind {
+    drawRect(Brush.radialGradient(listOf(accent.copy(alpha = 0.18f), Color.Transparent), Offset(size.width / 2, size.height * 0.3f), size.maxDimension * 0.6f))
 }
 
 /** Full width, with the item's height following the edge transformation. Surfaces also take `SurfaceTransformation(spec)`. */
@@ -473,23 +476,29 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
     val spec = rememberTransformationSpec()
     // ponytail: scrolls only on small screens, where the buttons sit below the fold; 220 dp is a guess, tune on a device.
     val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 220.dp
+    // Tertiary when the last wash covered all five, like the ring, so the home screen carries the result.
+    val lastShown = washes.firstOrNull()?.takeIf { it.coverageShown }
+    val glow by animateColorAsState(if (lastShown?.let { allCovered(it.coverage) } == true) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, tween(300))
+    Box(Modifier.fillMaxSize().accentGlow(glow)) {
     ScreenScaffold(state, scrollIndicator = { ScrollIndicatorUnlessCapturing(state) }) { padding ->
         TransformingLazyColumn(state = state, contentPadding = padding, userScrollEnabled = compact, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
-            // The last takeaway in the Tile's words, so the screen says something at a glance. Weight and size make the hierarchy, not a container.
+            // The last takeaway as one hero: the ring with its count inside, the time under it. Other results (too short,
+            // Timer-only, none yet) have no ring and keep the sentence.
             item {
                 val last = washes.firstOrNull()
-                Column(morphContent(spec).semantics(mergeDescendants = true) {}, horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (last?.coverageShown == true) MiniRing(last.coverage)
-                    if (last != null) Text(
-                        lastWashLabel(context, last),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    Text(
-                        last?.let { hint(context.resources, it) } ?: stringResource(R.string.history_empty),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                    )
+                val label = last?.let { lastWashLabel(context, it) }
+                val sentence = last?.let { hint(context.resources, it) } ?: stringResource(R.string.history_empty)
+                Column(morphContent(spec).clearAndSetSemantics { contentDescription = listOfNotNull(label, sentence).joinToString(". ") }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (last?.coverageShown == true) {
+                        Box(contentAlignment = Alignment.Center) {
+                            MiniRing(last.coverage, START_RING_SIZE, START_RING_STROKE, MaterialTheme.colorScheme.surfaceContainerHigh)
+                            Text(
+                                last.coverage.count { it.status == StepStatus.OK }.toString(),
+                                style = MaterialTheme.typography.titleLarge.rounded().copy(fontFeatureSettings = "tnum"),
+                            )
+                        }
+                    } else Text(sentence, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                    if (label != null) Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                     if (timerOnly) Text(stringResource(R.string.timer_only_short), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                 }
             }
@@ -532,6 +541,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                 }
             }
         }
+    }
     }
 }
 
