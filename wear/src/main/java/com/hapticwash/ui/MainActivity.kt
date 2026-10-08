@@ -204,6 +204,9 @@ private const val RING_SWEEP_DEG = 300f
 private const val HOLD_MS = 700
 private const val HINT_MS = 3000L
 
+/** The Summary's arcs and rows begin once the ring landing from the Wash is this far in. */
+private const val ENTRANCE_AT = 0.6f
+
 /** Start's ghost button is gone by this share of the bloom. */
 private const val GHOST_FADE = 0.4f
 
@@ -214,7 +217,13 @@ private const val HINT_DELAY_MS = 700L
 private const val PRESS_HEAD = 0.03f
 
 /** A hold that ended the Wash, until its Summary has taken over: the ring carries the stop colour across. */
-private object StopHold { var committed = false }
+private object StopHold {
+    var committed = false
+    var committedAt = 0L
+}
+
+/** A hold's commit gets at least this long on screen before the result takes over. */
+private const val COMMIT_BEAT_MS = 450L
 
 /** Start → Wash: the ring blooms from the Start button, from this fraction of its size up to 1. */
 private const val BLOOM_FROM = 0.2f
@@ -315,7 +324,7 @@ private object StartOrigin {
 }
 
 /**
- * Max depth 2 (§4.1.5): Start → In-progress → Summary (`result`, the one just ended), Start → History → Summary, Start → Settings.
+ * Max depth 2 (§4.1.5): Start → In-progress, which shows its own Summary when the Wash ends, Start → History → Summary, Start → Settings.
  * [startRequests] is a provider, not an Int: the nav graph keeps its destination lambdas, so a captured
  * Int would stay at its first value and a Tile tap on an already-open Start would be missed.
  */
@@ -347,8 +356,7 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
                         onAutoStarted = { answered = startRequests() },
                     )
                 }
-                composable("wash") { WashScreen(onEnd = { id -> nav.navigate("result/$id") { popUpTo("start") } }) }
-                composable("result/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull(), fromWash = true) }
+                composable("wash") { WashScreen() }
                 composable("history") { HistoryScreen(onOpen = { nav.navigate("summary/$it") }) }
                 composable("summary/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull()) }
                 composable("settings") { SettingsScreen() }
@@ -527,15 +535,38 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
     }
 }
 
-/** Elapsed time, optional progress ring, Stop. Never names a Step. */
+/**
+ * The Wash, and then its Summary in the same place: the result fades in over the Wash instead of sliding in as a
+ * new screen, so the ring and the stop square can carry across it. Swiping back from either goes to Start.
+ */
 @Composable
-private fun WashScreen(onEnd: (Long) -> Unit) {
+private fun WashScreen() {
+    var result by remember { mutableStateOf<Long?>(null) }
+    val leave = remember { Animatable(0f) }
+    LaunchedEffect(result) { if (result != null) leave.animateTo(1f, tween(200)) }
+    Box(Modifier.fillMaxSize()) {
+        // Gone once faded: nothing under the Summary should take a press.
+        if (leave.value < 1f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = 1 - leave.value }) { WashBody(onEnd = { result = it }, handedOver = result != null) }
+        result?.let { SummaryScreen(it, fromWash = true) }
+    }
+}
+
+/** Elapsed time, optional progress ring, hold to stop. Never names a Step. */
+@Composable
+private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean) {
     val context = LocalContext.current
     val status by WashService.status.collectAsState()
     val last by WashService.lastWash.collectAsState()
     val before = remember { last?.id }
-    LaunchedEffect(last) { last?.takeIf { it.id != before }?.let { onEnd(it.id) } }
+    LaunchedEffect(last) {
+        val ended = last?.takeIf { it.id != before } ?: return@LaunchedEffect
+        // The save is quick; a hold gets a beat for its commit to be seen first.
+        if (StopHold.committed) delay((COMMIT_BEAT_MS - (System.currentTimeMillis() - StopHold.committedAt)).coerceAtLeast(0))
+        onEnd(ended.id)
+    }
     val ring = remember { Settings(context).progressRing }
+    // The Summary draws the ring and the stop square from here on, shrinking them into its own; these must not double them.
+    val carried = handedOver && ring
     var stopping by remember { mutableStateOf(false) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     // Derived state, so the ring's progress lambda reads the live value at draw time.
@@ -587,6 +618,18 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
         hint.animateTo(0f, tween(400))
     }
     val stopInk = MaterialTheme.colorScheme.error
+    val stopGlow = MaterialTheme.colorScheme.errorContainer
+    // Committed and waiting for the save: the extra glow eases off and the stop square breathes, so the wait isn't a freeze.
+    val settle by animateFloatAsState(if (stopping) 0.4f else 1f, tween(600))
+    val stopBreath = remember { Animatable(1f) }
+    LaunchedEffect(stopping) {
+        if (!stopping) return@LaunchedEffect
+        delay(400) // after the commit pop
+        while (true) {
+            stopBreath.animateTo(0.88f, tween(700, easing = FastOutSlowInEasing))
+            stopBreath.animateTo(1f, tween(700, easing = FastOutSlowInEasing))
+        }
+    }
     val scope = rememberCoroutineScope()
     val feedback = LocalHapticFeedback.current
     fun stop() { stopping = true; WashService.stop(context) }
@@ -617,6 +660,7 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                             hold.animateTo(1f, tween(HOLD_MS, easing = LinearEasing))
                             feedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             StopHold.committed = true
+                            StopHold.committedAt = System.currentTimeMillis()
                             launch { commitPop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 3f) }
                             stop()
                         }
@@ -630,7 +674,7 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 // The whole screen warms toward the stop colour as the hold fills: fully the stop colour by half way, and brighter than the Wash's own glow, so the change is seen from a glance.
                 val h = hold.value
                 val shift = EaseOutStrong.transform((h * 2).coerceAtMost(1f))
-                drawRect(Brush.radialGradient(listOf(androidx.compose.ui.graphics.lerp(ringColor, stopInk, shift).copy(alpha = (alpha + 0.3f * h) * enter.value), Color.Transparent)))
+                drawRect(Brush.radialGradient(listOf(androidx.compose.ui.graphics.lerp(ringColor, stopGlow, shift).copy(alpha = (alpha + 0.5f * h * settle) * enter.value), Color.Transparent)))
                 val r = ripple.value
                 if (r < 1f) {
                     val edge = size.minDimension / 2
@@ -646,7 +690,7 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 val colors = ProgressIndicatorDefaults.colors(indicatorColor = ringColor)
                 val stroke = CircularProgressIndicatorDefaults.largeStrokeWidth
                 Spacer(
-                    Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding).graphicsLayer { alpha = enter.value }.drawBehind {
+                    Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding).graphicsLayer { alpha = if (carried) 0f else enter.value }.drawBehind {
                         // Scaled up about its centre and slid from the Start button's place, so one shape grows into the next.
                         val pad = CircularProgressIndicatorDefaults.FullScreenPadding.toPx()
                         val centre = size.center
@@ -669,10 +713,10 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
             val holdStroke = CircularProgressIndicatorDefaults.largeStrokeWidth
             Spacer(Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding).drawBehind {
                 val h = hold.value
-                if (h <= 0f) return@drawBehind
+                if (h <= 0f || carried) return@drawBehind
                 drawCircularProgressIndicator(h, holdColors, holdStroke * commitPop.value, startAngle = RING_START_DEG, endAngle = RING_START_DEG + RING_SWEEP_DEG)
                 // The stop symbol grows in at the centre as the countdown gives way to it.
-                val side = STOP_MARK.toPx() * lerp(0.6f, 1f, swap(h)) * commitPop.value
+                val side = STOP_MARK.toPx() * lerp(0.6f, 1f, swap(h)) * commitPop.value * stopBreath.value
                 drawRoundRect(stopInk, center - Offset(side / 2, side / 2), Size(side, side), CornerRadius(side * 0.22f), alpha = swap(h))
             })
             Column(
@@ -745,11 +789,17 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
     val colors = MaterialTheme.colorScheme
     // Rows arrive in a short cascade as the end pulses play. Decorative: scrolling is never blocked.
     val entrance = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing)) }
     // C6: straight from a Wash with the live ring on, that ring shrinks into the Coverage ring (0 = live, 1 = landed).
     val stoppedByHold = remember { fromWash && StopHold.committed.also { StopHold.committed = false } }
     val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true && Settings(context).progressRing) 0f else 1f) }
     LaunchedEffect(Unit) { morph.animateTo(1f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)) }
+    // The arcs and rows start once the ring is most of the way in, so they fill where they can be seen.
+    LaunchedEffect(Unit) {
+        snapshotFlow { morph.value }.first { it >= ENTRANCE_AT }
+        entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing))
+    }
+    // Ended by a hold, the stop square becomes the answer: it shrinks into the ring's centre and the numeral grows from there.
+    fun numeral() = if (stoppedByHold) EaseOutStrong.transform(((morph.value - 0.4f) / 0.6f).coerceIn(0f, 1f)) else 1f
     // The Coverage ring's centre in this screen's space, so a moving nav transition doesn't throw the morph off.
     var ringCentre by remember { mutableStateOf(Offset.Unspecified) }
     var screen by remember { mutableStateOf<LayoutCoordinates?>(null) }
@@ -760,7 +810,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
             if (wash.coverageShown) item {
                 CoverageRing(wash.coverage, { entrance.value }, morphContent(spec)
                     .onGloballyPositioned { ring -> screen?.let { ringCentre = it.localBoundingBoxOf(ring).center } }
-                    .graphicsLayer { alpha = morph.value })
+                    .graphicsLayer { alpha = morph.value }, ::numeral)
             }
             else item { Header(spec, duration(wash.durationS)) }
             when {
@@ -799,6 +849,16 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
             }
         }
         if (morph.value < 1f) LiveRing(wash!!.durationS, { morph.value }, { ringCentre }, stoppedByHold)
+        if (stoppedByHold && morph.value < 1f) {
+            val ink = colors.error
+            Canvas(Modifier.fillMaxSize()) {
+                val p = EaseOutStrong.transform(morph.value)
+                val from = Offset(size.width / 2, size.height / 2)
+                val c = lerp(from, ringCentre.takeIf { it.isSpecified } ?: from, p)
+                val side = STOP_MARK.toPx() * lerp(1f, 0.4f, p)
+                drawRoundRect(ink, c - Offset(side / 2, side / 2), Size(side, side), CornerRadius(side * 0.22f), alpha = 1 - numeral())
+            }
+        }
     }
 }
 
@@ -900,7 +960,7 @@ private fun staggered(entrance: Float, i: Int) =
  * half, Not detected leaves only the track, like the ✓ ◐ ○ glyphs below. The list says it in words.
  */
 @Composable
-private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, modifier: Modifier) {
+private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, modifier: Modifier, numeral: () -> Float = { 1f }) {
     val colors = MaterialTheme.colorScheme
     val ok = coverage.count { it.status == StepStatus.OK }
     val takeaway = stringResource(R.string.history_hint, ok)
@@ -927,7 +987,7 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
                 drawCircle(ink, drop, center + Offset(cos(a).toFloat(), sin(a).toFloat()) * r, alpha = 1 - b)
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(Modifier.graphicsLayer { val n = numeral(); alpha = n; scaleX = lerp(0.6f, 1f, n); scaleY = scaleX }, horizontalAlignment = Alignment.CenterHorizontally) {
             // The answer as one big rounded numeral: tabular, and tracked tighter the larger it is.
             Text(
                 ok.toString(),
@@ -1022,7 +1082,7 @@ private fun PreviewFrame(content: @Composable () -> Unit) = HapticWashTheme { Ap
 @WearPreviewDevices
 @WearPreviewFontScales
 @Composable
-private fun WashPreview() = PreviewFrame { WashScreen(onEnd = {}) }
+private fun WashPreview() = PreviewFrame { WashScreen() }
 
 @WearPreviewDevices
 @WearPreviewFontScales

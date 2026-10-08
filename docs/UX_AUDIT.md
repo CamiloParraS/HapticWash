@@ -272,6 +272,16 @@ skipped). Everything below is by construction and needs a device pass (M6).
 - **Start → Wash.** A copy of the Start pill shrinks and fades over the first 40 % of the ring's
   bloom. Only with the ring on.
 
+- **Stop → Summary, checked on the AVD** at 30× slowed animations (`animator_duration_scale 30`,
+  screenshots every ~0.5 s), after a first version didn't land. The nav host slid the Summary in
+  from the right over the ring morph, and the save was so quick that the commit pop never showed.
+  Now the Summary fades in over In-progress in the same place (`WashScreen` hosts both; there is
+  no `result` route), a hold keeps its commit on screen for at least 450 ms, and the ring and stop
+  square are drawn by the Summary alone from then on. Seen: the ring and square carry across, the
+  ring shrinks into the Coverage ring, and the numeral grows from the square's place. The glow
+  is `errorContainer`, a deep red, so the stop state is plain on the black screen. Swipe-back
+  from the Summary goes to Start. Not checked at normal speed or on a watch.
+
 **Not done:** the bloom in reverse when swiping back out of a running Wash. The nav host's own
 swipe-dismiss handles it, and `wear-compose-navigation` 1.7.1 offers no way to give it a custom
 exit that I found.
