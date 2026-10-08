@@ -59,6 +59,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.wear)
     implementation(libs.wear.compose.navigation)
+    implementation(libs.wear.compose.ui.tooling) // @WearPreviewDevices, @WearPreviewFontScales
+    debugImplementation(libs.androidx.compose.ui.tooling) // renders them in Android Studio
     implementation(libs.litert)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.wear.tiles)

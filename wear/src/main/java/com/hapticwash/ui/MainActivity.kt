@@ -17,12 +17,18 @@ import androidx.lifecycle.lifecycleScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
@@ -32,6 +38,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.hapticwash.ui.theme.rounded
@@ -104,13 +111,23 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.drawCircularProgressIndicator
 import androidx.wear.compose.material3.CircularProgressIndicatorDefaults
 import androidx.wear.compose.material3.FilledTonalButton
 import androidx.wear.compose.material3.FilledTonalIconButton
 import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.ListHeaderDefaults
+import androidx.wear.compose.material3.EdgeButton
+import androidx.wear.compose.material3.EdgeButtonSize
+import kotlin.math.acos
 import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.ScrollIndicator
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumnState
+import androidx.compose.ui.platform.LocalScrollCaptureInProgress
+import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
+import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import androidx.wear.compose.material3.ProgressIndicatorDefaults
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
@@ -138,11 +155,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.ceil
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
 /** Progress ring target. A UI constant: nothing in Coverage reads it. */
 private const val RING_TARGET_S = Haptics.TARGET_MS / 1000f
+private const val GLOW_RAMP_S = 3f
 
 /** Summary entrance: each row fades and rises over [ROW_MS], [STAGGER_MS] after the one above. */
 private const val ROW_MS = 200f
@@ -160,6 +179,11 @@ internal const val RING_GAP_DEG = 14f
 /** Start's ring for the last Wash. */
 private val MINI_RING_SIZE = 40.dp
 private val MINI_RING_STROKE = 4.dp
+
+/** Stop's EdgeButton: [EdgeButtonSize.Small]'s 56 dp and the 3 dp it keeps below itself. The Wash ring opens around it. */
+private val STOP_HEIGHT = 59.dp
+// ponytail: guessed margin between the ring's caps and Stop; tune on a device.
+private val STOP_CLEARANCE = 4.dp
 
 /** Start → Wash: the ring blooms from the Start button, from this fraction of its size up to 1. */
 private const val BLOOM_FROM = 0.2f
@@ -332,27 +356,46 @@ private fun AmbientWash(shift: Dp) {
 
 /** A scrollable, round-safe screen with [TimeText][AppScaffold] on top. Items shrink and fade at the round edge via [spec]. */
 @Composable
-private fun ListScreen(content: TransformingLazyColumnScope.(spec: TransformationSpec) -> Unit) {
+private fun ListScreen(backdrop: Boolean = true, content: TransformingLazyColumnScope.(spec: TransformationSpec) -> Unit) {
     val state = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
     // Like the watch's own Settings: the last row can scroll up to the middle of the screen, with black below it.
     val centre = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() / 2 } - ROW_HALF_HEIGHT
-    ScreenScaffold(state) { padding ->
-        TransformingLazyColumn(
-            state = state,
-            contentPadding = PaddingValues(
-                start = padding.calculateStartPadding(LayoutDirection.Ltr),
-                top = padding.calculateTopPadding(),
-                end = padding.calculateEndPadding(LayoutDirection.Ltr),
-                bottom = centre,
-            ),
-        ) { content(spec) }
+    val accent = MaterialTheme.colorScheme.primary
+    // A dark wash of the accent behind the list, like watchOS's app gradients.
+    Box(Modifier.fillMaxSize().drawBehind {
+        if (backdrop) drawRect(Brush.radialGradient(listOf(accent.copy(alpha = 0.18f), Color.Transparent), Offset(size.width / 2, size.height * 0.3f), size.maxDimension * 0.6f))
+    }) {
+        ScreenScaffold(state, scrollIndicator = { ScrollIndicatorUnlessCapturing(state) }) { padding ->
+            TransformingLazyColumn(
+                state = state,
+                contentPadding = PaddingValues(
+                    start = padding.calculateStartPadding(LayoutDirection.Ltr),
+                    top = padding.calculateTopPadding(),
+                    end = padding.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = centre,
+                ),
+            ) { content(spec) }
+        }
     }
 }
 
 /** Full width, with the item's height following the edge transformation. Surfaces also take `SurfaceTransformation(spec)`. */
 private fun TransformingLazyColumnItemScope.morph(spec: TransformationSpec) =
     Modifier.fillMaxWidth().transformedHeight(this, spec)
+
+/** A list's title: morphs at the edge like the rows, and keeps the top padding Material asks of a first header. */
+@Composable
+private fun TransformingLazyColumnItemScope.Header(spec: TransformationSpec, text: String) = ListHeader(
+    morph(spec).minimumVerticalContentPadding(ListHeaderDefaults.minimumTopListContentPadding),
+    transformation = SurfaceTransformation(spec),
+) { Text(text) }
+
+/** The default scroll indicator, hidden from long screenshots, where it would be frozen mid-list. */
+@Composable
+private fun ScrollIndicatorUnlessCapturing(state: TransformingLazyColumnState) {
+    if (!LocalScrollCaptureInProgress.current) ScrollIndicator(state)
+}
 
 /** [morph] for plain content that has no surface of its own. */
 private fun TransformingLazyColumnItemScope.morphContent(spec: TransformationSpec) =
@@ -388,7 +431,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
     val spec = rememberTransformationSpec()
     // ponytail: scrolls only on small screens, where the buttons sit below the fold; 220 dp is a guess, tune on a device.
     val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 220.dp
-    ScreenScaffold(state) { padding ->
+    ScreenScaffold(state, scrollIndicator = { ScrollIndicatorUnlessCapturing(state) }) { padding ->
         TransformingLazyColumn(state = state, contentPadding = padding, userScrollEnabled = compact, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
             // The last takeaway in the Tile's words, so the screen says something at a glance. Weight and size make the hierarchy, not a container.
             item {
@@ -411,9 +454,27 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
             // The one primary action, in the middle with the secondary actions below it.
             item {
                 val (press, pressScale) = rememberPressScale()
+                // From the watch's theme, like the rest of the app: primary into tertiary, the colour the ring turns at the target.
+                val colors = listOf(MaterialTheme.colorScheme.primaryDim, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+                // A slow drift of the gradient so Start feels alive. Read only in the draw phase, so it never recomposes;
+                // it stops by itself when the system's animation scale is 0.
+                val drift by rememberInfiniteTransition(label = "startGradient")
+                    .animateFloat(0f, 1f, infiniteRepeatable(tween(12000, easing = LinearEasing)), label = "drift")
                 Button(
                     ::start,
-                    morph(spec).then(pressScale).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f) },
+                    morph(spec).then(pressScale).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f) }
+                        .clip(CircleShape)
+                        .drawBehind {
+                            // Water: the colours flow one way, never reversing. Mirrored tiles repeat every two bands, so sliding
+                            // by exactly two ends where it began and the loop has no seam.
+                            val band = Offset(size.width, size.height * 0.6f)
+                            drawRect(Brush.linearGradient(colors, band * (2 * drift), band * (2 * drift + 1), TileMode.Mirror))
+                            // A soft light drifting on a looping figure-of-eight, at its own pace over the flow.
+                            val a = 2 * PI.toFloat() * drift
+                            val light = Offset(size.width * (0.5f + 0.3f * sin(a)), size.height * (0.5f + 0.25f * sin(2 * a)))
+                            drawRect(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.16f), Color.Transparent), light, size.width * 0.45f))
+                        },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onPrimary),
                     interactionSource = press,
                     transformation = SurfaceTransformation(spec),
                     icon = { Icon(painterResource(R.drawable.ic_wash), null) },
@@ -481,10 +542,22 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     val (press, pressScale) = rememberPressScale()
     // A dark wash of the ring's colour behind everything, like watchOS's app gradients; it brightens once the target is reached.
     val glow by animateFloatAsState(if (full) 0.32f else 0.18f, tween(300))
+    // The glow breathes while measuring, and swells over the last RAMP_S before the target so the ripple lands as a release.
+    // Stopped in ambient mode, where nothing here moves.
+    val breath = remember { Animatable(0.5f) }
+    LaunchedEffect(ambient) {
+        if (ambient) return@LaunchedEffect
+        while (true) {
+            breath.animateTo(1f, tween(2000, easing = FastOutSlowInEasing))
+            breath.animateTo(0f, tween(2000, easing = FastOutSlowInEasing))
+        }
+    }
     ScreenScaffold { padding ->
         Box(
             Modifier.fillMaxSize().onGloballyPositioned { screen = it }.drawBehind {
-                drawRect(Brush.radialGradient(listOf(ringColor.copy(alpha = glow * enter.value), Color.Transparent)))
+                val ramp = if (full) 0f else ((elapsedS - (RING_TARGET_S - GLOW_RAMP_S)) / GLOW_RAMP_S).coerceIn(0f, 1f)
+                val alpha = glow + (breath.value - 0.5f) * 0.08f + 0.08f * ramp
+                drawRect(Brush.radialGradient(listOf(ringColor.copy(alpha = alpha * enter.value), Color.Transparent)))
                 val r = ripple.value
                 if (r < 1f) {
                     val edge = size.minDimension / 2
@@ -493,7 +566,8 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
             },
             contentAlignment = Alignment.Center,
         ) {
-            // A 60° gap centred on 12 o'clock leaves TimeText clear.
+            // A 60° gap centred on 12 o'clock leaves TimeText clear, and one at 6 o'clock leaves Stop clear: two arcs,
+            // down the right then up the left, filled one after the other.
             // Drawn, not CircularProgressIndicator: that one restarts its own animation on every new value,
             // so fed every frame it never moves until the value stops changing at 100 %.
             if (ring) {
@@ -512,14 +586,10 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                             val s = lerp(BLOOM_FROM, 1f, p)
                             scale(s, s, centre)
                         }) {
-                            drawCircularProgressIndicator(
-                                progress = (elapsedS / RING_TARGET_S).coerceAtMost(1f),
-                                colors = colors,
-                                strokeWidth = stroke,
-                                startAngle = 300f,
-                                endAngle = 240f,
-                            )
-                        }
+                            val g = stopGapHalfDeg(stroke.toPx())
+                            val (right, left) = halves((elapsedS / RING_TARGET_S).coerceAtMost(1f))
+                            drawCircularProgressIndicator(right, colors, stroke, startAngle = 300f, endAngle = 90f - g)
+                            drawCircularProgressIndicator(left, colors, stroke, startAngle = 90f + g, endAngle = 240f)                        }
                     },
                 )
             }
@@ -540,16 +610,17 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                 )
                 if (status.timerOnly) Notice(stringResource(R.string.timer_only))
-                // Wide: wet, soapy fingers miss small targets. Answers the tap at once, before the Wash has finished saving.
-                // Tonal, so the countdown leads and Stop stays easy to hit.
-                FilledTonalButton(
-                    onClick = { stopping = true; WashService.stop(context) },
-                    modifier = Modifier.fillMaxWidth(0.8f).then(pressScale),
-                    enabled = !stopping,
-                    interactionSource = press,
-                    label = { Text(stringResource(if (stopping) R.string.stopping else R.string.stop_wash), Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-                )
             }
+            // An EdgeButton, wide and on the screen's edge: wet, soapy fingers miss small targets. Answers the tap at once,
+            // before the Wash has finished saving. Tonal, so the countdown leads and Stop stays easy to hit.
+            EdgeButton(
+                onClick = { stopping = true; WashService.stop(context) },
+                modifier = Modifier.align(Alignment.BottomCenter).graphicsLayer { alpha = enter.value }.then(pressScale),
+                buttonSize = EdgeButtonSize.Small,
+                enabled = !stopping,
+                colors = ButtonDefaults.filledTonalButtonColors(),
+                interactionSource = press,
+            ) { Text(stringResource(if (stopping) R.string.stopping else R.string.stop_wash)) }
         }
     }
 }
@@ -581,7 +652,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
                     .onGloballyPositioned { ring -> screen?.let { ringCentre = it.localBoundingBoxOf(ring).center } }
                     .graphicsLayer { alpha = morph.value })
             }
-            else item { ListHeader { Text(duration(wash.durationS)) } }
+            else item { Header(spec, duration(wash.durationS)) }
             when {
                 wash.modelVersion == null -> item { Notice(stringResource(R.string.timer_only), morphContent(spec)) }
                 !wash.coverageShown -> item { Notice(stringResource(R.string.too_short), morphContent(spec)) }
@@ -597,11 +668,13 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
                                 alpha = p
                                 translationY = (1 - p) * rise
                             }.padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(
-                                painterResource(STEP_ICONS[c.label - 1]), null,
-                                Modifier.size(20.dp).clearAndSetSemantics {},
-                                tint = if (c.status == StepStatus.OK) colors.primary else colors.onSurfaceVariant,
-                            )
+                            // A soft chip behind the glyph, tinted only when the Step looks covered; the words and the mark say the rest.
+                            Box(
+                                Modifier.size(32.dp).clip(CircleShape).background(if (c.status == StepStatus.OK) colors.primary.copy(alpha = 0.18f) else colors.surfaceContainer).clearAndSetSemantics {},
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(painterResource(STEP_ICONS[c.label - 1]), null, Modifier.size(20.dp), tint = if (c.status == StepStatus.OK) colors.primary else colors.onSurfaceVariant)
+                            }
                             Column {
                                 Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
                                 // The Status as a mark and in words, never colour alone (§4.1.10); the mark is read as the words.
@@ -634,11 +707,27 @@ private fun LiveRing(durationS: Float, morph: () -> Float, centre: () -> Offset)
         // Canvas space is inset by the padding; the target centre is in the screen's.
         val pad = CircularProgressIndicatorDefaults.FullScreenPadding.toPx()
         val c = lerp(center, centre().takeIf { it.isSpecified }?.minus(Offset(pad, pad)) ?: center, p)
-        drawArc(
-            color, 300f, 300f * (durationS / RING_TARGET_S).coerceAtMost(1f), false,
-            Offset(c.x - r, c.y - r), Size(2 * r, 2 * r), alpha = 1 - p, style = Stroke(stroke, cap = StrokeCap.Round),
-        )
+        val g = stopGapHalfDeg(liveStroke.toPx())
+        val (right, left) = halves((durationS / RING_TARGET_S).coerceAtMost(1f))
+        val style = Stroke(stroke, cap = StrokeCap.Round)
+        if (right > 0f) drawArc(color, 300f, (150f - g) * right, false, Offset(c.x - r, c.y - r), Size(2 * r, 2 * r), alpha = 1 - p, style = style)
+        if (left > 0f) drawArc(color, 90f + g, (150f - g) * left, false, Offset(c.x - r, c.y - r), Size(2 * r, 2 * r), alpha = 1 - p, style = style)
     }
+}
+
+/** The Wash ring's progress split over its two equal arcs: the right fills first, then the left. */
+private fun halves(progress: Float) = (progress * 2).coerceAtMost(1f) to (progress * 2 - 1).coerceIn(0f, 1f)
+
+/**
+ * Half the Wash ring's bottom gap, in degrees, for a ring drawn as WashScreen draws it (in a canvas inset by
+ * FullScreenPadding, [stroke] wide): where the stroke would reach the top of Stop, plus [STOP_CLEARANCE].
+ */
+private fun DrawScope.stopGapHalfDeg(stroke: Float): Float {
+    val r = size.minDimension / 2 - stroke / 2 // the arc's centre line
+    val screenR = size.minDimension / 2 + CircularProgressIndicatorDefaults.FullScreenPadding.toPx()
+    // Below this height, measured down from the centre, the stroke would touch the button.
+    val clear = screenR - (STOP_HEIGHT + STOP_CLEARANCE).toPx() - stroke / 2
+    return Math.toDegrees(acos((clear / r).coerceIn(-1f, 1f)).toDouble()).toFloat()
 }
 
 @Composable
@@ -646,13 +735,14 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
     val context = LocalContext.current
     val washes by remember { History.get(context).washes }.collectAsState()
     ListScreen { spec ->
-        item { ListHeader { Text(stringResource(R.string.history)) } }
+        item { Header(spec, stringResource(R.string.history)) }
         if (washes.isEmpty()) item { Notice(stringResource(R.string.history_empty), morphContent(spec)) }
         items(washes) { w ->
             FilledTonalButton(
                 onClick = { onOpen(w.id) },
                 modifier = morph(spec),
                 transformation = SurfaceTransformation(spec),
+                icon = if (w.coverageShown) ({ MiniRing(w.coverage, 28.dp, 3.dp) }) else null,
                 label = { Text(DateUtils.formatDateTime(context, w.startedAtEpochMs, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH)) },
                 secondaryLabel = { Text("${duration(w.durationS)} · ${hint(LocalContext.current.resources, w)}") },
             )
@@ -669,8 +759,8 @@ private fun SettingsScreen() {
     var haptics by remember { mutableStateOf(settings.haptics) }
     var ring by remember { mutableStateOf(settings.progressRing) }
     // Three settings, three rows, one screen: each row names the setting, and its current value, with an icon to scan by.
-    ListScreen { spec ->
-        item { ListHeader { Text(stringResource(R.string.settings)) } }
+    ListScreen(backdrop = false) { spec ->
+        item { Header(spec, stringResource(R.string.settings)) }
         // Two values, so a tap flips it and the row shows the new one: no dialog, and a second tap undoes it (§4.1.5).
         item {
             FilledTonalButton(
@@ -754,11 +844,11 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
 
 /** Start's small copy of [CoverageRing], so the last Wash reads at a glance in the app's one shape. */
 @Composable
-private fun MiniRing(coverage: List<StepCoverage>) {
+private fun MiniRing(coverage: List<StepCoverage>, size: Dp = MINI_RING_SIZE, stroke: Dp = MINI_RING_STROKE) {
     val colors = MaterialTheme.colorScheme
     val ink = ink(coverage)
-    Canvas(Modifier.size(MINI_RING_SIZE).clearAndSetSemantics {}) {
-        coverageArcs(coverage, MINI_RING_STROKE.toPx(), colors.surfaceContainer, ink)
+    Canvas(Modifier.size(size).clearAndSetSemantics {}) {
+        coverageArcs(coverage, stroke.toPx(), colors.surfaceContainer, ink)
     }
 }
 
@@ -826,3 +916,37 @@ private fun statusText(s: StepStatus) = when (s) {
     StepStatus.BRIEF -> R.string.status_brief
     StepStatus.NOT_DETECTED -> R.string.status_not_detected
 }
+
+/**
+ * Previews, in the app's theme and scaffold. Start is left out: it asks for a permission and loads the model.
+ * History and the Wash show their empty and idle states, as nothing is saved or running in a preview.
+ */
+@Composable
+private fun PreviewFrame(content: @Composable () -> Unit) = HapticWashTheme { AppScaffold { content() } }
+
+@WearPreviewDevices
+@WearPreviewFontScales
+@Composable
+private fun WashPreview() = PreviewFrame { WashScreen(onEnd = {}) }
+
+@WearPreviewDevices
+@WearPreviewFontScales
+@Composable
+private fun SettingsPreview() = PreviewFrame { SettingsScreen() }
+
+@WearPreviewDevices
+@Composable
+private fun HistoryPreview() = PreviewFrame { HistoryScreen(onOpen = {}) }
+
+@WearPreviewDevices
+@Composable
+private fun CoverageRingPreview() = PreviewFrame {
+    val statuses = listOf(StepStatus.OK, StepStatus.OK, StepStatus.BRIEF, StepStatus.NOT_DETECTED, StepStatus.OK)
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CoverageRing(statuses.mapIndexed { i, s -> StepCoverage(i + 1, 8f, s) }, { 1f }, Modifier.fillMaxWidth())
+    }
+}
+
+@WearPreviewDevices
+@Composable
+private fun AmbientPreview() = PreviewFrame { AmbientWash(shift = 0.dp) }
