@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.TileMode
@@ -184,6 +185,13 @@ internal const val RING_GAP_DEG = 14f
 /** Start's ring for the last Wash. */
 private val MINI_RING_SIZE = 40.dp
 private val MINI_RING_STROKE = 4.dp
+
+/** The stop symbol drawn at the centre while holding, and how much of the hold the countdown stays readable for. */
+private val STOP_MARK = 28.dp
+private const val SWAP_FROM = 0.3f
+
+/** How far the countdown has given way to the stop symbol at hold [h]: 0 until [SWAP_FROM], then eased to 1. */
+private fun swap(h: Float) = EaseOutStrong.transform(((h - SWAP_FROM) / (1 - SWAP_FROM)).coerceIn(0f, 1f))
 
 /** The Wash ring: one arc round the screen, leaving a 60° gap at 12 o'clock for TimeText. */
 private const val RING_START_DEG = 300f
@@ -553,6 +561,7 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     val hold = remember { Animatable(0f) }
     val hint = remember { Animatable(1f) }
     LaunchedEffect(Unit) { delay(HINT_MS); hint.animateTo(0f, tween(400)) }
+    val stopInk = MaterialTheme.colorScheme.error
     val scope = rememberCoroutineScope()
     val feedback = LocalHapticFeedback.current
     fun stop() { stopping = true; WashService.stop(context) }
@@ -589,7 +598,8 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 }.drawBehind {
                 val ramp = if (full) 0f else ((elapsedS - (RING_TARGET_S - GLOW_RAMP_S)) / GLOW_RAMP_S).coerceIn(0f, 1f)
                 val alpha = glow + (breath.value - 0.5f) * 0.08f + 0.08f * ramp
-                drawRect(Brush.radialGradient(listOf(ringColor.copy(alpha = alpha * enter.value), Color.Transparent)))
+                // The whole screen warms toward the stop colour as the hold fills.
+                drawRect(Brush.radialGradient(listOf(androidx.compose.ui.graphics.lerp(ringColor, stopInk, hold.value).copy(alpha = alpha * enter.value), Color.Transparent)))
                 val r = ripple.value
                 if (r < 1f) {
                     val edge = size.minDimension / 2
@@ -623,18 +633,26 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                     },
                 )
             }
-            // Hold to stop: a second pass round the ring in a contrasting ink. Drawn even with the progress ring off.
-            val holdInk = MaterialTheme.colorScheme.onSurface
+            // Hold to stop: the same ring, drawn the same way, filling a second time in the stop colour, so it reads as
+            // the ring turning into "end" rather than a new bar. Drawn even with the progress ring off.
+            val holdColors = ProgressIndicatorDefaults.colors(indicatorColor = stopInk, trackColor = Color.Transparent)
             val holdStroke = CircularProgressIndicatorDefaults.largeStrokeWidth
-            Spacer(Modifier.fillMaxSize().drawBehind {
+            Spacer(Modifier.fillMaxSize().padding(CircularProgressIndicatorDefaults.FullScreenPadding).drawBehind {
                 val h = hold.value
                 if (h <= 0f) return@drawBehind
-                val stroke = holdStroke.toPx()
-                val inset = CircularProgressIndicatorDefaults.FullScreenPadding.toPx() + stroke / 2
-                drawArc(holdInk, RING_START_DEG, RING_SWEEP_DEG * h, false, Offset(inset, inset), Size(size.width - 2 * inset, size.height - 2 * inset), alpha = 0.9f, style = Stroke(stroke, cap = StrokeCap.Round))
+                drawCircularProgressIndicator(h, holdColors, holdStroke, startAngle = RING_START_DEG, endAngle = RING_START_DEG + RING_SWEEP_DEG)
+                // The stop symbol grows in at the centre as the countdown gives way to it.
+                val side = STOP_MARK.toPx() * lerp(0.6f, 1f, swap(h))
+                drawRoundRect(stopInk, center - Offset(side / 2, side / 2), Size(side, side), CornerRadius(side * 0.22f), alpha = swap(h))
             })
             Column(
-                Modifier.graphicsLayer { val p = enter.value; alpha = p; scaleX = lerp(0.9f, 1f, p); scaleY = scaleX }.padding(padding),
+                Modifier.graphicsLayer {
+                    val p = enter.value
+                    val s = swap(hold.value)
+                    alpha = p * (1 - s)
+                    scaleX = lerp(0.9f, 1f, p) * (1 - 0.1f * s)
+                    scaleY = scaleX
+                }.padding(padding),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
