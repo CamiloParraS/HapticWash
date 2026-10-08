@@ -599,7 +599,10 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                 val ramp = if (full) 0f else ((elapsedS - (RING_TARGET_S - GLOW_RAMP_S)) / GLOW_RAMP_S).coerceIn(0f, 1f)
                 val alpha = glow + (breath.value - 0.5f) * 0.08f + 0.08f * ramp
                 // The whole screen warms toward the stop colour as the hold fills.
-                drawRect(Brush.radialGradient(listOf(androidx.compose.ui.graphics.lerp(ringColor, stopInk, hold.value).copy(alpha = alpha * enter.value), Color.Transparent)))
+                // Fully the stop colour by half way, and brighter than the Wash's own glow, so the change is seen from a glance.
+                val h = hold.value
+                val shift = EaseOutStrong.transform((h * 2).coerceAtMost(1f))
+                drawRect(Brush.radialGradient(listOf(androidx.compose.ui.graphics.lerp(ringColor, stopInk, shift).copy(alpha = (alpha + 0.3f * h) * enter.value), Color.Transparent)))
                 val r = ripple.value
                 if (r < 1f) {
                     val edge = size.minDimension / 2
