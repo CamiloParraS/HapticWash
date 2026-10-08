@@ -119,9 +119,14 @@ import androidx.wear.compose.material3.FilledTonalIconButton
 import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.ListHeader
 import androidx.wear.compose.material3.ListHeaderDefaults
-import androidx.wear.compose.material3.EdgeButton
-import androidx.wear.compose.material3.EdgeButtonSize
-import kotlin.math.acos
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.onLongClick
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScrollIndicator
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnState
@@ -180,10 +185,14 @@ internal const val RING_GAP_DEG = 14f
 private val MINI_RING_SIZE = 40.dp
 private val MINI_RING_STROKE = 4.dp
 
-/** Stop's EdgeButton: [EdgeButtonSize.Small]'s 56 dp and the 3 dp it keeps below itself. The Wash ring opens around it. */
-private val STOP_HEIGHT = 59.dp
-// ponytail: guessed margin between the ring's caps and Stop; tune on a device.
-private val STOP_CLEARANCE = 4.dp
+/** The Wash ring: one arc round the screen, leaving a 60° gap at 12 o'clock for TimeText. */
+private const val RING_START_DEG = 300f
+private const val RING_SWEEP_DEG = 300f
+
+/** Stop is a hold anywhere on the Wash screen: the sweep takes [HOLD_MS], and the "Hold to stop" hint stays [HINT_MS]. */
+// ponytail: 700 ms is a guess; tune with wet hands on a device.
+private const val HOLD_MS = 700
+private const val HINT_MS = 3000L
 
 /** Start → Wash: the ring blooms from the Start button, from this fraction of its size up to 1. */
 private const val BLOOM_FROM = 0.2f
@@ -539,7 +548,14 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
         ripple.animateTo(1f, tween(RIPPLE_MS, easing = EaseOutStrong))
     }
     val ringColor by animateColorAsState(if (full) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, tween(300))
-    val (press, pressScale) = rememberPressScale()
+    // Hold anywhere to stop (0 = not held, 1 = committed). Wet, soapy fingers miss a button, and a hold survives water
+    // on the glass. Press responds at once; the sweep is linear while the user decides, and release snaps back fast.
+    val hold = remember { Animatable(0f) }
+    val hint = remember { Animatable(1f) }
+    LaunchedEffect(Unit) { delay(HINT_MS); hint.animateTo(0f, tween(400)) }
+    val scope = rememberCoroutineScope()
+    val feedback = LocalHapticFeedback.current
+    fun stop() { stopping = true; WashService.stop(context) }
     // A dark wash of the ring's colour behind everything, like watchOS's app gradients; it brightens once the target is reached.
     val glow by animateFloatAsState(if (full) 0.32f else 0.18f, tween(300))
     // The glow breathes while measuring, and swells over the last RAMP_S before the target so the ripple lands as a release.
@@ -554,7 +570,23 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
     }
     ScreenScaffold { padding ->
         Box(
-            Modifier.fillMaxSize().onGloballyPositioned { screen = it }.drawBehind {
+            Modifier.fillMaxSize().onGloballyPositioned { screen = it }
+                .semantics { onLongClick(label = context.getString(R.string.stop_wash)) { if (!stopping) stop(); true } }
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown()
+                        if (stopping) return@awaitEachGesture
+                        scope.launch {
+                            hint.snapTo(0f)
+                            hold.animateTo(1f, tween(HOLD_MS, easing = LinearEasing))
+                            feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            stop()
+                        }
+                        waitForUpOrCancellation()
+                        // A new animateTo cancels the sweep in flight; once committed there is nothing to undo.
+                        if (!stopping && hold.value < 1f) scope.launch { hold.animateTo(0f, tween(200, easing = EaseOutStrong)) }
+                    }
+                }.drawBehind {
                 val ramp = if (full) 0f else ((elapsedS - (RING_TARGET_S - GLOW_RAMP_S)) / GLOW_RAMP_S).coerceIn(0f, 1f)
                 val alpha = glow + (breath.value - 0.5f) * 0.08f + 0.08f * ramp
                 drawRect(Brush.radialGradient(listOf(ringColor.copy(alpha = alpha * enter.value), Color.Transparent)))
@@ -586,13 +618,21 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                             val s = lerp(BLOOM_FROM, 1f, p)
                             scale(s, s, centre)
                         }) {
-                            val g = stopGapHalfDeg(stroke.toPx())
-                            val (right, left) = halves((elapsedS / RING_TARGET_S).coerceAtMost(1f))
-                            drawCircularProgressIndicator(right, colors, stroke, startAngle = 300f, endAngle = 90f - g)
-                            drawCircularProgressIndicator(left, colors, stroke, startAngle = 90f + g, endAngle = 240f)                        }
+                            drawCircularProgressIndicator((elapsedS / RING_TARGET_S).coerceAtMost(1f), colors, stroke, startAngle = RING_START_DEG, endAngle = RING_START_DEG + RING_SWEEP_DEG)
+                        }
                     },
                 )
             }
+            // Hold to stop: a second pass round the ring in a contrasting ink. Drawn even with the progress ring off.
+            val holdInk = MaterialTheme.colorScheme.onSurface
+            val holdStroke = CircularProgressIndicatorDefaults.largeStrokeWidth
+            Spacer(Modifier.fillMaxSize().drawBehind {
+                val h = hold.value
+                if (h <= 0f) return@drawBehind
+                val stroke = holdStroke.toPx()
+                val inset = CircularProgressIndicatorDefaults.FullScreenPadding.toPx() + stroke / 2
+                drawArc(holdInk, RING_START_DEG, RING_SWEEP_DEG * h, false, Offset(inset, inset), Size(size.width - 2 * inset, size.height - 2 * inset), alpha = 0.9f, style = Stroke(stroke, cap = StrokeCap.Round))
+            })
             Column(
                 Modifier.graphicsLayer { val p = enter.value; alpha = p; scaleX = lerp(0.9f, 1f, p); scaleY = scaleX }.padding(padding),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -610,17 +650,14 @@ private fun WashScreen(onEnd: (Long) -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                 )
                 if (status.timerOnly) Notice(stringResource(R.string.timer_only))
+                // Said once, then gone: the whole screen is the Stop target. "Stopping…" replaces it at once on commit.
+                Text(
+                    stringResource(if (stopping) R.string.stopping else R.string.hold_to_stop),
+                    Modifier.graphicsLayer { alpha = if (stopping) 1f else hint.value },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall,
+                )
             }
-            // An EdgeButton, wide and on the screen's edge: wet, soapy fingers miss small targets. Answers the tap at once,
-            // before the Wash has finished saving. Tonal, so the countdown leads and Stop stays easy to hit.
-            EdgeButton(
-                onClick = { stopping = true; WashService.stop(context) },
-                modifier = Modifier.align(Alignment.BottomCenter).graphicsLayer { alpha = enter.value }.then(pressScale),
-                buttonSize = EdgeButtonSize.Small,
-                enabled = !stopping,
-                colors = ButtonDefaults.filledTonalButtonColors(),
-                interactionSource = press,
-            ) { Text(stringResource(if (stopping) R.string.stopping else R.string.stop_wash)) }
         }
     }
 }
@@ -707,27 +744,9 @@ private fun LiveRing(durationS: Float, morph: () -> Float, centre: () -> Offset)
         // Canvas space is inset by the padding; the target centre is in the screen's.
         val pad = CircularProgressIndicatorDefaults.FullScreenPadding.toPx()
         val c = lerp(center, centre().takeIf { it.isSpecified }?.minus(Offset(pad, pad)) ?: center, p)
-        val g = stopGapHalfDeg(liveStroke.toPx())
-        val (right, left) = halves((durationS / RING_TARGET_S).coerceAtMost(1f))
-        val style = Stroke(stroke, cap = StrokeCap.Round)
-        if (right > 0f) drawArc(color, 300f, (150f - g) * right, false, Offset(c.x - r, c.y - r), Size(2 * r, 2 * r), alpha = 1 - p, style = style)
-        if (left > 0f) drawArc(color, 90f + g, (150f - g) * left, false, Offset(c.x - r, c.y - r), Size(2 * r, 2 * r), alpha = 1 - p, style = style)
+        val progress = (durationS / RING_TARGET_S).coerceAtMost(1f)
+        if (progress > 0f) drawArc(color, RING_START_DEG, RING_SWEEP_DEG * progress, false, Offset(c.x - r, c.y - r), Size(2 * r, 2 * r), alpha = 1 - p, style = Stroke(stroke, cap = StrokeCap.Round))
     }
-}
-
-/** The Wash ring's progress split over its two equal arcs: the right fills first, then the left. */
-private fun halves(progress: Float) = (progress * 2).coerceAtMost(1f) to (progress * 2 - 1).coerceIn(0f, 1f)
-
-/**
- * Half the Wash ring's bottom gap, in degrees, for a ring drawn as WashScreen draws it (in a canvas inset by
- * FullScreenPadding, [stroke] wide): where the stroke would reach the top of Stop, plus [STOP_CLEARANCE].
- */
-private fun DrawScope.stopGapHalfDeg(stroke: Float): Float {
-    val r = size.minDimension / 2 - stroke / 2 // the arc's centre line
-    val screenR = size.minDimension / 2 + CircularProgressIndicatorDefaults.FullScreenPadding.toPx()
-    // Below this height, measured down from the centre, the stroke would touch the button.
-    val clear = screenR - (STOP_HEIGHT + STOP_CLEARANCE).toPx() - stroke / 2
-    return Math.toDegrees(acos((clear / r).coerceIn(-1f, 1f)).toDouble()).toFloat()
 }
 
 @Composable

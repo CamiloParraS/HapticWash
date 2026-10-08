@@ -3,6 +3,7 @@
     <string name="start_wash">Start wash</string>
     <string name="stop_wash">Stop</string>
     <string name="stopping">Stopping…</string>
+    <string name="hold_to_stop">Hold to stop</string>
     <string name="washed_for">Washed for %1$s</string>
     <!-- When all five Steps look covered. Warm, still an estimate (§4.1.9). -->
     <string name="washed_for_all">Nice work. Washed for %1$s</string>
