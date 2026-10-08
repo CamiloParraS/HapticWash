@@ -420,6 +420,16 @@ private fun ListScreen(backdrop: Boolean = true, content: TransformingLazyColumn
     }
 }
 
+/** Start's entrance plays once per process: coming back from History or Settings shows it settled. */
+private object StartEntrance { var played = false }
+
+/** Row [i] of Start fades and rises with the Summary's stagger, driven by [entrance] (0..1 over [ENTRANCE_MS]). */
+private fun Modifier.rise(entrance: () -> Float, i: Int) = graphicsLayer {
+    val p = staggered(entrance(), i)
+    alpha = p
+    translationY = (1 - p) * 8.dp.toPx()
+}
+
 /** A dark wash of [accent] behind a screen, like watchOS's app gradients. */
 private fun Modifier.accentGlow(accent: Color) = drawBehind {
     drawRect(Brush.radialGradient(listOf(accent.copy(alpha = 0.18f), Color.Transparent), Offset(size.width / 2, size.height * 0.3f), size.maxDimension * 0.6f))
@@ -472,6 +482,11 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
         // Loads the model off the main thread; also the release smoke check's log line.
         timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
     }
+    val entrance = remember { Animatable(if (StartEntrance.played) 1f else 0f) }
+    LaunchedEffect(Unit) {
+        StartEntrance.played = true
+        entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing))
+    }
     val state = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
     // ponytail: scrolls only on small screens, where the buttons sit below the fold; 220 dp is a guess, tune on a device.
@@ -488,7 +503,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                 val last = washes.firstOrNull()
                 val label = last?.let { lastWashLabel(context, it) }
                 val sentence = last?.let { hint(context.resources, it) } ?: stringResource(R.string.history_empty)
-                Column(morphContent(spec).clearAndSetSemantics { contentDescription = listOfNotNull(label, sentence).joinToString(". ") }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(morphContent(spec).rise({ entrance.value }, 0).clearAndSetSemantics { contentDescription = listOfNotNull(label, sentence).joinToString(". ") }, horizontalAlignment = Alignment.CenterHorizontally) {
                     if (last?.coverageShown == true) {
                         Box(contentAlignment = Alignment.Center) {
                             MiniRing(last.coverage, START_RING_SIZE, START_RING_STROKE, MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -513,7 +528,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                     .animateFloat(0f, 1f, infiniteRepeatable(tween(12000, easing = LinearEasing)), label = "drift")
                 Button(
                     ::start,
-                    morph(spec).then(pressScale).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f); StartOrigin.size = it.size }
+                    morph(spec).rise({ entrance.value }, 1).then(pressScale).onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f); StartOrigin.size = it.size }
                         .clip(CircleShape)
                         .drawBehind {
                             // Water: the colours flow one way, never reversing. Mirrored tiles repeat every two bands, so sliding
@@ -535,7 +550,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
             // Rarely needed, so small and secondary to Start; 48 dp targets (§4.1.3).
             // Not edge-scaled: this low on the screen the transformation would shrink them below 48 dp.
             item {
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+                Row(Modifier.fillMaxWidth().rise({ entrance.value }, 2).padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
                     FilledTonalIconButton(onHistory, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
                     FilledTonalIconButton(onSettings, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
                 }
