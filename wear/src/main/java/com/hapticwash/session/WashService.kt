@@ -51,7 +51,6 @@ class WashService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var job: Job? = null
     private var listenJob: Job? = null
-    private var wakeLock: PowerManager.WakeLock? = null
 
     private val washing get() = job?.isActive == true
 
@@ -85,7 +84,8 @@ class WashService : Service() {
     private fun wash(replay: String?, speed: Float, wristExtra: String?, persist: Boolean) {
         listenJob?.cancel()
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(R.string.session_running))
-        wakeLock = getSystemService(PowerManager::class.java)
+        // Local, so a cancelled Wash still in its finally can't release the next Wash's lock.
+        val wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "HapticWash:session")
             .apply { acquire(MAX_SESSION_MS) }
         job = scope.launch {
@@ -98,7 +98,7 @@ class WashService : Service() {
             } catch (e: Exception) {
                 Log.e(TAG, "Session failed", e)
             } finally {
-                wakeLock?.takeIf { it.isHeld }?.release()
+                wakeLock.takeIf { it.isHeld }?.release()
                 _status.value = WashStatus()
                 scope.launch(Dispatchers.Main) { idle() } // job and listenJob change on the main thread only
             }
@@ -133,7 +133,10 @@ class WashService : Service() {
     }
 
     /** Between Washes: listen if Twist start is on, otherwise stop, holding nothing. */
-    private fun idle() = if (Settings(this).twistStart) listen(null) else stop()
+    private fun idle() {
+        if (washing) return // a Start landed before this ran; that Wash calls idle() when it ends
+        if (Settings(this).twistStart) listen(null) else stop()
+    }
 
     private fun stop() {
         stopForeground(STOP_FOREGROUND_REMOVE)

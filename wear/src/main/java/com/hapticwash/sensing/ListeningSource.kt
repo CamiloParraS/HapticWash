@@ -40,7 +40,8 @@ class ListeningSource(context: Context) : MotionSource {
             override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) = Unit
         }
         sm.registerListener(listener, gyr, PERIOD_US, LATENCY_US)
-        waker?.let { sm.registerListener(listener, it, PERIOD_US, LATENCY_US) }
+        // Its samples are thrown away: only its flushes matter, so its slowest rate.
+        waker?.let { sm.registerListener(listener, it, maxOf(it.maxDelay, PERIOD_US), LATENCY_US) }
         awaitClose { sm.unregisterListener(listener) }
     }.buffer(Channel.UNLIMITED) // a batch arrives at once; keep all of it
 

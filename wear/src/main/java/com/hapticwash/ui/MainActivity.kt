@@ -291,6 +291,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) takeStart(intent)
+        // ponytail: opening the app restarts Twist start's listening after a process kill or a sensor failure;
+        // reboot and kill with the app closed are ticket 05.
+        if (Settings(this).twistStart) WashService.listen(this)
         addOnNewIntentListener(::takeStart)
         lifecycleScope.launch { WashService.status.map { it.running }.distinctUntilChanged().collect(::watchAmbient) }
         setContent { HapticWashTheme { AppScaffold { App({ startRequests }, { openRequest }, { openRequest = null }, { ambient }) } } }
@@ -977,6 +980,11 @@ private fun SettingsScreen() {
     var ring by remember { mutableStateOf(settings.progressRing) }
     var twist by remember { mutableStateOf(settings.twistStart) }
     var warn by remember { mutableStateOf(false) }
+    fun setTwist(on: Boolean) {
+        twist = on
+        settings.twistStart = on
+        if (on) WashService.listen(context) else WashService.unlisten(context)
+    }
     // One row per setting: each row names the setting, and its current value, with an icon to scan by.
     ListScreen(backdrop = false) { spec ->
         item { Header(spec, stringResource(R.string.settings)) }
@@ -1001,7 +1009,7 @@ private fun SettingsScreen() {
         }
         // Turning it on asks first (§4.1 item 8); turning it off doesn't.
         item {
-            SwitchButton(twist, { on -> if (on) warn = true else { twist = false; settings.twistStart = false; WashService.unlisten(context) } },
+            SwitchButton(twist, { on -> if (on) warn = true else setTwist(false) },
                 morph(spec), transformation = SurfaceTransformation(spec),
                 icon = { Icon(painterResource(R.drawable.ic_wash), contentDescription = null) }, label = { Text(stringResource(R.string.twist_start)) })
         }
@@ -1014,7 +1022,7 @@ private fun SettingsScreen() {
         onDismissRequest = { warn = false },
         title = { Text(stringResource(R.string.twist_warning_title)) },
         text = { Text(stringResource(R.string.twist_warning)) },
-        confirmButton = { AlertDialogDefaults.ConfirmButton({ warn = false; twist = true; settings.twistStart = true; WashService.listen(context) }) },
+        confirmButton = { AlertDialogDefaults.ConfirmButton({ warn = false; setTwist(true) }) },
         dismissButton = { AlertDialogDefaults.DismissButton({ warn = false }) },
     )
 }

@@ -43,15 +43,19 @@ class TwistDetectorTest {
     @Test fun silentDuringRefractoryThenFiresAgain() = assertEquals(2, fires(1f, *twists(1.0, 1.4, 1.8, 6.0, 6.4, 6.8)))
 
     // Held-out uwash segments with the highest roll (6 s each, 12 segments): hand washing is not a Twist.
-    @Test fun washingSegmentsDoNotFire() {
+    @Test fun washingSegmentsDoNotFire() = assertEquals(0, washingFires(1))
+
+    // Every other row: the 25 Hz Twist start listens at.
+    @Test fun washingSegmentsDoNotFireAtTheListeningRate() = assertEquals(0, washingFires(2))
+
+    private fun washingFires(every: Int): Int {
         val rows = javaClass.getResourceAsStream("/uwash_high_roll.csv")!!.bufferedReader().readLines().drop(1)
-        val fired = rows.chunked(300).sumOf { segment ->
+        return rows.chunked(300).sumOf { segment ->
             val d = TwistDetector()
-            segment.count {
+            segment.filterIndexed { i, _ -> i % every == 0 }.count {
                 val (ts, gy) = it.split(',')
                 d.push(MotionSample(ts.toLong(), 0f, 0f, 0f, 0f, gy.toFloat(), 0f))
             }
         }
-        assertEquals(0, fired)
     }
 }
