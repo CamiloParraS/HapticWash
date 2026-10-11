@@ -296,9 +296,12 @@ exit that I found.
   timer-only mode". Washes are timed (16 s) and stored, with one non-blocking notice on
   Start, In-progress and Summary. No Coverage is shown and nothing crashes.
 - **Cold start (§4.3), release build** (`scripts/release_smoke.sh`, then `am start -W`
-  after `force-stop`): 374, 355, 389, 346, 389, 429 ms. Median ≈ 380 ms against the 1.5 s
-  budget. Model load is off first composition. The 1.84 s in `reports/M4_replay.md` is a
-  debug build. Indicative only (emulator).
+  after `force-stop`), re-measured 2026-10-11 at 1002c2f on `Wear_OS_Small_Round`: 477, 462,
+  452, 541, 522, 443 ms. Median ≈ 470 ms against the 1.5 s budget (was ≈ 380 ms on
+  2026-09-30, before the Start redesign). TotalTime is first frame; the Start button takes
+  taps from then, and its entrance fade ends 240 ms later, so ≈ 710 ms to fully shown.
+  Model load is off first composition. The 1.84 s in `reports/M4_replay.md` is a debug
+  build. Indicative only (emulator).
 - **Heap (§4.3).** See `reports/M4_replay.md`: about 22 MB of Java + native PSS
   mid-replay, within 40 MB.
 
