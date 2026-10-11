@@ -59,4 +59,8 @@
     <string name="applies_next_wash">Se aplicará en el próximo lavado</string>
     <string name="haptics">Vibración</string>
     <string name="progress_ring">Anillo de progreso</string>
+    <string name="twist_start">Empezar con un giro</string>
+    <string name="twist_warning_title">Gasta más batería</string>
+    <string name="twist_warning">El reloj espera un giro todo el día, así que la batería dura menos.</string>
+    <string name="twist_listening">Esperando un giro</string>
 </resources>

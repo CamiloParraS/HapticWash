@@ -3,7 +3,9 @@
 
     <!-- No INTERNET, ever (SPEC 4.2 R1). ManifestTest checks the merged manifest. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <!-- Only qualifies the health service type (D32): install-time, no prompt; never sampled above 50 Hz. -->
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -80,7 +82,7 @@
         <service
             android:name=".session.WashService"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="health" />
     </application>
 
 </manifest>

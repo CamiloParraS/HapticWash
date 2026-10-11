@@ -13,9 +13,11 @@ import android.util.Log
 import com.hapticwash.R
 import com.hapticwash.inference.StepModel
 import com.hapticwash.pipeline.Preprocessor
+import com.hapticwash.sensing.ListeningSource
 import com.hapticwash.sensing.MotionSource
 import com.hapticwash.sensing.RealSensorSource
 import com.hapticwash.sensing.ReplaySource
+import com.hapticwash.sensing.TwistDetector
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +31,7 @@ import com.hapticwash.ui.WashComplicationService
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 /** What the In-progress screen shows. Never a Step: the app doesn't direct the Wash live. */
@@ -39,28 +42,49 @@ data class WashStatus(
 )
 
 /**
- * One wash session as a foreground service (type dataSync): motion source -> preprocessor ->
+ * One wash session as a foreground service (type health, D32): motion source -> preprocessor ->
  * step model, one prediction per window. Sensors run only while a session runs (§4.1 item 8);
- * a partial wake lock keeps them delivering with the screen off.
+ * a partial wake lock keeps them delivering with the screen off. With Twist start on, the same
+ * service listens between Washes, so a Twist starts its Wash in-process, never by a background start.
  */
 class WashService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var job: Job? = null
+    private var listenJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
+
+    private val washing get() = job?.isActive == true
 
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
-            job?.cancel() ?: stopSelf()
-            return START_NOT_STICKY
+        when (intent?.action) {
+            ACTION_STOP -> job?.cancel() ?: run { if (listenJob?.isActive != true) stopSelf() }
+            ACTION_LISTEN -> {
+                startForeground(NOTIFICATION_ID, notification(if (washing) R.string.session_running else R.string.twist_listening), TYPE)
+                if (!washing) listen(intent.getStringExtra(EXTRA_REPLAY_PATH))
+            }
+            ACTION_UNLISTEN -> {
+                listenJob?.cancel()
+                if (!washing) idle()
+            }
+            else -> {
+                startForeground(NOTIFICATION_ID, notification(R.string.session_running), TYPE)
+                if (!washing) wash(
+                    intent?.getStringExtra(EXTRA_REPLAY_PATH),
+                    intent?.getFloatExtra(EXTRA_SPEED, 1f) ?: 1f,
+                    intent?.getStringExtra(EXTRA_WRIST),
+                    intent?.getBooleanExtra(EXTRA_PERSIST, false) == true,
+                )
+            }
         }
-        startForeground(1, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        if (job?.isActive == true) return START_NOT_STICKY
-        val replay = intent?.getStringExtra(EXTRA_REPLAY_PATH)
-        val speed = intent?.getFloatExtra(EXTRA_SPEED, 1f) ?: 1f
-        val wristExtra = intent?.getStringExtra(EXTRA_WRIST)
-        val persist = intent?.getBooleanExtra(EXTRA_PERSIST, false) == true
+        return START_NOT_STICKY
+    }
+
+    /** Starts a Wash; a tap on Start and a Twist both end up here. Listening pauses until it ends. */
+    private fun wash(replay: String?, speed: Float, wristExtra: String?, persist: Boolean) {
+        listenJob?.cancel()
+        getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(R.string.session_running))
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "HapticWash:session")
             .apply { acquire(MAX_SESSION_MS) }
@@ -76,11 +100,44 @@ class WashService : Service() {
             } finally {
                 wakeLock?.takeIf { it.isHeld }?.release()
                 _status.value = WashStatus()
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
+                scope.launch(Dispatchers.Main) { idle() } // job and listenJob change on the main thread only
             }
         }
-        return START_NOT_STICKY
+    }
+
+    /**
+     * Twist start: runs [TwistDetector] over the listening sensors, or over a replayed CSV (debug builds,
+     * [replay]), until a Twist starts a Wash. No wake lock (D32).
+     */
+    private fun listen(replay: String?) {
+        listenJob?.cancel()
+        getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(R.string.twist_listening))
+        listenJob = scope.launch(Dispatchers.Main) { // a few samples a second; on main so wash() runs there
+            val detector = TwistDetector()
+            val source = if (replay != null) ReplaySource(File(replay)) else ListeningSource(this@WashService)
+            Log.i(TAG, "Listening for a Twist: source=${if (replay != null) "replay" else "sensor"}")
+            val twist = try {
+                source.stream().firstOrNull { detector.push(it) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Listening failed", e)
+                null
+            }
+            when {
+                twist != null -> { Log.i(TAG, "Twist: starting a Wash"); wash(null, 1f, null, false) }
+                replay != null -> idle() // the replay ran out with no Twist
+                else -> stop() // the sensors failed; retrying would only fail again
+            }
+        }
+    }
+
+    /** Between Washes: listen if Twist start is on, otherwise stop, holding nothing. */
+    private fun idle() = if (Settings(this).twistStart) listen(null) else stop()
+
+    private fun stop() {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     override fun onDestroy() {
@@ -165,14 +222,14 @@ class WashService : Service() {
         }
     }
 
-    private fun notification(): Notification {
+    private fun notification(text: Int): Notification {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, getString(R.string.channel_session), NotificationManager.IMPORTANCE_LOW),
         )
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.splash_icon)
-            .setContentTitle(getString(R.string.session_running))
+            .setContentTitle(getString(text))
             .setOngoing(true)
             .build()
     }
@@ -183,6 +240,10 @@ class WashService : Service() {
     companion object {
         const val TAG = "HapticWash"
         private const val ACTION_STOP = "com.hapticwash.STOP"
+        private const val ACTION_LISTEN = "com.hapticwash.LISTEN"
+        private const val ACTION_UNLISTEN = "com.hapticwash.UNLISTEN"
+        private const val NOTIFICATION_ID = 1
+        private const val TYPE = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
         private const val EXTRA_REPLAY_PATH = "replay_path"
         private const val EXTRA_SPEED = "speed"
         private const val EXTRA_WRIST = "wrist"
@@ -216,5 +277,14 @@ class WashService : Service() {
 
         fun stop(context: Context) =
             context.startService(Intent(context, WashService::class.java).setAction(ACTION_STOP))
+
+        /** Twist start turned on: listen between Washes. [replay] (debug builds) feeds a CSV to the listener instead of the sensors. */
+        fun listen(context: Context, replay: String? = null) = context.startForegroundService(
+            Intent(context, WashService::class.java).setAction(ACTION_LISTEN).putExtra(EXTRA_REPLAY_PATH, replay),
+        )
+
+        /** Twist start turned off: stop listening; a running Wash carries on. */
+        fun unlisten(context: Context) =
+            context.startService(Intent(context, WashService::class.java).setAction(ACTION_UNLISTEN))
     }
 }

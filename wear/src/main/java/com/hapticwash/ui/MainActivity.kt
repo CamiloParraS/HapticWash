@@ -112,6 +112,8 @@ import androidx.wear.compose.foundation.lazy.TransformingLazyColumnItemScope
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnScope
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import androidx.wear.compose.material3.AlertDialog
+import androidx.wear.compose.material3.AlertDialogDefaults
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
@@ -973,7 +975,9 @@ private fun SettingsScreen() {
     var wrist by remember { mutableStateOf(settings.wrist) }
     var haptics by remember { mutableStateOf(settings.haptics) }
     var ring by remember { mutableStateOf(settings.progressRing) }
-    // Three settings, three rows, one screen: each row names the setting, and its current value, with an icon to scan by.
+    var twist by remember { mutableStateOf(settings.twistStart) }
+    var warn by remember { mutableStateOf(false) }
+    // One row per setting: each row names the setting, and its current value, with an icon to scan by.
     ListScreen(backdrop = false) { spec ->
         item { Header(spec, stringResource(R.string.settings)) }
         // Two values, so a tap flips it and the row shows the new one: no dialog, and a second tap undoes it (§4.1.5).
@@ -995,9 +999,24 @@ private fun SettingsScreen() {
             SwitchButton(ring, { ring = it; settings.progressRing = it }, morph(spec), transformation = SurfaceTransformation(spec),
                 icon = { Icon(painterResource(R.drawable.ic_ring), contentDescription = null) }, label = { Text(stringResource(R.string.progress_ring)) })
         }
+        // Turning it on asks first (§4.1 item 8); turning it off doesn't.
+        item {
+            SwitchButton(twist, { on -> if (on) warn = true else { twist = false; settings.twistStart = false; WashService.unlisten(context) } },
+                morph(spec), transformation = SurfaceTransformation(spec),
+                icon = { Icon(painterResource(R.drawable.ic_wash), contentDescription = null) }, label = { Text(stringResource(R.string.twist_start)) })
+        }
         // Only said when it matters: Wrist side and the ring are read at Wash start.
         if (status.running) item { Notice(stringResource(R.string.applies_next_wash), morphContent(spec)) }
     }
+    // The battery warning: one screen, turn on or leave off. Dismissing leaves it off.
+    AlertDialog(
+        visible = warn,
+        onDismissRequest = { warn = false },
+        title = { Text(stringResource(R.string.twist_warning_title)) },
+        text = { Text(stringResource(R.string.twist_warning)) },
+        confirmButton = { AlertDialogDefaults.ConfirmButton({ warn = false; twist = true; settings.twistStart = true; WashService.listen(context) }) },
+        dismissButton = { AlertDialogDefaults.DismissButton({ warn = false }) },
+    )
 }
 
 /** Press feedback for Start and Stop: a slight, critically damped shrink while the finger is down. */

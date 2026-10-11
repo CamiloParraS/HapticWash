@@ -16,10 +16,15 @@ class Settings(context: Context) {
     var progressRing: Boolean
         get() = p.getBoolean(PROGRESS_RING, false)
         set(v) = p.edit { putBoolean(PROGRESS_RING, v) }
+    /** Twist start (M5): off by default; while on, WashService listens between Washes. */
+    var twistStart: Boolean
+        get() = p.getBoolean(TWIST_START, false)
+        set(v) = p.edit { putBoolean(TWIST_START, v) }
 
     private companion object {
         const val WRIST = "wrist"
         const val HAPTICS = "haptics"
         const val PROGRESS_RING = "progress_ring"
+        const val TWIST_START = "twist_start"
     }
 }
