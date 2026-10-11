@@ -12,6 +12,8 @@ private val BANNED = listOf(
     "guarantee", "sanitized", "sterile", "germ-free", "perfect", "wrong", "incorrect",
     "you missed", "you failed", "missed step", "failed step",
     "clean hands", "hands are clean", "are clean", "is clean", "now clean",
+    "garantizado", "garantizada", "estéril", "perfecto", "perfecta", "incorrecto", "incorrecta",
+    "manos limpias", "están limpias", "has fallado", "paso omitido", "paso fallido",
 )
 private val BANNED_RE = Regex(BANNED.joinToString("|", "\\b(", ")\\b") { Regex.escape(it) }, RegexOption.IGNORE_CASE)
 

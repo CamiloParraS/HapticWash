@@ -66,6 +66,12 @@ class WashStoreTest {
     }
 
     @Test
+    fun onlyWashesAtLeastMinWashSAreWorthSaving() {
+        assertEquals(false, wash(1).copy(durationS = 9.99f).worthSaving())
+        assertEquals(true, wash(1).copy(durationS = 10f).worthSaving())
+    }
+
+    @Test
     fun wristExtraOverridesTheSettingOnlyWhenPresent() {
         assertEquals(Wrist.RIGHT, Wrist.resolve(null, Wrist.RIGHT))
         assertEquals(Wrist.LEFT, Wrist.resolve("left", Wrist.RIGHT))

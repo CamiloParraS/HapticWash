@@ -25,6 +25,9 @@ data class WashSession(
     val coverageShown: Boolean,
 )
 
+/** A Wash shorter than [CoverageConfig.minWashS] is an accidental start or a test: shown once, never kept in History. */
+fun WashSession.worthSaving(config: CoverageConfig = CoverageConfig()) = durationS >= config.minWashS
+
 /** The only place Coverage thresholds live (SPEC-APP M4). Cumulative seconds per Step. */
 data class CoverageConfig(
     val okS: Float = 4f,

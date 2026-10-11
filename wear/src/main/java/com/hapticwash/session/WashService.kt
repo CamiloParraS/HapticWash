@@ -126,7 +126,7 @@ class WashService : Service() {
             // Real Washes go to History, replay Washes (debug builds only) to their own store.
             // Never masks what ended the Wash; a lost replay Wash fails the report's count check instead.
             runCatching {
-                if (real) History.get(this).add(wash) else WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash)
+                if (real) { if (wash.worthSaving()) History.get(this).add(wash) } else WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash)
             }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
             // The Tile and the complication show the last Wash.
             if (real) {
