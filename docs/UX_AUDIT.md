@@ -336,5 +336,5 @@ Closed 2026-10-10 at a9c3f52. `./gradlew :wear:testDebugUnitTest`: 34 tests, 0 f
 - **Screenshots** predate the Start hero ring and hold-to-stop (2026-10-08), so Start and
   In-progress no longer match the app, and the ambient Wash display (C10) has none. Retake
   before the first release.
-- **Spanish strings** (`values-es`) are scanned by `LanguageTest`, but the banned list is
-  English only; they were reviewed by hand at close-out and hold no result language.
+- **Spanish strings** (`values-es`) are covered by `LanguageTest`'s Spanish terms, widened at
+  close-out (`fallaste`, `olvidaste`, `sin gérmenes`, …) and reviewed by hand.
