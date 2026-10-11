@@ -4,8 +4,8 @@ import com.hapticwash.inference.ModelMeta
 
 /** Auto-end calibration knobs (SPEC-APP M5), next to the Coverage thresholds. */
 data class AutoEndConfig(
-    /** All-NULL for this long from the start: the Wash was never begun, cancel it. */
-    val idleS: Float = 10f,
+    /** No washing seen this long after the start: the Wash was never begun, cancel it. */
+    val giveUpS: Float = 30f,
     /** NULL for this long counts as "stopped washing". */
     val sustainedNullS: Float = 8f,
     val targetS: Float = Haptics.TARGET_MS / 1000f,
@@ -35,7 +35,7 @@ class AutoEnd(private val meta: ModelMeta?, private val config: AutoEndConfig = 
         if (smoothed.indices.maxBy { smoothed[it] } == nullLabel) nullRun++ else { washed = true; nullRun = 0; nudgedAtNullS = -1f }
         val nullS = nullRun * strideS
         return when {
-            !washed && elapsedS >= config.idleS -> AutoEndAction.CANCEL
+            !washed && elapsedS >= config.giveUpS -> AutoEndAction.CANCEL
             !washed || nullS < config.sustainedNullS -> AutoEndAction.NONE
             // A nudge told the user to keep going: give them another sustained stretch before ending.
             elapsedS >= config.targetS && (nudgedAtNullS < 0 || nullS >= nudgedAtNullS + config.sustainedNullS) -> AutoEndAction.END

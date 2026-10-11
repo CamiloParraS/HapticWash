@@ -138,7 +138,7 @@ class WashService : Service() {
                 // Never began: not saved, end pattern only.
                 if (real) TileService.getUpdater(this).requestUpdate(WashTileService::class.java) // no longer "in progress"
                 Buzzer.play(this, Haptics.onCancel(kind, Settings(this).haptics))
-                Log.i(TAG, "Wash cancelled: no washing in the first %.0f s".format(durationS))
+                Log.i(TAG, "Wash cancelled: no washing seen in %.0f s".format(durationS))
             } else {
                 val wash = coverage.finish(durationS, startedAtEpochMs, kind)
                 // Real Washes go to History, replay Washes (debug builds only) to their own store.

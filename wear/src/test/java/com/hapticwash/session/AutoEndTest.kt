@@ -22,8 +22,14 @@ class AutoEndTest {
     }
 
     @Test
-    fun allNullFirst10sCancels() {
-        assertEquals(listOf(AutoEndAction.CANCEL), run(AutoEnd(meta), "NULL" to 20))
+    fun allNullForTheGiveUpWindowCancels() {
+        assertEquals(listOf(AutoEndAction.CANCEL), run(AutoEnd(meta), "NULL" to 40))
+    }
+
+    @Test
+    fun idleLeadShorterThanGiveUpIsNotCancelledAndLaterRulesApply() {
+        // 13 idle windows (~21 s), then washing, then a NULL gap before 40 s: no cancel, one nudge.
+        assertEquals(listOf(AutoEndAction.NUDGE), run(AutoEnd(meta), "NULL" to 13, "THUMBS" to 4, "NULL" to 10))
     }
 
     @Test
