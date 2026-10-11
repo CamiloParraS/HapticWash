@@ -52,4 +52,23 @@ class AutoEndTest {
     fun timerOnlyNeverActs() {
         assertEquals(emptyList<AutoEndAction>(), run(AutoEnd(null), "NULL" to 50))
     }
+
+    @Test
+    fun pauseStraddlingTheTargetAfterANudgeEndsOnlyASustainedStretchLater() {
+        // 17 windows (~27 s) washing, then NULL: nudge at 8 s of NULL (~38 s), END not before 16 s of NULL.
+        val a = AutoEnd(meta)
+        repeat(17) { a.window(hot("THUMBS")) }
+        val seen = mutableListOf<AutoEndAction>()
+        while (seen.lastOrNull() != AutoEndAction.END) seen += a.window(hot("NULL"))
+        assertEquals(1, seen.count { it == AutoEndAction.NUDGE })
+        assertEquals(true, seen.size * 1.5f >= 16f)
+    }
+
+    @Test
+    fun secondNullGapAfterWashingResumesGetsAFreshNudge() {
+        assertEquals(
+            listOf(AutoEndAction.NUDGE, AutoEndAction.NUDGE),
+            run(AutoEnd(meta), "THUMBS" to 4, "NULL" to 6, "THUMBS" to 2, "NULL" to 6),
+        )
+    }
 }

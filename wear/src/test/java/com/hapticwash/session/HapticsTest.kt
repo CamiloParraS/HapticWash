@@ -57,6 +57,14 @@ class HapticsTest {
     }
 
     @Test
+    fun nudgeNeverPlaysWithin3sOfAnotherVibration() {
+        val nudge = Haptics.onNudge("sensor", hapticsOn = true, elapsedMs = 38_000) // target tick 2 s after it
+        val times = Haptics.playTimes(nudge, t0 = 38_000, lastAt = 37_000) // start/previous vibration 1 s earlier
+        assertEquals(listOf(40_000L, 43_000L), times)
+        assertTrue((listOf(37_000L) + times).zipWithNext().all { (a, b) -> b - a >= Haptics.GAP_MS })
+    }
+
+    @Test
     fun cancelledWashGetsTheEndPatternOnly() {
         assertEquals(listOf(Buzz(0, Pulse.END)), Haptics.onCancel("sensor", hapticsOn = true))
         assertEquals(emptyList<Buzz>(), Haptics.onCancel("sensor", hapticsOn = false))

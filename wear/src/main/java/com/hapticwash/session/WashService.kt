@@ -136,24 +136,25 @@ class WashService : Service() {
             val durationS = (last - first).coerceAtLeast(0) / 1e9f
             if (cancelled) {
                 // Never began: not saved, end pattern only.
+                if (real) TileService.getUpdater(this).requestUpdate(WashTileService::class.java) // no longer "in progress"
                 Buzzer.play(this, Haptics.onCancel(kind, Settings(this).haptics))
                 Log.i(TAG, "Wash cancelled: no washing in the first %.0f s".format(durationS))
-                return
+            } else {
+                val wash = coverage.finish(durationS, startedAtEpochMs, kind)
+                // Real Washes go to History, replay Washes (debug builds only) to their own store.
+                // Never masks what ended the Wash; a lost replay Wash fails the report's count check instead.
+                runCatching {
+                    if (real) History.get(this).add(wash) else WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash)
+                }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
+                // The Tile and the complication show the last Wash.
+                if (real) {
+                    TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
+                    ComplicationDataSourceUpdateRequester.create(this, ComponentName(this, WashComplicationService::class.java)).requestUpdateAll()
+                }
+                _lastWash.value = wash
+                Buzzer.play(this, Haptics.onEnd(wash, Settings(this).haptics))
+                Log.i(TAG, "Wash: $wash")
             }
-            val wash = coverage.finish(durationS, startedAtEpochMs, kind)
-            // Real Washes go to History, replay Washes (debug builds only) to their own store.
-            // Never masks what ended the Wash; a lost replay Wash fails the report's count check instead.
-            runCatching {
-                if (real) History.get(this).add(wash) else WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash)
-            }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
-            // The Tile and the complication show the last Wash.
-            if (real) {
-                TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
-                ComplicationDataSourceUpdateRequester.create(this, ComponentName(this, WashComplicationService::class.java)).requestUpdateAll()
-            }
-            _lastWash.value = wash
-            Buzzer.play(this, Haptics.onEnd(wash, Settings(this).haptics))
-            Log.i(TAG, "Wash: $wash")
             val sorted = latencyNs.sorted()
             fun pct(q: Double) = if (sorted.isEmpty()) 0.0 else sorted[(q * sorted.size).toInt().coerceAtMost(sorted.size - 1)] / 1e6
             Log.i(

@@ -46,6 +46,15 @@ object Haptics {
     /** Time-reached target (WHO: wash for 40–60 s). In-progress counts down to it. */
     const val TARGET_MS = 40_000L
 
+    /**
+     * When each of [buzzes] actually plays: [Buzz.atMs] after [t0], but never within [GAP_MS] of the
+     * previous vibration (starting from [lastAt]). Pure so the gap is tested; Buzzer applies it.
+     */
+    fun playTimes(buzzes: List<Buzz>, t0: Long, lastAt: Long): List<Long> {
+        var last = lastAt
+        return buzzes.map { b -> maxOf(t0 + b.atMs, last + GAP_MS).also { last = it } }
+    }
+
     /** The start pulse, then the time-reached ticks; a Wash that ends first cancels the ticks. */
     fun onStart(source: String, hapticsOn: Boolean) =
         if (hapticsOn && source == "sensor") listOf(Buzz(0, Pulse.START), Buzz(TARGET_MS, Pulse.TARGET)) else emptyList()
@@ -93,7 +102,8 @@ object Buzzer {
         val t0 = SystemClock.elapsedRealtime()
         pending = scope.launch {
             for (b in buzzes) {
-                delay(maxOf(t0 + b.atMs, lastAt + Haptics.GAP_MS) - SystemClock.elapsedRealtime())
+                // lastAt moves as vibrations really fire, so re-derive this buzz's time each round.
+                delay(Haptics.playTimes(listOf(b), t0, lastAt).first() - SystemClock.elapsedRealtime())
                 if (!Settings(app).haptics) return@launch
                 vibrator.vibrate(effect(vibrator, b.pulse))
                 lastAt = SystemClock.elapsedRealtime()
