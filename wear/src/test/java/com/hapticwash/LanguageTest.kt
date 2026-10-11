@@ -14,6 +14,7 @@ private val BANNED = listOf(
     "clean hands", "hands are clean", "are clean", "is clean", "now clean",
     "garantizado", "garantizada", "estéril", "perfecto", "perfecta", "incorrecto", "incorrecta",
     "manos limpias", "están limpias", "has fallado", "paso omitido", "paso fallido",
+    "fallaste", "olvidaste", "te saltaste", "sin gérmenes", "desinfectadas", "esterilizadas",
 )
 private val BANNED_RE = Regex(BANNED.joinToString("|", "\\b(", ")\\b") { Regex.escape(it) }, RegexOption.IGNORE_CASE)
 
@@ -31,6 +32,9 @@ class LanguageTest {
         assertNull(bannedIn("Failed to load model"))
         assertNull(bannedIn("Clean up history"))
         assertNull(bannedIn("Imperfections"))
+        assertEquals("están limpias", bannedIn("Tus manos están limpias"))
+        assertEquals("olvidaste", bannedIn("Olvidaste un paso"))
+        assertNull(bannedIn("No se pudo cargar el modelo"))
     }
 
     @Test
