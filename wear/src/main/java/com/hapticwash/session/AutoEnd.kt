@@ -6,8 +6,13 @@ import com.hapticwash.inference.ModelMeta
 data class AutoEndConfig(
     /** No washing seen this long after the start: the Wash was never begun, cancel it. */
     val giveUpS: Float = 30f,
-    /** NULL for this long counts as "stopped washing". */
-    val sustainedNullS: Float = 8f,
+    /**
+     * Confident NULL for this long counts as "stopped washing". 15 s, 0.8: none of the 10 zhang
+     * replays ends before its labelled washing does (8 s, any NULL: one ended 27 s early).
+     */
+    val sustainedNullS: Float = 15f,
+    /** Smoothed NULL below this is not "real" no-washing: it breaks a NULL stretch instead of extending it. */
+    val nullConfidence: Float = 0.8f,
     val targetS: Float = Haptics.TARGET_MS / 1000f,
 )
 
@@ -32,7 +37,11 @@ class AutoEnd(private val meta: ModelMeta?, private val config: AutoEndConfig = 
     fun window(smoothed: FloatArray): AutoEndAction {
         if (meta == null) return AutoEndAction.NONE
         n++
-        if (smoothed.indices.maxBy { smoothed[it] } == nullLabel) nullRun++ else { washed = true; nullRun = 0; nudgedAtNullS = -1f }
+        when {
+            smoothed.indices.maxBy { smoothed[it] } != nullLabel -> { washed = true; nullRun = 0; nudgedAtNullS = -1f }
+            smoothed[nullLabel] >= config.nullConfidence -> nullRun++
+            else -> nullRun = 0 // uncertain NULL: maybe still washing
+        }
         val nullS = nullRun * strideS
         return when {
             !washed && elapsedS >= config.giveUpS -> AutoEndAction.CANCEL

@@ -10,6 +10,9 @@ class AutoEndTest {
     private val meta = ModelMeta.parse(File("src/main/assets/model/model_meta.json").readText()) // stride 1.5 s
     private fun hot(label: String) = FloatArray(meta.labels.size).also { it[meta.labels.indexOf(label)] = 1f }
 
+    /** NULL on top but unsure: 0.6 NULL, the rest on Washing. */
+    private fun unsureNull() = FloatArray(meta.labels.size).also { it[meta.labels.indexOf("NULL")] = 0.6f; it[meta.labels.indexOf("WASH_OTHER")] = 0.4f }
+
     /** Non-NONE actions for the windows in order, stopping where the Wash would end. */
     private fun run(autoEnd: AutoEnd, vararg legs: Pair<String, Int>): List<AutoEndAction> {
         val out = mutableListOf<AutoEndAction>()
@@ -28,8 +31,8 @@ class AutoEndTest {
 
     @Test
     fun idleLeadShorterThanGiveUpIsNotCancelledAndLaterRulesApply() {
-        // 13 idle windows (~21 s), then washing, then a NULL gap before 40 s: no cancel, one nudge.
-        assertEquals(listOf(AutoEndAction.NUDGE), run(AutoEnd(meta), "NULL" to 13, "THUMBS" to 4, "NULL" to 10))
+        // 8 idle windows (~13.5 s), then washing, then a 15 s NULL gap before 40 s: no cancel, one nudge.
+        assertEquals(listOf(AutoEndAction.NUDGE), run(AutoEnd(meta), "NULL" to 8, "THUMBS" to 2, "NULL" to 10))
     }
 
     @Test
@@ -61,20 +64,27 @@ class AutoEndTest {
 
     @Test
     fun pauseStraddlingTheTargetAfterANudgeEndsOnlyASustainedStretchLater() {
-        // 17 windows (~27 s) washing, then NULL: nudge at 8 s of NULL (~38 s), END not before 16 s of NULL.
+        // 8 windows (~13.5 s) washing, then NULL: nudge at 15 s of NULL (~28.5 s), END not before 30 s of NULL.
         val a = AutoEnd(meta)
-        repeat(17) { a.window(hot("THUMBS")) }
+        repeat(8) { a.window(hot("THUMBS")) }
         val seen = mutableListOf<AutoEndAction>()
         while (seen.lastOrNull() != AutoEndAction.END) seen += a.window(hot("NULL"))
         assertEquals(1, seen.count { it == AutoEndAction.NUDGE })
-        assertEquals(true, seen.size * 1.5f >= 16f)
+        assertEquals(true, seen.size * 1.5f >= 30f)
     }
 
     @Test
     fun secondNullGapAfterWashingResumesGetsAFreshNudge() {
         assertEquals(
             listOf(AutoEndAction.NUDGE, AutoEndAction.NUDGE),
-            run(AutoEnd(meta), "THUMBS" to 4, "NULL" to 6, "THUMBS" to 2, "NULL" to 6),
+            run(AutoEnd(meta), "THUMBS" to 2, "NULL" to 10, "THUMBS" to 2, "NULL" to 10),
         )
+    }
+
+    @Test
+    fun uncertainNullDoesNotEndTheWash() {
+        val a = AutoEnd(meta)
+        repeat(30) { a.window(hot("WASH_OTHER")) }
+        assertEquals(emptyList<AutoEndAction>(), List(20) { a.window(unsureNull()) }.filter { it != AutoEndAction.NONE })
     }
 }
