@@ -38,6 +38,47 @@ data class CoverageConfig(
     }
 }
 
+/** Auto-end calibration knobs (SPEC-APP M5), next to the Coverage thresholds. */
+data class AutoEndConfig(
+    /** All-NULL for this long from the start: the Wash was never begun, cancel it. */
+    val idleS: Float = 10f,
+    /** NULL for this long counts as "stopped washing". */
+    val sustainedNullS: Float = 8f,
+    val targetS: Float = Haptics.TARGET_MS / 1000f,
+)
+
+enum class AutoEndAction { NONE, NUDGE, CANCEL, END }
+
+/**
+ * Smoothed window vectors in, what to do about NULL out (label 0; Washing is not NULL).
+ * Timer-only (null [meta]) never acts. Time is window time, not the wall clock.
+ */
+class AutoEnd(private val meta: ModelMeta?, private val config: AutoEndConfig = AutoEndConfig()) {
+    private val strideS = meta?.let { it.windowStride.toFloat() / it.sampleRateHz } ?: 0f
+    private val windowS = meta?.let { it.windowSize.toFloat() / it.sampleRateHz } ?: 0f
+    private var n = 0
+    private var washed = false
+    private var nullRun = 0
+    private var nudged = false
+
+    /** Seconds of Wash covered by the windows seen so far. */
+    val elapsedS get() = if (n == 0) 0f else windowS + (n - 1) * strideS
+
+    fun window(smoothed: FloatArray): AutoEndAction {
+        if (meta == null) return AutoEndAction.NONE
+        n++
+        if (smoothed.indices.maxBy { smoothed[it] } == 0) nullRun++ else { washed = true; nullRun = 0; nudged = false }
+        val nullS = nullRun * strideS
+        return when {
+            !washed && elapsedS >= config.idleS -> AutoEndAction.CANCEL
+            !washed || nullS < config.sustainedNullS -> AutoEndAction.NONE
+            elapsedS >= config.targetS -> AutoEndAction.END
+            !nudged -> { nudged = true; AutoEndAction.NUDGE }
+            else -> AutoEndAction.NONE
+        }
+    }
+}
+
 /** Causal trailing mean of the last [ModelMeta.movingAverageK] vectors; averages what it has during warm-up. */
 class Smoother(meta: ModelMeta) {
     private val k = meta.movingAverageK

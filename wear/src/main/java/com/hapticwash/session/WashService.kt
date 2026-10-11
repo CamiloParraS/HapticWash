@@ -97,6 +97,8 @@ class WashService : Service() {
         }
         val smoother = model?.let { Smoother(it.meta) }
         val coverage = CoverageStateMachine(model?.meta)
+        val autoEnd = AutoEnd(model?.meta)
+        var cancelled = false
         val startedAtEpochMs = System.currentTimeMillis()
         _status.value = WashStatus(running = true, startedAtEpochMs = startedAtEpochMs, timerOnly = model == null)
         Buzzer.play(this, Haptics.onStart(kind, Settings(this).haptics))
@@ -115,13 +117,29 @@ class WashService : Service() {
                 val t = System.nanoTime()
                 val p = m.predict(w)
                 latencyNs += System.nanoTime() - t
-                coverage.window(smoother!!.push(p))
+                val sm = smoother!!.push(p)
+                coverage.window(sm)
                 val top = p.indices.maxBy { p[it] }
                 val label = m.meta.labels[top]
                 Log.i(TAG, "window %d t=%.1fs %s p=%.2f".format(latencyNs.size, (last - first) / 1e9, label, p[top]))
+                when (autoEnd.window(sm)) {
+                    AutoEndAction.NUDGE ->
+                        Buzzer.play(this, Haptics.onNudge(kind, Settings(this).haptics, (autoEnd.elapsedS * 1000).toLong()))
+                    AutoEndAction.CANCEL -> { cancelled = true; throw AutoEnded() }
+                    AutoEndAction.END -> throw AutoEnded()
+                    AutoEndAction.NONE -> {}
+                }
             }
+        } catch (_: AutoEnded) {
+            // Auto-end: fall through to the normal end below.
         } finally {
             val durationS = (last - first).coerceAtLeast(0) / 1e9f
+            if (cancelled) {
+                // Never began: not saved, end pattern only.
+                Buzzer.play(this, Haptics.onCancel(kind, Settings(this).haptics))
+                Log.i(TAG, "Wash cancelled: no washing in the first %.0f s".format(durationS))
+                return
+            }
             val wash = coverage.finish(durationS, startedAtEpochMs, kind)
             // Real Washes go to History, replay Washes (debug builds only) to their own store.
             // Never masks what ended the Wash; a lost replay Wash fails the report's count check instead.
@@ -157,6 +175,9 @@ class WashService : Service() {
             .setOngoing(true)
             .build()
     }
+
+    /** Thrown out of the collector to end the Wash on Auto-end. */
+    private class AutoEnded : Exception()
 
     companion object {
         const val TAG = "HapticWash"

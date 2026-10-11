@@ -4,8 +4,10 @@ import android.content.Context
 import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.VibrationEffect.Composition.PRIMITIVE_CLICK
+import android.os.VibrationEffect.Composition.PRIMITIVE_LOW_TICK
 import android.os.VibrationEffect.Composition.PRIMITIVE_QUICK_FALL
 import android.os.VibrationEffect.Composition.PRIMITIVE_QUICK_RISE
+import android.os.VibrationEffect.Composition.PRIMITIVE_SLOW_RISE
 import android.os.VibrationEffect.Composition.PRIMITIVE_TICK
 import android.os.Vibrator
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +28,9 @@ enum class Pulse(val primitives: List<Pair<Int, Int>>, vararg val timings: Long)
     SUCCESS(listOf(PRIMITIVE_CLICK to 0, PRIMITIVE_QUICK_RISE to 120), 0, 80, 120, 160),
     /** Three taps, the last one falling: a nudge, not an alarm (C4). */
     MISSED(listOf(PRIMITIVE_CLICK to 0, PRIMITIVE_CLICK to 160, PRIMITIVE_QUICK_FALL to 160), 0, 60, 160, 60, 160, 60),
-    TARGET(listOf(PRIMITIVE_TICK to 0, PRIMITIVE_TICK to 80, PRIMITIVE_TICK to 80), 0, 40, 80, 40, 80, 40);
+    TARGET(listOf(PRIMITIVE_TICK to 0, PRIMITIVE_TICK to 80, PRIMITIVE_TICK to 80), 0, 40, 80, 40, 80, 40),
+    /** Auto-end: washing seems to have stopped, keep going. A soft rise then a low tick. */
+    KEEP_GOING(listOf(PRIMITIVE_SLOW_RISE to 0, PRIMITIVE_LOW_TICK to 200), 0, 120, 200, 40);
 
     val durationMs get() = timings.sum()
 }
@@ -45,6 +49,19 @@ object Haptics {
     /** The start pulse, then the time-reached ticks; a Wash that ends first cancels the ticks. */
     fun onStart(source: String, hapticsOn: Boolean) =
         if (hapticsOn && source == "sensor") listOf(Buzz(0, Pulse.START), Buzz(TARGET_MS, Pulse.TARGET)) else emptyList()
+
+    /**
+     * Keep-going nudge [elapsedMs] into the Wash. Replaces the pending time-reached ticks
+     * (Buzzer.play cancels them), so they are rescheduled for what is left of the target.
+     */
+    fun onNudge(source: String, hapticsOn: Boolean, elapsedMs: Long): List<Buzz> {
+        if (!hapticsOn || source != "sensor") return emptyList()
+        return listOf(Buzz(0, Pulse.KEEP_GOING), Buzz((TARGET_MS - elapsedMs).coerceAtLeast(0), Pulse.TARGET))
+    }
+
+    /** A cancelled idle start: the end pattern only, no missed-step pulse. */
+    fun onCancel(source: String, hapticsOn: Boolean) =
+        if (hapticsOn && source == "sensor") listOf(Buzz(0, Pulse.END)) else emptyList()
 
     fun onEnd(wash: WashSession, hapticsOn: Boolean): List<Buzz> {
         if (!hapticsOn || wash.source != "sensor") return emptyList()
