@@ -32,3 +32,14 @@ counted and timed, with no Coverage.
 
 **Wrist side** — which wrist the watch is worn on. The model is trained on the left wrist;
 right-wrist motion is mirrored into the left-wrist frame.
+
+**Twist** — three quick forearm rotations, back and forth, inside a short window. A deliberate
+gesture, not wash motion.
+
+**Twist start** — starting a Wash with a Twist instead of a tap. Off by default; while on, the
+watch listens in the background between Washes. Not spotting: the app never decides on its own
+that a wash is happening.
+
+**Auto-end** — a Wash ending itself on sustained `NULL`: cancelled (not saved) if the first 10 s
+are all `NULL`, a keep-going nudge if washing pauses before the 40 s target, ended normally if
+washing stops after it. Needs the model, so Timer-only Washes end by tap only.

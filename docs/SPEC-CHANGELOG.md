@@ -3,6 +3,25 @@
 Changes to [SPEC-APP.md](SPEC-APP.md) after M4, newest first. Each entry says what changed,
 why, and where it is implemented. The Core spec is unaffected unless an entry says so.
 
+## 2026-10-10 — M5 re-scoped (branch `docs/m5-rescope`)
+
+This entry changes the Core spec too (§1.2, §6, §7, §11, new §13). Decision: D30.
+
+### C11 — M5-App: Twist start and Auto-end replace always-on spotting
+
+- **Was:** M5-App runs the M5-AI spotting model on-watch, duty-cycled, to start a Wash without a
+  tap. It depends on M5-AI.
+- **Now:** twisting the wrist three times starts a Wash (Twist start, toggle off by default, with
+  the §4.1.8 battery warning). Every model-backed Wash ends itself on sustained `NULL` (Auto-end):
+  cancelled if the first 10 s are all `NULL`, nudged to keep going if washing pauses before 40 s,
+  ended normally if washing stops after 40 s. §4.1.6 gains the keep-going nudge. M5-AI moves to
+  Future Work, so M5-App no longer depends on it.
+- **Why:** a deliberate gesture is cheap, explainable and testable now. Spotting needs a 31.6 GB
+  ingest, a second model, and duty-cycling, and published spotting F1 is low enough that false
+  starts would annoy. Auto-end lets a hands-free start end hands-free too.
+- **How:** not implemented yet. Tickets in `.scratch/m5-twist-start/issues/` (02 detector,
+  03 Auto-end, 04 toggle and listening, 05 reboot, 06 report and audit).
+
 ## 2026-09-30 — Apple-style polish (branch `feat/state-machine`)
 
 Accepted on the same rule as C1–C3.

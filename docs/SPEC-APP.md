@@ -77,12 +77,14 @@ These are non-negotiable and apply to every screen.
 6. **Haptics over sound.** Feedback is vibration. Use short, distinct patterns:
    session start (one short pulse), session end (two short pulses, the second rising
    when all five Steps look covered), missed-step notice (three short taps), time reached
-   at the 40 s target (three quick ticks; see [SPEC-CHANGELOG](SPEC-CHANGELOG.md) C1, C4, C5). Never vibrate more than once per 3 seconds.
+   at the 40 s target (three quick ticks; see [SPEC-CHANGELOG](SPEC-CHANGELOG.md) C1, C4, C5),
+   keep going when washing pauses before the target (a gentle nudge, distinct from every
+   other pattern; M5, C11). Never vibrate more than once per 3 seconds.
 7. **Ambient mode.** During an active wash the app must handle ambient/always-on
    transitions without stopping sensor collection or crashing.
 8. **Battery honesty.** Continuous 50 Hz accelerometer + gyroscope is expensive. Manual
-   mode must stop the sensor listener the moment a session ends. Always-on mode (M5)
-   must show an explicit battery warning at enable time.
+   mode must stop the sensor listener the moment a session ends. Twist start (M5) listens
+   in the background, so it must show an explicit battery warning at enable time.
 9. **No result is presented as certainty.** Coverage UI language is "looks like",
    "may have been brief", "not detected". Never "you missed" / "you failed" / "clean".
 10. **Accessibility.** All interactive elements carry `contentDescription`. Do not encode
@@ -177,7 +179,7 @@ harness replaces it.
   duration 10 s for coverage to be shown at all.
 - Compose screens: Start, In-progress (time left to the 40 s target, then elapsed time;
   subtle progress), Summary (per-step status), History (last 20 washes), Settings (wrist
-  side, haptics, progress ring). Always-on gets its setting with M5. See
+  side, haptics, progress ring). Twist start gets its setting with M5. See
   [SPEC-CHANGELOG](SPEC-CHANGELOG.md) C2, C3.
 - Room persistence of sessions and per-step durations.
 - Haptic patterns per §4.1 item 6.
@@ -204,26 +206,50 @@ harness replaces it.
 
 ---
 
-### M5-App — Always-on runtime _(optional for v1)_
+### M5-App — Twist start and Auto-end _(optional for v1)_
 
-**Objective.** Run the M5-AI spotting model on-watch to start sessions without a tap,
-within battery limits.
+**Objective.** Start and end a Wash without touching the screen: twist the wrist three
+times to start, and the Wash ends itself when washing stops. No second model: automatic
+wash detection (spotting) is Future Work (Core §13, D30).
 
 **Deliverables**
 
-- Second model in the app assets; gated inference (spotting model runs continuously at
-  low duty cycle; step model runs only after spotting fires).
-- Duty-cycling strategy documented and implemented (e.g. spotting inference on 1 of every
-  N windows until a positive, then dense).
-- Battery-impact estimate.
+- **Twist detector.** Pure logic over the `MotionSample` stream: three forearm rotations
+  (gyroscope roll peaks of alternating sign) inside a short window fire once, then a
+  refractory period. Threshold, window and refractory period live in one configuration
+  object; they are calibration knobs, tuned on hardware at M6.
+- **Twist start setting.** "Start with a twist", off by default. Enabling it shows the
+  §4.1 item 8 battery warning. While on, the watch listens in the background at a low
+  sample rate; a Twist starts a Wash exactly as tapping Start does. Listening pauses during
+  a Wash, resumes after it, and survives a reboot and a process kill.
+- **Auto-end**, for every `sensor` Wash with the model loaded, driven by smoothed `NULL`:
+  - the first 10 s are all `NULL` → the Wash is cancelled and not saved;
+  - a sustained `NULL` stretch before the 40 s target → the keep-going nudge (§4.1 item 6);
+  - a sustained `NULL` stretch after the target → the Wash ends normally (Summary, end
+    pattern, History). The Wash ends when washing stops, never at exactly 40 s.
+
+  "Sustained" is a calibration knob. Manual Stop always works. Timer-only mode has no
+  `NULL` signal, so it has no Auto-end. Replays follow the same rules.
+- Battery-impact estimate for background listening.
 
 **Acceptance criteria**
 
-- Feature toggle defaults **off**, with the §4.1 item 8 battery warning at enable time.
+- Detector unit tests: three twists fire once; two twists, or three spread wider than the
+  window, don't; one slow roll doesn't; held-out washing sessions produce no fires;
+  mirrored right-wrist motion fires as left does.
+- Auto-end unit tests: all-`NULL` first 10 s → cancelled; a `NULL` gap before 40 s → one
+  nudge and the Wash continues; sustained `NULL` past 40 s → ends with Coverage; a brief
+  `NULL` blip past 40 s → no stop; Timer-only → no Auto-end.
+- Toggle defaults **off**; with it off, the app holds no sensor connection and no wake lock
+  outside a Wash.
+- No new permission from the §2.1 forbidden list.
 
 **Verification**
 
-- Replay of a full held-out `ocdetect` day through the app; count spurious session starts.
+- Replay one held-out `ocdetect` participant-day through the detector and Auto-end; report
+  spurious Twist starts and how many Auto-end cancelled. Any number is acceptable;
+  omitting it is not.
+- Emulator: a debug-only replay into the listener starts a Wash; repeat after a reboot.
 
 ---
 
