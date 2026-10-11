@@ -296,7 +296,7 @@ exit that I found.
   timer-only mode". Washes are timed (16 s) and stored, with one non-blocking notice on
   Start, In-progress and Summary. No Coverage is shown and nothing crashes.
 - **Cold start (§4.3), release build** (`scripts/release_smoke.sh`, then `am start -W`
-  after `force-stop`), re-measured 2026-10-11 at 1002c2f on `Wear_OS_Small_Round`: 477, 462,
+  after `force-stop`), re-measured 2026-10-10 at 1002c2f on `Wear_OS_Small_Round`: 477, 462,
   452, 541, 522, 443 ms. Median ≈ 470 ms against the 1.5 s budget (was ≈ 380 ms on
   2026-09-30, before the Start redesign). TotalTime is first frame; the Start button takes
   taps from then, and its entrance fade ends 240 ms later, so ≈ 710 ms to fully shown.
@@ -315,7 +315,26 @@ exit that I found.
 | Room persistence (deliverable) | JSON file + `SharedPreferences` instead, D27 | deviation, recorded |
 | UI audit with a screenshot of each screen | this file, `docs/ux/` | pass |
 | Banned-language lint test | `LanguageTest` (D29) | pass |
+| Hold to stop on a device | not run outside 30× slowed animations | **deferred to M6** |
+| TalkBack spoken output | labels checked structurally (note B) | **deferred to M6** |
 
 Test runs for this audit, same day: `./gradlew :wear:testDebugUnitTest`: 32 tests, 0 failures
 (1 skipped: the gated replay report). `./gradlew :wear:connectedDebugAndroidTest` on the AVD:
 `GoldenParityTest` 1/1, `ModelLoadFailureTest` 3/3.
+
+## M4 close-out
+
+Closed 2026-10-10 at a9c3f52. `./gradlew :wear:testDebugUnitTest`: 34 tests, 0 failures,
+1 skipped. Written off, each with its reason and where it is picked up:
+
+- **Replay ≥ 8 of 10 sessions: not met (5 of 10).** A model generalisation gap, not an app
+  bug: the in-distribution uwash check passes 6 of 6 (D26). Thresholds stay untuned on
+  zhang_who (D15). Picked up by the next model in the AI repo; re-evaluating is a rerun (D26).
+- **Room persistence: replaced** by a JSON file and `SharedPreferences` (D27).
+- **Hold to stop and TalkBack: deferred to M6**, on a real watch (sections "Hold to stop",
+  note B). The 700 ms `HOLD_MS` needs tuning with wet hands there.
+- **Screenshots** predate the Start hero ring and hold-to-stop (2026-10-08), so Start and
+  In-progress no longer match the app, and the ambient Wash display (C10) has none. Retake
+  before the first release.
+- **Spanish strings** (`values-es`) are scanned by `LanguageTest`, but the banned list is
+  English only; they were reviewed by hand at close-out and hold no result language.
