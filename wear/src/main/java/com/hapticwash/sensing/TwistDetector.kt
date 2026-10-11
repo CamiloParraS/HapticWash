@@ -20,8 +20,8 @@ data class TwistConfig(
  * mirroring (gy negated) needs no handling. One instance per Wash.
  */
 class TwistDetector(private val config: TwistConfig = TwistConfig()) {
-    private val peaks = LongArray(3)
-    private var n = 0
+    private val peakTimes = LongArray(3)
+    private var peakCount = 0
     private var lastSign = 0
     private var silentUntil = Long.MIN_VALUE
 
@@ -29,14 +29,25 @@ class TwistDetector(private val config: TwistConfig = TwistConfig()) {
     fun push(s: MotionSample): Boolean {
         if (s.timestampNs < silentUntil) return false
         if (abs(s.gy) < config.thresholdRadPerS) return false
+        // A stray flick must not outlive the window: forget stale peaks and sign.
+        if (peakCount > 0 && s.timestampNs - peakTimes[peakCount - 1] > config.windowNs) reset()
         val sign = if (s.gy > 0) 1 else -1
         if (sign == lastSign) return false // still the same rotation
         lastSign = sign
-        if (n == 3) { peaks[0] = peaks[1]; peaks[1] = peaks[2]; n = 2 }
-        peaks[n++] = s.timestampNs
-        if (n < 3 || s.timestampNs - peaks[0] > config.windowNs) return false
-        n = 0; lastSign = 0
+        if (peakCount == 3) {
+            peakTimes[0] = peakTimes[1]
+            peakTimes[1] = peakTimes[2]
+            peakCount = 2
+        }
+        peakTimes[peakCount++] = s.timestampNs
+        if (peakCount < 3 || s.timestampNs - peakTimes[0] > config.windowNs) return false
+        reset()
         silentUntil = s.timestampNs + config.refractoryNs
         return true
+    }
+
+    private fun reset() {
+        peakCount = 0
+        lastSign = 0
     }
 }
