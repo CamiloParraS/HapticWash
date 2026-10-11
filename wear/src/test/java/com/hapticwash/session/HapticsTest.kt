@@ -45,4 +45,28 @@ class HapticsTest {
         assertTrue(target.atMs >= start.atMs + Pulse.START.durationMs + Haptics.GAP_MS)
         assertEquals(Pulse.entries.size, Pulse.entries.map { it.timings.toList() }.toSet().size)
     }
+
+    @Test
+    fun keepGoingNudgeKeepsTheTargetTickAfterIt() {
+        // Buzzer enforces the 3 s gap between these; the nudge is its own pattern (checked above).
+        val b = Haptics.onNudge("sensor", hapticsOn = true, elapsedMs = 30_000)
+        assertEquals(listOf(Pulse.KEEP_GOING, Pulse.TARGET), b.map { it.pulse })
+        assertEquals(10_000L, b[1].atMs)
+        assertEquals(emptyList<Buzz>(), Haptics.onNudge("sensor", hapticsOn = false, elapsedMs = 0))
+        assertEquals(emptyList<Buzz>(), Haptics.onNudge("replay", hapticsOn = true, elapsedMs = 0))
+    }
+
+    @Test
+    fun nudgeNeverPlaysWithin3sOfAnotherVibration() {
+        val nudge = Haptics.onNudge("sensor", hapticsOn = true, elapsedMs = 38_000) // target tick 2 s after it
+        val times = Haptics.playTimes(nudge, t0 = 38_000, lastAt = 37_000) // start/previous vibration 1 s earlier
+        assertEquals(listOf(40_000L, 43_000L), times)
+        assertTrue((listOf(37_000L) + times).zipWithNext().all { (a, b) -> b - a >= Haptics.GAP_MS })
+    }
+
+    @Test
+    fun cancelledWashGetsTheEndPatternOnly() {
+        assertEquals(listOf(Buzz(0, Pulse.END)), Haptics.onCancel("sensor", hapticsOn = true))
+        assertEquals(emptyList<Buzz>(), Haptics.onCancel("sensor", hapticsOn = false))
+    }
 }
