@@ -24,18 +24,19 @@ training happens here** — the model arrives as a release artifact from `Haptic
 | Lists      | `ScalingLazyColumn` / `TransformingLazyColumn`                    | Never plain `LazyColumn`    |
 | Async      | Coroutines + `Flow`                                               |                             |
 | Sensors    | `SensorManager`, `TYPE_ACCELEROMETER` + `TYPE_GYROSCOPE`          | 50 Hz, see §8.1             |
-| Background | Foreground `Service`, type `dataSync`                             | Notification required       |
+| Background | Foreground `Service`, type `health` (D32)                         | Notification required       |
 | Inference  | LiteRT (TensorFlow Lite) Android runtime                          | CPU only, pin exact version |
 | Storage    | Room (sessions + step coverage)                                   | Local only                  |
 | Prefs      | DataStore (Preferences)                                           | wrist side, toggles         |
 | DI         | Hilt (optional; manual DI acceptable if it keeps the graph small) |                             |
 | Tests      | JUnit5 + Turbine (unit), AndroidX Test + Espresso (instrumented)  |                             |
-**Permissions:** `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`,
+**Permissions:** `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_HEALTH`, `HIGH_SAMPLING_RATE_SENSORS`,
 `POST_NOTIFICATIONS`, `VIBRATE`, `WAKE_LOCK` (partial wake lock held only for the
 duration of an active session, so sensor delivery continues with the screen off;
 confirm it is needed on the emulator at M3 — D12).
 Accelerometer and gyroscope at 50 Hz require **no** runtime permission.
-`HIGH_SAMPLING_RATE_SENSORS` is **not** needed (only applies above 200 Hz).
+`HIGH_SAMPLING_RATE_SENSORS` is declared only because it qualifies the `health` service type
+(install-time, no prompt; D32); the app never samples above 200 Hz.
 Do **not** request `BODY_SENSORS`, `ACTIVITY_RECOGNITION`, `INTERNET`, or location.
 `INTERNET` absence is a hard architectural guarantee — see §4.2.
 
@@ -220,7 +221,7 @@ wash detection (spotting) is Future Work (Core §13, D30).
   object; they are calibration knobs, tuned on hardware at M6.
 - **Twist start setting.** "Start with a twist", off by default. Enabling it shows the
   §4.1 item 8 battery warning. While on, the watch listens in the background at a low
-  sample rate; a Twist starts a Wash exactly as tapping Start does. Listening pauses during
+  sample rate, on batched wake-up sensors in the `health` service (D32); a Twist starts a Wash exactly as tapping Start does. Listening pauses during
   a Wash, resumes after it, and survives a reboot and a process kill.
 - **Auto-end**, for every `sensor` Wash with the model loaded, driven by smoothed `NULL`:
   - no washing seen within a give-up window (30 s) from the start → the Wash is cancelled

@@ -3,6 +3,21 @@
 Changes to [SPEC-APP.md](SPEC-APP.md) after M4, newest first. Each entry says what changed,
 why, and where it is implemented. The Core spec is unaffected unless an entry says so.
 
+## 2026-10-11 — Background listening settled (branch `docs/m5-rescope`)
+
+Decision: D32. The Core spec is unaffected.
+
+### C12 — §2.1: the foreground service is type `health`, not `dataSync`
+
+- **Was:** a `dataSync` foreground service; `HIGH_SAMPLING_RATE_SENSORS` not needed.
+- **Now:** a `health` foreground service, for the Wash and for Twist start's listening.
+  Permissions swap `FOREGROUND_SERVICE_DATA_SYNC` for `FOREGROUND_SERVICE_HEALTH` and declare
+  `HIGH_SAMPLING_RATE_SENSORS`, which qualifies the type without a runtime prompt. The
+  forbidden list is unchanged. Listening uses batched wake-up sensors with no wake lock.
+- **Why:** with targetSdk 37, `dataSync` gets 6 h of background time a day and can't start at
+  boot, so Twist start would stop most days and not survive a reboot. `health` has neither limit.
+- **How:** not implemented yet. Ticket 04 (starts with a sensor probe on the watch) and 05.
+
 ## 2026-10-10 — M5 re-scoped (branch `docs/m5-rescope`)
 
 This entry changes the Core spec too (§1.2, §6, §7, §11, new §13). Decision: D30.
