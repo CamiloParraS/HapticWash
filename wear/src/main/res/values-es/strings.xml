@@ -1,0 +1,62 @@
+
+<resources>
+    <string name="app_name">HapticWash</string>
+
+    <!-- Lavado -->
+    <string name="start_wash">Empezar lavado</string>
+    <string name="stop_wash">Detener</string>
+    <string name="stopping">Deteniendo…</string>
+    <string name="hold_to_stop">Mantén para parar</string>
+    <string name="washed_for">Duración: %1$s</string>
+    <string name="washed_for_all">¡Buen trabajo! Duración: %1$s</string>
+    <string name="last_wash_title">Último lavado</string>
+    <string name="complication_label">Lavado de manos</string>
+    <string name="ring_caption">de 5 pasos\ncompletados</string>
+    <string name="time_left">restantes</string>
+    <string name="ambient_washing">Lavando manos…</string>
+    <string name="target_reached">¡%1$d segundos completados!</string>
+    <string name="timer_only">Solo temporizador: no se pueden detectar los pasos</string>
+    <string name="timer_only_short">Solo temporizador</string>
+    <string name="channel_session">Lavado de manos</string>
+    <string name="session_running">Lavado en curso</string>
+    <string name="tile_running">Ver lavado</string>
+
+    <plurals name="washes_today">
+        <item quantity="one">%d lavado hoy</item>
+        <item quantity="many">%d lavados hoy</item>
+        <item quantity="other">%d lavados hoy</item>
+    </plurals>
+
+    <!-- Resultados -->
+    <string name="too_short">No hay datos suficientes</string>
+    <string name="too_short_to_save">Lavado demasiado breve para guardar</string>
+    <string name="too_short_short">Muy breve</string>
+    <string name="status_ok">Parece completado</string>
+    <string name="status_brief">Parece incompleto</string>
+    <string name="status_not_detected">No detectado</string>
+
+    <!-- Pasos del lavado -->
+    <string-array name="steps">
+        <item>Palmas</item>
+        <item>Dorso de las manos</item>
+        <item>Entre los dedos</item>
+        <item>Pulgares</item>
+        <item>Puntas de los dedos</item>
+    </string-array>
+
+    <!-- Historial -->
+    <string name="history">Historial</string>
+    <string name="history_empty">Todavía no hay lavados</string>
+    <string name="steps_covered">pasos completados</string>
+    <string name="coverage_count">%1$d de 5</string>
+    <string name="history_hint">%1$d de 5 pasos detectados</string>
+
+    <!-- Ajustes -->
+    <string name="settings">Ajustes</string>
+    <string name="wrist_side">Muñeca</string>
+    <string name="wrist_left">Izquierda</string>
+    <string name="wrist_right">Derecha</string>
+    <string name="applies_next_wash">Se aplicará en el próximo lavado</string>
+    <string name="haptics">Vibración</string>
+    <string name="progress_ring">Anillo de progreso</string>
+</resources>
