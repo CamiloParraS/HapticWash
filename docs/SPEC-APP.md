@@ -223,7 +223,8 @@ wash detection (spotting) is Future Work (Core §13, D30).
   sample rate; a Twist starts a Wash exactly as tapping Start does. Listening pauses during
   a Wash, resumes after it, and survives a reboot and a process kill.
 - **Auto-end**, for every `sensor` Wash with the model loaded, driven by smoothed `NULL`:
-  - the first 10 s are all `NULL` → the Wash is cancelled and not saved;
+  - no washing seen within a give-up window (30 s) from the start → the Wash is cancelled
+    and not saved; before that it waits, so walking to the sink is fine;
   - a sustained `NULL` stretch before the 40 s target → the keep-going nudge (§4.1 item 6);
   - a sustained `NULL` stretch after the target → the Wash ends normally (Summary, end
     pattern, History). The Wash ends when washing stops, never at exactly 40 s.
@@ -237,7 +238,8 @@ wash detection (spotting) is Future Work (Core §13, D30).
 - Detector unit tests: three twists fire once; two twists, or three spread wider than the
   window, don't; one slow roll doesn't; held-out washing sessions produce no fires;
   mirrored right-wrist motion fires as left does.
-- Auto-end unit tests: all-`NULL` first 10 s → cancelled; a `NULL` gap before 40 s → one
+- Auto-end unit tests: all-`NULL` for the give-up window → cancelled; idle then washing →
+  not cancelled; a `NULL` gap before 40 s → one
   nudge and the Wash continues; sustained `NULL` past 40 s → ends with Coverage; a brief
   `NULL` blip past 40 s → no stop; Timer-only → no Auto-end.
 - Toggle defaults **off**; with it off, the app holds no sensor connection and no wake lock

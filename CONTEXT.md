@@ -40,6 +40,6 @@ gesture, not wash motion.
 watch listens in the background between Washes. Not spotting: the app never decides on its own
 that a wash is happening.
 
-**Auto-end** — a Wash ending itself on sustained `NULL`: cancelled (not saved) if the first 10 s
-are all `NULL`, a keep-going nudge if washing pauses before the 40 s target, ended normally if
+**Auto-end** — a Wash ending itself on sustained `NULL`: cancelled (not saved) if no washing is seen
+within 30 s of the start, a keep-going nudge if washing pauses before the 40 s target, ended normally if
 washing stops after it. Needs the model, so Timer-only Washes end by tap only.
