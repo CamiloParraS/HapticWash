@@ -31,12 +31,14 @@ training happens here** — the model arrives as a release artifact from `Haptic
 | DI         | Hilt (optional; manual DI acceptable if it keeps the graph small) |                             |
 | Tests      | JUnit5 + Turbine (unit), AndroidX Test + Espresso (instrumented)  |                             |
 **Permissions:** `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_HEALTH`, `HIGH_SAMPLING_RATE_SENSORS`,
-`POST_NOTIFICATIONS`, `VIBRATE`, `WAKE_LOCK` (partial wake lock held only for the
+`POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`, `VIBRATE`, `WAKE_LOCK` (partial wake lock held only for the
 duration of an active session, so sensor delivery continues with the screen off;
 confirm it is needed on the emulator at M3 — D12).
 Accelerometer and gyroscope at 50 Hz require **no** runtime permission.
 `HIGH_SAMPLING_RATE_SENSORS` is declared only because it qualifies the `health` service type
 (install-time, no prompt; D32); the app never samples above 200 Hz.
+`USE_FULL_SCREEN_INTENT` is declared only so a Twist-started Wash can bring the app to the screen from the
+background (a service can't start an activity); the notification it posts is transient and is shown only then.
 Do **not** request `BODY_SENSORS`, `ACTIVITY_RECOGNITION`, `INTERNET`, or location.
 `INTERNET` absence is a hard architectural guarantee — see §4.2.
 

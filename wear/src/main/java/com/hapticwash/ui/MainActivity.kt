@@ -347,6 +347,10 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
     var answered by rememberSaveable { mutableIntStateOf(0) }
     // A Tile or complication tap: back to Start, which then starts (or rejoins) the Wash.
     LaunchedEffect(startRequests()) { if (startRequests() > answered) nav.popBackStack("start", inclusive = false) }
+    // A Wash that began without a tap on Start (a Twist): show it. A tap has already navigated, so Start is no longer current.
+    LaunchedEffect(running.running) {
+        if (running.running && nav.currentBackStackEntry?.destination?.route == "start") nav.navigate("wash")
+    }
     // A tap on the Tile's ring or words: that Wash's Summary, over Start, as if opened from History.
     LaunchedEffect(openRequest()) {
         val id = openRequest() ?: return@LaunchedEffect

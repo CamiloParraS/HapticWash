@@ -3,6 +3,7 @@ package com.hapticwash.session
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.ComponentName
 import android.content.Context
@@ -18,6 +19,7 @@ import com.hapticwash.sensing.MotionSource
 import com.hapticwash.sensing.RealSensorSource
 import com.hapticwash.sensing.ReplaySource
 import com.hapticwash.sensing.TwistDetector
+import com.hapticwash.ui.MainActivity
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -125,11 +127,32 @@ class WashService : Service() {
                 null
             }
             when {
-                twist != null -> { Log.i(TAG, "Twist: starting a Wash"); wash(null, 1f, null, false) }
+                twist != null -> { Log.i(TAG, "Twist: starting a Wash"); wash(null, 1f, null, false); openApp() }
                 replay != null -> idle() // the replay ran out with no Twist
                 else -> stop() // the sensors failed; retrying would only fail again
             }
         }
+    }
+
+    /**
+     * A background service can't start an activity (Android 10+), but a full-screen-intent notification can bring
+     * the app up. The Wash screen is then shown by the app itself, since a Wash is running.
+     */
+    private fun openApp() {
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_OPEN, getString(R.string.channel_session), NotificationManager.IMPORTANCE_HIGH))
+        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        nm.notify(
+            OPEN_ID,
+            Notification.Builder(this, CHANNEL_OPEN)
+                .setSmallIcon(R.drawable.splash_icon)
+                .setContentTitle(getString(R.string.session_running))
+                .setContentIntent(open)
+                .setFullScreenIntent(open, true)
+                .setAutoCancel(true)
+                .setTimeoutAfter(OPEN_TIMEOUT_MS)
+                .build(),
+        )
     }
 
     /** Between Washes: listen if Twist start is on, otherwise stop, holding nothing. */
@@ -246,6 +269,9 @@ class WashService : Service() {
         private const val ACTION_LISTEN = "com.hapticwash.LISTEN"
         private const val ACTION_UNLISTEN = "com.hapticwash.UNLISTEN"
         private const val NOTIFICATION_ID = 1
+        private const val OPEN_ID = 2
+        private const val CHANNEL_OPEN = "session_open"
+        private const val OPEN_TIMEOUT_MS = 10_000L
         private const val TYPE = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
         private const val EXTRA_REPLAY_PATH = "replay_path"
         private const val EXTRA_SPEED = "speed"

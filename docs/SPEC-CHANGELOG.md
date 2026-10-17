@@ -3,6 +3,15 @@
 Changes to [SPEC-APP.md](SPEC-APP.md) after M4, newest first. Each entry says what changed,
 why, and where it is implemented. The Core spec is unaffected unless an entry says so.
 
+## 2026-10-17 — Twist start opens the app (branch `docs/m5-rescope`)
+
+### C13 — §2.1: `USE_FULL_SCREEN_INTENT`
+
+- **Was:** a Twist-started Wash ran in the service with the screen unchanged.
+- **Now:** `WashService` posts a transient full-screen-intent notification that opens the app on the Wash screen. Adds `USE_FULL_SCREEN_INTENT`; the forbidden list is unchanged.
+- **Why:** a background service can't start an activity (Android 10+). Android 14+ may require the user to grant this permission for non-call/alarm apps; unverified on a real watch, check at M6.
+- **How:** `WashService.openApp()`, `MainActivity` navigates to `wash` when a Wash starts off the Start screen.
+
 ## 2026-10-11 — Background listening settled (branch `docs/m5-rescope`)
 
 Decision: D32. The Core spec is unaffected.
