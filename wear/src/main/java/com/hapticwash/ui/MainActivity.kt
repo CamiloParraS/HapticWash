@@ -64,6 +64,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.wear.compose.material3.Icon
 import com.hapticwash.session.StepCoverage
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -1015,10 +1017,12 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
 private fun GuideScreen(label: Int?) {
     if (label == null || label !in 1..5) return
     val colors = MaterialTheme.colorScheme
-    ScreenScaffold {
+    // Scrolls: on a small screen, or in Spanish, the title, technique and why line don't all fit at once.
+    val scroll = rememberScrollState()
+    ScreenScaffold(scroll) {
         Column(
-            Modifier.fillMaxSize().padding(start = 28.dp, end = 28.dp, top = 22.dp, bottom = 8.dp).semantics(mergeDescendants = true) {},
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            Modifier.fillMaxSize().verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = 22.dp, bottom = 36.dp).semantics(mergeDescendants = true) {},
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
