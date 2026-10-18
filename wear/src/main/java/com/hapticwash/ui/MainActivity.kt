@@ -118,6 +118,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.MotionDurationScale
+import kotlin.coroutines.coroutineContext
 import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnItemScope
@@ -799,6 +801,8 @@ private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean, onCancelled: ()
     val breath = remember { Animatable(0.5f) }
     LaunchedEffect(ambient) {
         if (ambient) return@LaunchedEffect
+        // Animator scale 0 finishes every animation at once, so this loop would spin; hold still instead.
+        if (coroutineContext[MotionDurationScale]?.scaleFactor == 0f) return@LaunchedEffect
         while (true) {
             breath.animateTo(1f, tween(2000, easing = FastOutSlowInEasing))
             breath.animateTo(0f, tween(2000, easing = FastOutSlowInEasing))
@@ -1317,6 +1321,17 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
                 val drop = (if (i % 2 == 0) 4.dp else 3.dp).toPx() * (1 - b)
                 drawCircle(ink, drop, center + Offset(cos(a).toFloat(), sin(a).toFloat()) * r, alpha = 1 - b)
             }
+        }
+        // A Step that needs attention is named by its own glyph just inside its arc, so a dim segment is never anonymous.
+        // Only those: five glyphs would crowd the numeral, and the list below names the rest.
+        val slot = 360.0 / coverage.size
+        coverage.forEachIndexed { i, c ->
+            if (c.status == StepStatus.OK) return@forEachIndexed
+            val a = Math.toRadians(-90.0 + (i + 0.5) * slot)
+            val r = RING_SIZE / 2 - RING_STROKE - 9.dp
+            Icon(painterResource(STEP_ICONS[c.label - 1]), null,
+                Modifier.size(14.dp).offset(r * cos(a).toFloat(), r * sin(a).toFloat()).graphicsLayer { alpha = entrance() },
+                tint = colors.onSurfaceVariant)
         }
         Column(Modifier.graphicsLayer { val n = numeral(); alpha = n; scaleX = lerp(0.6f, 1f, n); scaleY = scaleX }, horizontalAlignment = Alignment.CenterHorizontally) {
             // The answer as one big rounded numeral: tabular, and tracked tighter the larger it is.
