@@ -53,6 +53,8 @@
 
     <!-- Ajustes -->
     <string name="settings">Ajustes</string>
+    <string name="credits">Créditos</string>
+    <string name="credits_body">Ilustraciones: Hegasy (Guido4 / hegasy.de), \"Hand Disinfection according to DIN EN 1500\", CC BY-SA 4.0, recortadas. commons.wikimedia.org/wiki/File:04_Hegasy_Hand_Disinfection_Wiki_EN_CCBYSA.png</string>
     <string name="wrist_side">Muñeca</string>
     <string name="wrist_left">Izquierda</string>
     <string name="wrist_right">Derecha</string>

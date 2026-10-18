@@ -28,6 +28,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -378,7 +379,8 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
                 composable(Routes.HISTORY) { HistoryScreen(onOpen = { nav.navigate(Routes.summary(it)) }) }
                 composable(Routes.SUMMARY) { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull(), onGuide = { l -> nav.navigate(Routes.guide(l)) }) }
                 composable(Routes.GUIDE) { GuideScreen(it.arguments?.getString("label")?.toIntOrNull()) }
-                composable(Routes.SETTINGS) { SettingsScreen() }
+                composable(Routes.SETTINGS) { SettingsScreen(onCredits = { nav.navigate(Routes.CREDITS) }) }
+                composable(Routes.CREDITS) { CreditsScreen() }
             }
         }
         ambientNow?.let { AmbientWash(shift = if (it.burnIn) (it.updates % 3 - 1).dp * 2 else 0.dp) }
@@ -966,7 +968,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
     }
 }
 
-/** A Step's guide page: name, glyph (the app's per-Step icon, D34 fallback), one sourced why line. */
+/** A Step's guide page: name, Hegasy crop (CC BY-SA, separate file; D34), one sourced why line. */
 @Composable
 private fun GuideScreen(label: Int?) {
     if (label == null || label !in 1..5) return
@@ -978,7 +980,7 @@ private fun GuideScreen(label: Int?) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-            Icon(painterResource(STEP_ICONS[label - 1]), null, Modifier.size(48.dp), tint = colors.primary)
+            Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(100.dp).clip(CircleShape))
             Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
         }
     }
@@ -1029,7 +1031,15 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
 }
 
 @Composable
-private fun SettingsScreen() {
+private fun CreditsScreen() {
+    ListScreen(backdrop = false) { spec ->
+        item { Header(spec, stringResource(R.string.credits)) }
+        item { Notice(stringResource(R.string.credits_body), morphContent(spec)) }
+    }
+}
+
+@Composable
+private fun SettingsScreen(onCredits: () -> Unit = {}) {
     val context = LocalContext.current
     val settings = remember { Settings(context) }
     val status by WashService.status.collectAsState()
@@ -1076,6 +1086,9 @@ private fun SettingsScreen() {
         if (BuildConfig.TARGET_CHECK) item {
             SwitchButton(targetCheck, { targetCheck = it; settings.targetCheck = it }, morph(spec), transformation = SurfaceTransformation(spec),
                 icon = { Icon(painterResource(R.drawable.ic_step_tips), contentDescription = null) }, label = { Text(stringResource(R.string.target_check)) })
+        }
+        item {
+            FilledTonalButton(onClick = onCredits, modifier = morph(spec), transformation = SurfaceTransformation(spec), label = { Text(stringResource(R.string.credits)) })
         }
         // Only said when it matters: Wrist side and the ring are read at Wash start.
         if (status.running) item { Notice(stringResource(R.string.applies_next_wash), morphContent(spec)) }
@@ -1181,7 +1194,8 @@ private fun ink(coverage: List<StepCoverage>) =
     if (allCovered(coverage)) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
 
 /** One glyph per Step, in canonical order (labels 1..5). */
-private val STEP_ICONS = intArrayOf(R.drawable.ic_step_palms, R.drawable.ic_step_backs, R.drawable.ic_step_between, R.drawable.ic_step_thumbs, R.drawable.ic_step_tips)
+private val STEP_ART = intArrayOf(R.drawable.step_art_palms, R.drawable.step_art_backs, R.drawable.step_art_between, R.drawable.step_art_thumbs, R.drawable.step_art_tips)
+private val STEP_ICONS =intArrayOf(R.drawable.ic_step_palms, R.drawable.ic_step_backs, R.drawable.ic_step_between, R.drawable.ic_step_thumbs, R.drawable.ic_step_tips)
 
 /** How much of a Step's arc is filled: shape carries the Status, not colour (§4.1.10). */
 internal fun share(s: StepStatus) = when (s) {
