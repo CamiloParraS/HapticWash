@@ -28,13 +28,16 @@
     </plurals>
 
     <!-- Resultados -->
+    <string name="wash_cancelled">No se detectó lavado</string>
     <string name="too_short">No hay datos suficientes</string>
     <string name="too_short_to_save">Lavado demasiado breve para guardar</string>
     <string name="too_short_short">Muy breve</string>
     <string name="status_ok">Parece completado</string>
     <string name="status_brief">Parece incompleto</string>
     <string name="status_not_detected">No detectado</string>
-    <string name="focus_step">%1$s: a menudo sin detectar últimamente</string>
+    <string name="focus_step">Para la próxima: %1$s</string>
+    <string name="target_todo">Falta</string>
+    <string name="covered_steps">✓ %1$s</string>
 
     <!-- Pasos del lavado -->
     <string-array name="steps">
@@ -45,13 +48,21 @@
         <item>Puntas de los dedos</item>
     </string-array>
 
-    <!-- Step guide why lines (neutral tú; third person about the study). Škodová 2015, AJIC 43(12):1360-2. -->
+    <!-- Step guide why lines: why the Step matters (neutral tú). No named illnesses, no prevention claims. -->
     <string-array name="step_whys">
-        <item>Palmas: casi nunca se omiten, pero es solo el primer paso</item>
-        <item>Dorso: en un estudio, más de la mitad omitió una zona</item>
-        <item>Entre los dedos: cerca de 1 de cada 4 la omitió en un estudio</item>
-        <item>Pulgares: la zona más omitida en un estudio de 705 personas</item>
-        <item>Puntas: cerca de la mitad omitió alguna en un estudio</item>
+        <item>Las palmas manejan más cosas, así que recogen más</item>
+        <item>El dorso también toca cosas, pero las palmas no lo alcanzan</item>
+        <item>Lo que tocas queda atrapado entre los dedos y sin frotar</item>
+        <item>Los pulgares agarran todo, así que recogen lo que tocas</item>
+        <item>Las puntas tocan primero y solo reciben jabón si las diriges</item>
+    </string-array>
+
+    <string-array name="step_how">
+        <item>Frota palma contra palma</item>
+        <item>Frota el dorso de cada mano con la otra palma</item>
+        <item>Entrelaza los dedos y frota de arriba abajo</item>
+        <item>Sujeta cada pulgar y frótalo en círculos</item>
+        <item>Frota las puntas de los dedos en la palma contraria</item>
     </string-array>
 
     <!-- Historial -->
@@ -65,6 +76,9 @@
     <string name="settings">Ajustes</string>
     <string name="credits">Créditos</string>
     <string name="open_guide">Abrir guía: %1$s</string>
+    <string name="credits_illustrations">Ilustraciones</string>
+    <string name="credits_author">Hegasy (Guido4 / hegasy.de)</string>
+    <string name="credits_licence">CC BY-SA 4.0, recortadas</string>
     <string name="credits_body">Ilustraciones: Hegasy (Guido4 / hegasy.de), \"Hand Disinfection according to DIN EN 1500\", CC BY-SA 4.0, recortadas. commons.wikimedia.org/wiki/File:04_Hegasy_Hand_Disinfection_Wiki_EN_CCBYSA.png</string>
     <string name="wrist_side">Muñeca</string>
     <string name="wrist_left">Izquierda</string>

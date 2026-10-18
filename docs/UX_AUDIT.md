@@ -403,3 +403,15 @@ the researcher's reading.
 The merged manifest has no `INTERNET` permission (the only hit is a comment; `ManifestTest`).
 Replaying a labelled session with a Step missing past 40 s showed the card once, over the
 running Wash; the Wash then ended to its Summary.
+
+## Coaching follow-up (2026-10-18)
+
+Critique fixes, retaken on the AVD (zhang_who_3 and _5 replays at 4x, Target check at the real 40 s):
+Target check "Still to do", Focus Step card above the rows, covered Steps as one line (all five stay as
+rows when everything is covered), technique line first on the Guide, label/value Credits, and a toast
+when a Wash is cancelled ([wash_cancelled](ux/wash_cancelled.png)). Fixed on the way: the Wash screen
+no longer sticks on "stopping" after a cancel, and backing out of a guide opened from a fresh Summary
+returns to that Summary instead of a dead Wash screen.
+Retaken: summary_coaching (+scrolled), summary_mixed (+scrolled), target_check, guide_fingertips (+
+_from_focus), guide_between_fingers, credits (+scrolled). Not retaken (still the old layout): guide_palms,
+guide_back_of_hands, guide_thumbs, guide_thumbs_from_focus, guide_between_fingers_es, credits_es, summary_focus_step is now a scrolled Summary.

@@ -3,6 +3,7 @@ package com.hapticwash.ui
 import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
+import android.widget.Toast
 import android.content.Intent
 import android.content.res.Resources
 import android.content.pm.PackageManager
@@ -349,6 +350,7 @@ private object StartOrigin {
 @Composable
 fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, onOpened: () -> Unit = {}, ambient: () -> Ambient? = { null }) {
     val nav = rememberSwipeDismissableNavController()
+    val context = LocalContext.current
     val running by WashService.status.collectAsState()
     val ambientNow = ambient().takeIf { running.running }
     var answered by rememberSaveable { mutableIntStateOf(0) }
@@ -378,7 +380,10 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
                         onAutoStarted = { answered = startRequests() },
                     )
                 }
-                composable(Routes.WASH) { WashScreen(onGuide = { nav.navigate(Routes.guide(it)) }) }
+                composable(Routes.WASH) { WashScreen(onGuide = { nav.navigate(Routes.guide(it)) }, onCancelled = {
+                    nav.popBackStack(Routes.START, inclusive = false)
+                    Toast.makeText(context, R.string.wash_cancelled, Toast.LENGTH_LONG).show()
+                }) }
                 composable(Routes.HISTORY) { HistoryScreen(onOpen = { nav.navigate(Routes.summary(it)) }) }
                 composable(Routes.SUMMARY) { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull(), onGuide = { l -> nav.navigate(Routes.guide(l)) }) }
                 composable(Routes.GUIDE) { GuideScreen(it.arguments?.getString("label")?.toIntOrNull()) }
@@ -616,14 +621,16 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
  * new screen, so the ring and the stop square can carry across it. Swiping back from either goes to Start.
  */
 @Composable
-private fun WashScreen(onGuide: (Int) -> Unit) {
-    var result by remember { mutableStateOf<Long?>(null) }
-    val leave = remember { Animatable(0f) }
+private fun WashScreen(onGuide: (Int) -> Unit, onCancelled: () -> Unit = {}) {
+    // Saved, so coming back from a Step guide opened off this Summary lands on the Summary, not a Wash that has ended.
+    var result by rememberSaveable { mutableStateOf<Long?>(null) }
+    val fresh = remember { result == null } // false when restored: no ring morph replayed
+    val leave = remember { Animatable(if (result != null) 1f else 0f) }
     LaunchedEffect(result) { if (result != null) leave.animateTo(1f, tween(200)) }
     Box(Modifier.fillMaxSize()) {
         // Gone once faded: nothing under the Summary should take a press.
-        if (leave.value < 1f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = 1 - leave.value }) { WashBody(onEnd = { result = it }, handedOver = result != null) }
-        result?.let { SummaryScreen(it, fromWash = true, onGuide = onGuide) }
+        if (leave.value < 1f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = 1 - leave.value }) { WashBody(onEnd = { result = it }, handedOver = result != null, onCancelled = onCancelled) }
+        result?.let { SummaryScreen(it, fromWash = fresh, onGuide = onGuide) }
         if (result == null) TargetCheckCard()
     }
 }
@@ -643,17 +650,17 @@ private fun TargetCheckCard() {
     if (undetected.isEmpty() || dismissed) return
     val steps = stringArrayResource(R.array.steps)
     Column(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).clickable { dismissed = true }.padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).clickable { dismissed = true }.padding(horizontal = 24.dp, vertical = 36.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.status_not_detected), style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.target_todo), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
         // One left edge for the icons, so the names line up whatever their width.
         Column(verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.Start) {
             undetected.forEach {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(STEP_ICONS[it - 1]), contentDescription = null, Modifier.size(24.dp))
-                    Text(steps[it - 1], style = MaterialTheme.typography.bodyMedium)
+                    Icon(painterResource(STEP_ICONS[it - 1]), contentDescription = null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
+                    Text(steps[it - 1], style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
@@ -661,10 +668,11 @@ private fun TargetCheckCard() {
 }
 
 private const val TARGET_CARD_MS = 6_000L
+private const val CANCEL_GRACE_MS = 600L
 
 /** Elapsed time, optional progress ring, hold to stop. Never names a Step. */
 @Composable
-private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean) {
+private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean, onCancelled: () -> Unit) {
     val context = LocalContext.current
     val status by WashService.status.collectAsState()
     val last by WashService.lastWash.collectAsState()
@@ -674,6 +682,15 @@ private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean) {
         // The save is quick; a hold gets a beat for its commit to be seen first.
         if (StopHold.committed) delay((COMMIT_BEAT_MS - (System.currentTimeMillis() - StopHold.committedAt)).coerceAtLeast(0))
         onEnd(ended.id)
+    }
+    // A Wash that never began is cancelled and saved nowhere, so no Summary follows: the service just stops running. Leave then, or the stop hold waits for a save that never comes.
+    var sawRunning by remember { mutableStateOf(false) }
+    val handed by rememberUpdatedState(handedOver)
+    LaunchedEffect(status.running) {
+        if (status.running) { sawRunning = true; return@LaunchedEffect }
+        if (!sawRunning) return@LaunchedEffect
+        delay(CANCEL_GRACE_MS) // a normal end publishes its Wash first and the effect above hands over
+        if (!handed) onCancelled()
     }
     val ring = remember { Settings(context).progressRing }
     // The Summary draws the ring and the stop square from here on, shrinking them into its own; these must not double them.
@@ -930,8 +947,24 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                 !wash.coverageShown -> item { Notice(stringResource(R.string.too_short), morphContent(spec)) }
                 else -> {
                     item { Notice(stringResource(if (allCovered(wash.coverage)) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec)) }
-                    items(wash.coverage.size) { i ->
-                        val c = wash.coverage[i]
+                    // The Focus Step first: one estimate-language card, opening the same guide as a row.
+                    focus?.let { label ->
+                        item {
+                            Box(
+                                morphContent(spec).clip(RoundedCornerShape(16.dp)).background(colors.primary.copy(alpha = 0.18f))
+                                    .clickable(onClickLabel = stringResource(R.string.open_guide, steps[label - 1]), role = Role.Button) { onGuide(label) }
+                                    .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text("${stringResource(R.string.focus_step, steps[label - 1])} ›", style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+                            }
+                        }
+                    }
+                    // Only Steps that need attention get a row; the covered ones are one line, since they all say the same.
+                    // Everything covered: all five stay as rows, so every Step's guide is still one tap away.
+                    val attention = wash.coverage.filter { it.status != StepStatus.OK }.ifEmpty { wash.coverage }
+                    items(attention.size) { i ->
+                        val c = attention[i]
                         val rise = with(LocalDensity.current) { 6.dp.toPx() }
                         // Each Step has its own glyph, so a row is found by shape; colour only adds emphasis.
                         Row(
@@ -942,11 +975,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                             }.clip(RoundedCornerShape(16.dp)).clickable(onClickLabel = stringResource(R.string.open_guide, steps[c.label - 1]), role = Role.Button) { onGuide(c.label) }
                                 .heightIn(min = 48.dp).padding(horizontal = 16.dp).semantics(mergeDescendants = true) {},
                             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            // A soft chip behind the glyph, tinted only when the Step looks covered; the words and the mark say the rest.
-                            Box(
-                                Modifier.size(32.dp).clip(CircleShape).background(if (c.status == StepStatus.OK) colors.primary.copy(alpha = 0.18f) else colors.surfaceContainer).clearAndSetSemantics {},
-                                contentAlignment = Alignment.Center,
-                            ) {
+                            Box(Modifier.size(32.dp).clip(CircleShape).background(if (c.status == StepStatus.OK) colors.primary.copy(alpha = 0.18f) else colors.surfaceContainer).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
                                 Icon(painterResource(STEP_ICONS[c.label - 1]), null, Modifier.size(20.dp), tint = if (c.status == StepStatus.OK) colors.primary else colors.onSurfaceVariant)
                             }
                             Column {
@@ -959,18 +988,9 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                             }
                         }
                     }
-                    // The Focus Step: at most one estimate-language line, opening the same guide as its row.
-                    focus?.let { label ->
-                        item {
-                            Box(
-                                morphContent(spec).clip(RoundedCornerShape(16.dp))
-                                    .clickable(onClickLabel = stringResource(R.string.open_guide, steps[label - 1]), role = Role.Button) { onGuide(label) }
-                                    .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(stringResource(R.string.focus_step, steps[label - 1]), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-                            }
-                        }
+                    val covered = wash.coverage.filter { it.status == StepStatus.OK }
+                    if (covered.isNotEmpty() && attention.size < wash.coverage.size) item {
+                        Text(stringResource(R.string.covered_steps, covered.joinToString(", ") { steps[it.label - 1] }), morphContent(spec), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -997,13 +1017,14 @@ private fun GuideScreen(label: Int?) {
     val colors = MaterialTheme.colorScheme
     ScreenScaffold {
         Column(
-            Modifier.fillMaxSize().padding(horizontal = 28.dp).semantics(mergeDescendants = true) {},
+            Modifier.fillMaxSize().padding(start = 28.dp, end = 28.dp, top = 22.dp, bottom = 8.dp).semantics(mergeDescendants = true) {},
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-            Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(100.dp).clip(CircleShape))
-            Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+            Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(68.dp).clip(CircleShape))
+            Text(stringArrayResource(R.array.step_how)[label - 1], style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+            Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
         }
     }
 }
@@ -1057,7 +1078,14 @@ private fun CreditsScreen() {
     ListScreen(backdrop = false) { spec ->
         item { Header(spec, stringResource(R.string.credits)) }
         // The URL has no spaces; a zero-width space after "/" and "_" lets it wrap on the round edge instead of mid-word.
-        item { Notice(stringResource(R.string.credits_body).replace("/", "/\u200B").replace("_", "_\u200B"), morphContent(spec)) }
+        item {
+            Column(morphContent(spec).fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.credits_illustrations), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.credits_author), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.credits_licence), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.credits_body).substringAfter("cropped. ").substringAfter("recortadas. ").replace("/", "/\u200B").replace("_", "_\u200B"), Modifier.padding(top = 6.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+            }
+        }
     }
 }
 

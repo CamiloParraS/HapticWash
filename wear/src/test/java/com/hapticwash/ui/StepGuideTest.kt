@@ -40,24 +40,24 @@ class StepGuideTest {
     }
 
     @Test
-    fun whyLinesAreShortEvidenceLanguage() {
+    fun whyLinesSayWhyTheStepMattersInPlainLanguage() {
         val lines = array("step_whys")
         assertEquals(5, lines.size)
         lines.forEach { assertTrue("too long: $it", it.length <= 60) }
-        lines.drop(1).forEach { assertTrue("no study named: $it", "study" in it) }
-        assertFalse("Fingertips is contested (Szilagyi 2013)", lines[4].contains("most", ignoreCase = true))
-        assertTrue(lines[3].startsWith("Thumbs"))
+        lines.forEach { assertFalse("no study statistics: $it", "study" in it || Regex("""\d""").containsMatchIn(it)) }
+        assertTrue("Thumbs line names thumbs", "Thumbs" in lines[3])
+        assertTrue("Between fingers line names the fingers", "between fingers" in lines[2])
     }
 
     @Test
     fun spanishWhyLinesMatchTheAgreedWording() {
         assertEquals(
             listOf(
-                "Palmas: casi nunca se omiten, pero es solo el primer paso",
-                "Dorso: en un estudio, más de la mitad omitió una zona",
-                "Entre los dedos: cerca de 1 de cada 4 la omitió en un estudio",
-                "Pulgares: la zona más omitida en un estudio de 705 personas",
-                "Puntas: cerca de la mitad omitió alguna en un estudio",
+                "Las palmas manejan más cosas, así que recogen más",
+                "El dorso también toca cosas, pero las palmas no lo alcanzan",
+                "Lo que tocas queda atrapado entre los dedos y sin frotar",
+                "Los pulgares agarran todo, así que recogen lo que tocas",
+                "Las puntas tocan primero y solo reciben jabón si las diriges",
             ),
             array("step_whys", "values-es"),
         )

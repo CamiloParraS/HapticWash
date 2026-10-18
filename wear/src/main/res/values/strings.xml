@@ -26,6 +26,7 @@
         <item quantity="other">%d washes today</item>
     </plurals>
 
+    <string name="wash_cancelled">No washing detected</string>
     <string name="too_short">Too short to estimate</string>
     <string name="too_short_to_save">Too short to save</string>
     <string name="too_short_short">Too short</string>
@@ -33,7 +34,9 @@
     <string name="status_brief">May have been brief</string>
     <string name="status_not_detected">Not detected</string>
     <!-- Summary only: the Focus Step, one estimate-language line. %1$s is the Step name. -->
-    <string name="focus_step">%1$s: often not detected lately</string>
+    <string name="focus_step">Focus next time: %1$s</string>
+    <string name="target_todo">Still to do</string>
+    <string name="covered_steps">✓ %1$s</string>
     <!-- §1.3 user-facing Step names, in canonical order (labels 1..5). -->
     <string-array name="steps">
         <item>Palms</item>
@@ -43,13 +46,22 @@
         <item>Fingertips</item>
     </string-array>
 
-    <!-- Step guide why lines, canonical order. Škodová 2015, AJIC 43(12):1360-2, Table 1 (705 health-care workers, one hospital). -->
+    <!-- Step guide why lines, canonical order: why the Step matters, in terms of what hands do. No named illnesses, no prevention claims (LanguageTest). -->
     <string-array name="step_whys">
-        <item>Palms: rarely missed, but it\'s only the first Step</item>
-        <item>Back of hands: over half missed a patch in one study</item>
-        <item>Between fingers: about 1 in 4 missed it in one study</item>
-        <item>Thumbs: the most-missed spot in a 705-person study</item>
-        <item>Fingertips: about half missed some in one study</item>
+        <item>Palms handle the most, so they pick up the most</item>
+        <item>Backs of hands touch things too; palms never reach them</item>
+        <item>What you touch gets trapped between fingers and skipped</item>
+        <item>Thumbs grip everything, so they pick up whatever you touch</item>
+        <item>Fingertips touch first, and only get soap if aimed there</item>
+    </string-array>
+
+    <!-- Step guide technique lines: what to do, shown above the study line. -->
+    <string-array name="step_how">
+        <item>Rub palm against palm</item>
+        <item>Rub each back of hand with the other palm</item>
+        <item>Interlace fingers and rub up and down</item>
+        <item>Clasp each thumb and rub in a circle</item>
+        <item>Rub fingertips in the opposite palm</item>
     </string-array>
 
     <string name="history">History</string>
@@ -61,6 +73,9 @@
     <string name="settings">Settings</string>
     <string name="credits">Credits</string>
     <string name="open_guide">Open %1$s guide</string>
+    <string name="credits_illustrations">Illustrations</string>
+    <string name="credits_author">Hegasy (Guido4 / hegasy.de)</string>
+    <string name="credits_licence">CC BY-SA 4.0, cropped</string>
     <string name="credits_body">Illustrations: Hegasy (Guido4 / hegasy.de), \"Hand Disinfection according to DIN EN 1500\", CC BY-SA 4.0, cropped. commons.wikimedia.org/wiki/File:04_Hegasy_Hand_Disinfection_Wiki_EN_CCBYSA.png</string>
     <string name="wrist_side">Wrist side</string>
     <string name="wrist_left">Left</string>
