@@ -12,6 +12,9 @@ private val BANNED = listOf(
     "guarantee", "sanitized", "sterile", "germ-free", "perfect", "wrong", "incorrect",
     "you missed", "you failed", "missed step", "failed step",
     "clean hands", "hands are clean", "are clean", "is clean", "now clean",
+    // Claim words (EN) the Step guide could drift into: illnesses, infection prevention, poster wording.
+    "germs", "bacteria", "viruses", "virus", "infection", "infections", "illness", "disease", "kills",
+    "prevent", "prevents", "protect", "protects", "safe", "most missed",
     "garantizado", "garantizada", "estéril", "perfecto", "perfecta", "incorrecto", "incorrecta",
     "manos limpias", "están limpias", "has fallado", "paso omitido", "paso fallido",
     "fallaste", "olvidaste", "te saltaste", "sin gérmenes", "desinfectadas", "esterilizadas",
@@ -35,6 +38,10 @@ class LanguageTest {
         assertEquals("están limpias", bannedIn("Tus manos están limpias"))
         assertEquals("olvidaste", bannedIn("Olvidaste un paso"))
         assertNull(bannedIn("No se pudo cargar el modelo"))
+        assertEquals("safe", bannedIn("Your hands are safe"))
+        assertEquals("infection", bannedIn("Helps stop infection"))
+        assertEquals("most missed", bannedIn("Fingertips: the most missed Step"))
+        assertNull(bannedIn("Thumbs: the most-missed spot in a 705-person study"))
     }
 
     @Test

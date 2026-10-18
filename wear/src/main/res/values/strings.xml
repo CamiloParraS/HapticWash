@@ -41,6 +41,15 @@
         <item>Fingertips</item>
     </string-array>
 
+    <!-- Step guide why lines, canonical order. Škodová 2015, AJIC 43(12):1360-2, Table 1 (705 health-care workers, one hospital). -->
+    <string-array name="step_whys">
+        <item>Palms: rarely missed, but it\'s only the first Step</item>
+        <item>Back of hands: over half missed a patch in one study</item>
+        <item>Between fingers: about 1 in 4 missed it in one study</item>
+        <item>Thumbs: the most-missed spot in a 705-person study</item>
+        <item>Fingertips: about half missed some in one study</item>
+    </string-array>
+
     <string name="history">History</string>
     <string name="history_empty">No washes yet</string>
     <string name="steps_covered">steps covered</string>

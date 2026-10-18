@@ -30,6 +30,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
@@ -364,7 +365,7 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
     Box {
         CompositionLocalProvider(LocalAmbient provides (ambientNow != null)) {
             SwipeDismissableNavHost(nav, startDestination = "start") {
-                composable("start") {
+                composable(Routes.START) {
                     StartScreen(
                         onWash = { nav.navigate("wash") },
                         onHistory = { nav.navigate("history") },
@@ -373,10 +374,11 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
                         onAutoStarted = { answered = startRequests() },
                     )
                 }
-                composable("wash") { WashScreen() }
-                composable("history") { HistoryScreen(onOpen = { nav.navigate("summary/$it") }) }
-                composable("summary/{id}") { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull()) }
-                composable("settings") { SettingsScreen() }
+                composable(Routes.WASH) { WashScreen(onGuide = { nav.navigate(Routes.guide(it)) }) }
+                composable(Routes.HISTORY) { HistoryScreen(onOpen = { nav.navigate(Routes.summary(it)) }) }
+                composable(Routes.SUMMARY) { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull(), onGuide = { l -> nav.navigate(Routes.guide(l)) }) }
+                composable(Routes.GUIDE) { GuideScreen(it.arguments?.getString("label")?.toIntOrNull()) }
+                composable(Routes.SETTINGS) { SettingsScreen() }
             }
         }
         ambientNow?.let { AmbientWash(shift = if (it.burnIn) (it.updates % 3 - 1).dp * 2 else 0.dp) }
@@ -609,14 +611,14 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
  * new screen, so the ring and the stop square can carry across it. Swiping back from either goes to Start.
  */
 @Composable
-private fun WashScreen() {
+private fun WashScreen(onGuide: (Int) -> Unit = {}) {
     var result by remember { mutableStateOf<Long?>(null) }
     val leave = remember { Animatable(0f) }
     LaunchedEffect(result) { if (result != null) leave.animateTo(1f, tween(200)) }
     Box(Modifier.fillMaxSize()) {
         // Gone once faded: nothing under the Summary should take a press.
         if (leave.value < 1f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = 1 - leave.value }) { WashBody(onEnd = { result = it }, handedOver = result != null) }
-        result?.let { SummaryScreen(it, fromWash = true) }
+        result?.let { SummaryScreen(it, fromWash = true, onGuide = onGuide) }
         if (result == null) TargetCheckCard()
     }
 }
@@ -881,7 +883,7 @@ private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean) {
 
 /** A Wash's Summary: the one just ended ([fromWash]), or one from History. */
 @Composable
-private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
+private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -> Unit = {}) {
     val context = LocalContext.current
     val wash = remember(id) {
         WashService.lastWash.value?.takeIf { it.id == id } ?: History.get(context).read().find { it.id == id }
@@ -928,7 +930,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
                                 val p = staggered(entrance.value, i)
                                 alpha = p
                                 translationY = (1 - p) * rise
-                            }.padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            }.clip(RoundedCornerShape(16.dp)).clickable { onGuide(c.label) }.padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             // A soft chip behind the glyph, tinted only when the Step looks covered; the words and the mark say the rest.
                             Box(
                                 Modifier.size(32.dp).clip(CircleShape).background(if (c.status == StepStatus.OK) colors.primary.copy(alpha = 0.18f) else colors.surfaceContainer).clearAndSetSemantics {},
@@ -960,6 +962,24 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false) {
                 val side = STOP_MARK.toPx() * lerp(1f, 0.4f, p)
                 drawRoundRect(ink, c - Offset(side / 2, side / 2), Size(side, side), CornerRadius(side * 0.22f), alpha = 1 - numeral())
             }
+        }
+    }
+}
+
+/** A Step's guide page: name, glyph (the app's per-Step icon, D34 fallback), one sourced why line. */
+@Composable
+private fun GuideScreen(label: Int?) {
+    if (label == null || label !in 1..5) return
+    val colors = MaterialTheme.colorScheme
+    ScreenScaffold {
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 28.dp).semantics(mergeDescendants = true) {},
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+            Icon(painterResource(STEP_ICONS[label - 1]), null, Modifier.size(48.dp), tint = colors.primary)
+            Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
         }
     }
 }
