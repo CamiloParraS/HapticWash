@@ -27,6 +27,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -151,6 +152,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.hapticwash.R
 import com.hapticwash.inference.StepModel
+import com.hapticwash.BuildConfig
 import com.hapticwash.session.Haptics
 import com.hapticwash.session.History
 import com.hapticwash.session.Settings
@@ -615,8 +617,40 @@ private fun WashScreen() {
         // Gone once faded: nothing under the Summary should take a press.
         if (leave.value < 1f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = 1 - leave.value }) { WashBody(onEnd = { result = it }, handedOver = result != null) }
         result?.let { SummaryScreen(it, fromWash = true) }
+        if (result == null) TargetCheckCard()
     }
 }
+
+/**
+ * Target check: at the target, names the Steps not detected so far (name + icon). Closes after 6 s or on tap; the Wash
+ * runs on behind it. The service clears the Steps when the Wash ends, which closes it too.
+ */
+@Composable
+private fun TargetCheckCard() {
+    val undetected = WashService.status.collectAsState().value.undetected
+    var dismissed by remember { mutableStateOf(false) }
+    LaunchedEffect(undetected) {
+        dismissed = false
+        if (undetected.isNotEmpty()) { delay(TARGET_CARD_MS); dismissed = true }
+    }
+    if (undetected.isEmpty() || dismissed) return
+    val steps = stringArrayResource(R.array.steps)
+    Column(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).clickable { dismissed = true }.padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stringResource(R.string.status_not_detected), style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
+        undetected.forEach {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(painterResource(STEP_ICONS[it - 1]), contentDescription = null, Modifier.size(24.dp))
+                Text(steps[it - 1], style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+private const val TARGET_CARD_MS = 6_000L
 
 /** Elapsed time, optional progress ring, hold to stop. Never names a Step. */
 @Composable
@@ -983,6 +1017,7 @@ private fun SettingsScreen() {
     var haptics by remember { mutableStateOf(settings.haptics) }
     var ring by remember { mutableStateOf(settings.progressRing) }
     var twist by remember { mutableStateOf(settings.twistStart) }
+    var targetCheck by remember { mutableStateOf(settings.targetCheck) }
     var warn by remember { mutableStateOf(false) }
     fun setTwist(on: Boolean) {
         twist = on
@@ -1016,6 +1051,11 @@ private fun SettingsScreen() {
             SwitchButton(twist, { on -> if (on) warn = true else setTwist(false) },
                 morph(spec), transformation = SurfaceTransformation(spec),
                 icon = { Icon(painterResource(R.drawable.ic_wash), contentDescription = null) }, label = { Text(stringResource(R.string.twist_start)) })
+        }
+        // Absent entirely when the build flag ships the check disabled.
+        if (BuildConfig.TARGET_CHECK) item {
+            SwitchButton(targetCheck, { targetCheck = it; settings.targetCheck = it }, morph(spec), transformation = SurfaceTransformation(spec),
+                icon = { Icon(painterResource(R.drawable.ic_step_tips), contentDescription = null) }, label = { Text(stringResource(R.string.target_check)) })
         }
         // Only said when it matters: Wrist side and the ring are read at Wash start.
         if (status.running) item { Notice(stringResource(R.string.applies_next_wash), morphContent(spec)) }

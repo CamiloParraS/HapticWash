@@ -69,12 +69,15 @@ class CoverageStateMachine(private val meta: ModelMeta?, private val config: Cov
         counts[smoothed.indices.maxBy { smoothed[it] }]++
     }
 
+    /** Coverage so far, in §1.3 order. */
+    fun snapshot() = List(STEPS.size) { n ->
+        val s = (steps?.let { counts[it[n]] } ?: 0) * strideS
+        StepCoverage(n + 1, s, config.status(s))
+    }
+
     /** [durationS] comes from sample timestamps (last − first), never the wall clock. */
     fun finish(durationS: Float, startedAtEpochMs: Long, source: String): WashSession {
-        val coverage = List(STEPS.size) { n ->
-            val s = (steps?.let { counts[it[n]] } ?: 0) * strideS
-            StepCoverage(n + 1, s, config.status(s))
-        }
+        val coverage = snapshot()
         return WashSession(
             id = startedAtEpochMs,
             startedAtEpochMs = startedAtEpochMs,
