@@ -18,6 +18,10 @@ private val BANNED = listOf(
     "garantizado", "garantizada", "estéril", "perfecto", "perfecta", "incorrecto", "incorrecta",
     "manos limpias", "están limpias", "has fallado", "paso omitido", "paso fallido",
     "fallaste", "olvidaste", "te saltaste", "sin gérmenes", "desinfectadas", "esterilizadas",
+    // Claim words (ES) for the Step guide. "más omitida" is left out: it describes the study, not the user.
+    "previene", "prevenir", "protege", "proteger", "elimina gérmenes", "elimina bacterias", "mata",
+    "segura", "seguras", "seguro", "seguros", "infección", "infecciones", "más omitido",
+    "tus manos están seguras", "omitiste",
 )
 private val BANNED_RE = Regex(BANNED.joinToString("|", "\\b(", ")\\b") { Regex.escape(it) }, RegexOption.IGNORE_CASE)
 
@@ -41,6 +45,10 @@ class LanguageTest {
         assertEquals("safe", bannedIn("Your hands are safe"))
         assertEquals("infection", bannedIn("Helps stop infection"))
         assertEquals("most missed", bannedIn("Fingertips: the most missed Step"))
+        assertEquals("omitiste", bannedIn("Omitiste los pulgares"))
+        assertEquals("previene", bannedIn("Lavarse previene todo"))
+        assertEquals("más omitido", bannedIn("Los pulgares: el paso más omitido"))
+        assertNull(bannedIn("Pulgares: la zona más omitida en un estudio de 705 personas"))
         assertNull(bannedIn("Thumbs: the most-missed spot in a 705-person study"))
     }
 

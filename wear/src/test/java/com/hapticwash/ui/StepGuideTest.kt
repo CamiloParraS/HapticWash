@@ -10,8 +10,8 @@ import org.w3c.dom.Element
 
 /** Coaching ticket 01: the Step guide page behind each Summary row (SPEC-APP Coaching, deliverables 1-2). */
 class StepGuideTest {
-    private fun array(name: String): List<String> {
-        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(File("src/main/res/values/strings.xml"))
+    private fun array(name: String, res: String = "values"): List<String> {
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(File("src/main/res/$res/strings.xml"))
         val arrays = doc.getElementsByTagName("string-array")
         val a = (0 until arrays.length).map { arrays.item(it) as Element }.first { it.getAttribute("name") == name }
         val items = a.getElementsByTagName("item")
@@ -47,5 +47,19 @@ class StepGuideTest {
         lines.drop(1).forEach { assertTrue("no study named: $it", "study" in it) }
         assertFalse("Fingertips is contested (Szilagyi 2013)", lines[4].contains("most", ignoreCase = true))
         assertTrue(lines[3].startsWith("Thumbs"))
+    }
+
+    @Test
+    fun spanishWhyLinesMatchTheAgreedWording() {
+        assertEquals(
+            listOf(
+                "Palmas: casi nunca se omiten, pero es solo el primer paso",
+                "Dorso: en un estudio, más de la mitad omitió una zona",
+                "Entre los dedos: cerca de 1 de cada 4 la omitió en un estudio",
+                "Pulgares: la zona más omitida en un estudio de 705 personas",
+                "Puntas: cerca de la mitad omitió alguna en un estudio",
+            ),
+            array("step_whys", "values-es"),
+        )
     }
 }
