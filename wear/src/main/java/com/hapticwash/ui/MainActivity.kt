@@ -646,10 +646,13 @@ private fun TargetCheckCard() {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(stringResource(R.string.status_not_detected), style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
-        undetected.forEach {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(painterResource(STEP_ICONS[it - 1]), contentDescription = null, Modifier.size(24.dp))
-                Text(steps[it - 1], style = MaterialTheme.typography.bodyMedium)
+        // One left edge for the icons, so the names line up whatever their width.
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.Start) {
+            undetected.forEach {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(painterResource(STEP_ICONS[it - 1]), contentDescription = null, Modifier.size(24.dp))
+                    Text(steps[it - 1], style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }

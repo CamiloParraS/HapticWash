@@ -338,3 +338,68 @@ Closed 2026-10-10 at a9c3f52. `./gradlew :wear:testDebugUnitTest`: 34 tests, 0 f
   before the first release.
 - **Spanish strings** (`values-es`) are covered by `LanguageTest`'s Spanish terms, widened at
   close-out (`fallaste`, `olvidaste`, `sin gérmenes`, …) and reviewed by hand.
+
+# UX audit — Coaching (Step guide, Focus Step, Target check, Credits)
+
+SPEC-APP §4.1 items 1–10, checked 2026-10-18 on the `Wear_OS_Large_Round` AVD (454 × 454 px)
+with a debug build of `feat/coaching`. The app was not hacked: the Target check card and Summary
+come from a real replay (`scripts/showcase.sh`, zhang_who_3, 1× speed, `PERSIST=false`, so the
+card appears at the real 40 s; Thumbs and Fingertips were undetected). The Focus Step needs five
+or more `sensor` Washes in History, so six were written to `files/history.json` with `run-as`
+(Thumbs `NOT_DETECTED` in each). The Spanish page uses `cmd locale set-app-locales com.hapticwash
+--locales es`. Screenshots are the full square frame; the watch shows the inscribed circle.
+
+| Screen | Screenshot |
+|---|---|
+| Summary (replay) and scrolled | [summary_coaching](ux/summary_coaching.png), [scrolled](ux/summary_coaching_scrolled.png) |
+| Focus Step line, end of Summary | [summary_focus_step](ux/summary_focus_step.png) |
+| Guide: Palms | [guide_palms](ux/guide_palms.png) |
+| Guide: Back of hands | [guide_back_of_hands](ux/guide_back_of_hands.png) |
+| Guide: Between fingers | [guide_between_fingers](ux/guide_between_fingers.png) |
+| Guide: Between fingers, Spanish, long line (3 lines) | [guide_between_fingers_es](ux/guide_between_fingers_es.png) |
+| Guide: Thumbs, and opened from the Focus Step line | [guide_thumbs](ux/guide_thumbs.png), [from_focus](ux/guide_thumbs_from_focus.png) |
+| Guide: Fingertips | [guide_fingertips](ux/guide_fingertips.png) |
+| Target check card (Thumbs, Fingertips) | [target_check](ux/target_check.png) |
+| Settings, Target check toggle and Credits row | [settings_target_check](ux/settings_target_check.png) |
+| Credits | [credits](ux/credits.png), [scrolled](ux/credits_scrolled.png) |
+
+## Checklist
+
+**G** guide page, **F** Focus Step line, **T** Target check card, **C** Credits.
+
+| § | Item | G | F | T | C | Notes |
+|---|---|---|---|---|---|---|
+| 1 | Glanceable < 5 s | ✓ | ✓ | ✓ | ◐ | G: name, picture, one line. F: one line. T: "Not detected" and an icon + name per Step. C is one paragraph of credit text (the licence needs it), opened on purpose from Settings, hence ◐. |
+| 2 | Round-safe, `TimeText` | ✓ | ✓ | ✓ | ✓ | `TimeText` shows on G, T and C. The long Spanish line takes 3 lines and ends at y ≈ 400 of 454; its widest line is well inside the circle at that height, so **nothing clips** (ticket 02's open point is closed). The artwork is a 100 dp circle crop, centred. F is an item in Summary's scaling list. C is a list; its URL breaks mid-word, see defects. |
+| 3 | Touch targets ≥ 48 dp; one primary action | ✓ | ✓ | ✓ | ✓ | G has no controls. F is a two-line row with 8 dp padding (> 48 dp). T closes on a tap anywhere. Credits is a 52 dp row in Settings. None adds a primary action. |
+| 4 | One-tap start | — | — | — | — | Start is unchanged. Start and Settings hold no route to the guide (`StepGuideTest`). |
+| 5 | No text entry; dialogs ≤ 2 options; depth ≤ 2 | ✓ | ✓ | ✓ | ✓ | Summary → guide and Settings → Credits are two levels; swipe-back worked from both. T is an overlay, not a route. |
+| 6 | Haptics | — | — | ◐ | — | `MISSED` replaces the `TARGET` ticks when a Step is undetected (`HapticsTest`, `TargetCheckTest`). Replays are silent, so the pattern was not measured with `dumpsys vibrator_manager`; repeat on hardware (M6). |
+| 7 | Ambient | — | — | ◐ | — | No new sensing; the card sits on the Wash screen and its ambient handling. Not exercised with the card up. |
+| 8 | Battery honesty | — | — | — | — | No new sensing. |
+| 9 | No result as certainty | ✓ | ✓ | ✓ | ✓ | "Thumbs: often not detected lately", "Not detected", why lines say "in one study". `LanguageTest` covers the new strings. |
+| 10 | Accessibility; not by colour alone | ✓ | ✓ | ✓ | ✓ | T: a Step icon plus its name. G is one merged node (picture decorative). Rows and F are clickable and read their text. |
+
+## Artwork (Back of hands against Between fingers)
+
+All five crops read on the round display. Back of hands and Between fingers are still close
+(same pose, vertical arrow on both); the name above and the why line below tell them apart, not
+the picture. Outcome: **use the crops**, no fallback to icons. The panel-to-Step mapping is still
+the researcher's reading.
+
+## Defects
+
+- **Fixed:** the Target check card centred each row on its own, so the Thumbs and Fingertips icons
+  sat at different x. The rows now share one left edge (`TargetCheckCard`, `MainActivity.kt`).
+- **Not fixed, minor:** Credits breaks the Wikimedia URL mid-word at the round edge
+  ("Disinfectio / n_Wiki…"). It is plain text, not a link; fixing means shortening or splitting
+  the string in both languages.
+- **Not checked:** Credits in Spanish; the Spanish Target check card; the card under ambient
+  mode; vibration timing of `MISSED`.
+
+## Verification
+
+`./gradlew :wear:testDebugUnitTest`: 84 tests, 0 failures, 1 skipped (the gated replay report).
+The merged manifest has no `INTERNET` permission (the only hit is a comment; `ManifestTest`).
+Replaying a labelled session with a Step missing past 40 s showed the card once, over the
+running Wash; the Wash then ended to its Summary.
