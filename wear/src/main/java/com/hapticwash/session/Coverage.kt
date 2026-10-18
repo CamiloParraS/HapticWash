@@ -33,12 +33,31 @@ data class CoverageConfig(
     val okS: Float = 4f,
     val briefS: Float = 1.5f,
     val minWashS: Float = 10f,
+    // Focus Step (SPEC-APP Coaching): both rates are calibration knobs.
+    val focusWindow: Int = 10,
+    val focusMinWashes: Int = 5,
+    val focusMissedRate: Float = 0.6f,
+    val focusNotDetectedRate: Float = 0.3f,
 ) {
     fun status(seconds: Float) = when {
         seconds >= okS -> StepStatus.OK
         seconds >= briefS -> StepStatus.BRIEF
         else -> StepStatus.NOT_DETECTED
     }
+}
+
+/**
+ * The Step the user habitually leaves undetected, as its label, or null. [washes] newest first. Looks at the last
+ * [CoverageConfig.focusWindow] `sensor` Washes that show Coverage; no stored state.
+ */
+fun focusStep(washes: List<WashSession>, config: CoverageConfig = CoverageConfig()): Int? {
+    val window = washes.filter { it.source == "sensor" && it.coverageShown }.take(config.focusWindow)
+    if (window.size < config.focusMinWashes) return null
+    fun rate(label: Int, vararg of: StepStatus) = window.count { w -> w.coverage[label - 1].status in of }.toFloat() / window.size
+    return (1..5).filter {
+        rate(it, StepStatus.NOT_DETECTED, StepStatus.BRIEF) >= config.focusMissedRate &&
+            rate(it, StepStatus.NOT_DETECTED) >= config.focusNotDetectedRate
+    }.maxWithOrNull(compareBy({ rate(it, StepStatus.NOT_DETECTED) }, { it }))
 }
 
 /** Causal trailing mean of the last [ModelMeta.movingAverageK] vectors; averages what it has during warm-up. */

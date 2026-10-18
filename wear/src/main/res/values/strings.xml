@@ -32,6 +32,8 @@
     <string name="status_ok">Looks covered</string>
     <string name="status_brief">May have been brief</string>
     <string name="status_not_detected">Not detected</string>
+    <!-- Summary only: the Focus Step, one estimate-language line. %1$s is the Step name. -->
+    <string name="focus_step">%1$s: often not detected lately</string>
     <!-- §1.3 user-facing Step names, in canonical order (labels 1..5). -->
     <string-array name="steps">
         <item>Palms</item>

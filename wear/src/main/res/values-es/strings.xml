@@ -34,6 +34,7 @@
     <string name="status_ok">Parece completado</string>
     <string name="status_brief">Parece incompleto</string>
     <string name="status_not_detected">No detectado</string>
+    <string name="focus_step">%1$s: a menudo sin detectar últimamente</string>
 
     <!-- Pasos del lavado -->
     <string-array name="steps">
