@@ -274,7 +274,8 @@ notes: `research/feedback-timing-and-missed-steps.md` and `research/why-lines-an
 **Deliverables**
 
 1. **Step guide.** A detail page behind each of the five Summary rows (Step name, illustration,
-   why line, in that order), reached by tapping the row. All five rows are tappable whatever their
+   why line, in that order), reached by tapping the row, and a pager (swipe sideways, page dots) walks the other four Steps in
+   canonical order so one tap reaches every guide. All five rows are tappable whatever their
    status. History needs nothing new: its rows open the same Summary. No entry from Start or
    Settings (Start keeps its single action; Summary → page is two levels, §4.1.5). WHO's sixth
    motion ("backs of fingers to opposing palms") has no Step: it is left out, with no row and no

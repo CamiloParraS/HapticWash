@@ -413,5 +413,6 @@ when a Wash is cancelled ([wash_cancelled](ux/wash_cancelled.png)). Fixed on the
 no longer sticks on "stopping" after a cancel, and backing out of a guide opened from a fresh Summary
 returns to that Summary instead of a dead Wash screen.
 Retaken: summary_coaching (+scrolled), summary_mixed (+scrolled), target_check, guide_fingertips (+
-_from_focus), guide_between_fingers, credits (+scrolled). Not retaken (still the old layout): guide_palms,
-guide_back_of_hands, guide_thumbs, guide_thumbs_from_focus, guide_between_fingers_es, credits_es, summary_focus_step is now a scrolled Summary.
+_from_focus), guide_between_fingers, credits (+scrolled). Guides are now a pager across the five Steps
+(page dots, swipe sideways; edge swipe or back leaves): all five guide shots and guide_between_fingers_es
+(+ _scrolled, small round AVD) retaken. Not retaken: credits_es. summary_focus_step is now a scrolled Summary.

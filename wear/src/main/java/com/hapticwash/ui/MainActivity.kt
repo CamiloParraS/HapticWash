@@ -124,6 +124,9 @@ import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.AlertDialogDefaults
 import androidx.wear.compose.material3.AppScaffold
+import androidx.wear.compose.foundation.pager.HorizontalPager
+import androidx.wear.compose.foundation.pager.rememberPagerState
+import androidx.wear.compose.material3.HorizontalPagerScaffold
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.drawCircularProgressIndicator
@@ -1013,24 +1016,34 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
     }
 }
 
-/** A Step's guide page: name, Hegasy crop (CC BY-SA, separate file; D34), one sourced why line. */
+/**
+ * The Step guides, one page per Step in canonical order, opened on the tapped Step. Swiping sideways walks the others,
+ * so one tap reaches all five (a fully covered Wash still has a way to every guide). Each page: name, Hegasy crop
+ * (CC BY-SA, separate file; D34), one-line technique, one why line.
+ */
 @Composable
 private fun GuideScreen(label: Int?) {
     if (label == null || label !in 1..5) return
+    val pager = rememberPagerState(initialPage = label - 1) { 5 }
+    HorizontalPagerScaffold(pager) {
+        HorizontalPager(pager, Modifier.fillMaxSize()) { page -> GuidePage(page + 1) }
+    }
+}
+
+@Composable
+private fun GuidePage(label: Int) {
     val colors = MaterialTheme.colorScheme
-    // Scrolls: on a small screen, or in Spanish, the title, technique and why line don't all fit at once.
     val scroll = rememberScrollState()
-    ScreenScaffold(scroll) {
-        Column(
-            Modifier.fillMaxSize().verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = 22.dp, bottom = 36.dp).semantics(mergeDescendants = true) {},
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-            Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(68.dp).clip(CircleShape))
-            Text(stringArrayResource(R.array.step_how)[label - 1], style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-            Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-        }
+    // Scrolls: on a small screen, or in Spanish, the title, technique and why line don't all fit at once.
+    Column(
+        Modifier.fillMaxSize().verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = 22.dp, bottom = 36.dp).semantics(mergeDescendants = true) {},
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(68.dp).clip(CircleShape))
+        Text(stringArrayResource(R.array.step_how)[label - 1], style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+        Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
     }
 }
 
