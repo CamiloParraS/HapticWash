@@ -160,6 +160,7 @@ import com.hapticwash.session.Settings
 import com.hapticwash.session.StepStatus
 import com.hapticwash.session.WashService
 import com.hapticwash.session.allCovered
+import com.hapticwash.session.focusStep
 import com.hapticwash.session.WashSession
 import com.hapticwash.session.worthSaving
 import com.hapticwash.session.Wrist
@@ -889,6 +890,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
         WashService.lastWash.value?.takeIf { it.id == id } ?: History.get(context).read().find { it.id == id }
     }
     val steps = stringArrayResource(R.array.steps)
+    val focus = remember(id) { focusStep(History.get(context).read()) }
     val colors = MaterialTheme.colorScheme
     // Rows arrive in a short cascade as the end pulses play. Decorative: scrolling is never blocked.
     val entrance = remember { Animatable(0f) }
@@ -946,6 +948,16 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                                     Text(stringResource(statusText(c.status)), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 }
                             }
+                        }
+                    }
+                    // The Focus Step: at most one estimate-language line, opening the same guide as its row.
+                    focus?.let { label ->
+                        item {
+                            Text(
+                                stringResource(R.string.focus_step, steps[label - 1]),
+                                morphContent(spec).clip(RoundedCornerShape(16.dp)).clickable { onGuide(label) }.padding(horizontal = 16.dp, vertical = 8.dp),
+                                color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center,
+                            )
                         }
                     }
                 }
