@@ -1,0 +1,12 @@
+The five images wear/src/main/res/drawable-nodpi/step_art_*.png are cropped
+from "Hand Disinfection according to DIN EN 1500" by Hegasy (Guido4 / hegasy.de),
+https://commons.wikimedia.org/wiki/File:04_Hegasy_Hand_Disinfection_Wiki_EN_CCBYSA.png
+
+Licence: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0),
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Changes: each image is a crop of one panel of the original sheet.
+
+These crops are offered under CC BY-SA 4.0 (or a compatible licence). No additional
+terms or technical restrictions apply to them. The licensor does not endorse HapticWash.
+This licence covers these image files only, not the app's source code.

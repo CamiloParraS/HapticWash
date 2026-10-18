@@ -36,7 +36,7 @@ class StepGuideTest {
     fun noScreenIsMoreThanTwoLevelsBelowItsList() {
         fun depth(r: String): Int = 1 + (Routes.links.getValue(r).maxOfOrNull { depth(it) } ?: 0)
         assertEquals(2, depth(Routes.SUMMARY)) // Summary -> Guide, nothing under the Guide
-        assertEquals(1, depth(Routes.SETTINGS))
+        assertEquals(2, depth(Routes.SETTINGS)) // Settings -> Credits
     }
 
     @Test

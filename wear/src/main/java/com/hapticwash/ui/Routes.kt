@@ -11,6 +11,7 @@ internal object Routes {
     const val SETTINGS = "settings"
     const val SUMMARY = "summary/{id}"
     const val GUIDE = "guide/{label}"
+    const val CREDITS = "credits"
 
     fun summary(id: Long) = "summary/$id"
 
@@ -22,7 +23,8 @@ internal object Routes {
         WASH to setOf(GUIDE), // the Wash shows its own Summary when it ends
         HISTORY to setOf(SUMMARY),
         SUMMARY to setOf(GUIDE),
-        SETTINGS to emptySet(),
+        SETTINGS to setOf(CREDITS),
+        CREDITS to emptySet(),
         GUIDE to emptySet(),
     )
 }
