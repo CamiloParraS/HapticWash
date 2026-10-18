@@ -37,7 +37,7 @@
     <string name="focus_step">Focus next time: %1$s</string>
     <string name="target_todo">Still to do</string>
     <string name="close">Close</string>
-    <string name="focus_count">Not detected in %1$d of your last %2$d washes</string>
+    <string name="focus_count">Not detected in %1$d of last %2$d</string>
     <string name="focus_row">Focus next time · %1$d of last %2$d</string>
     <string name="page_of">Page %1$d of %2$d</string>
     <string name="covered_steps">✓ %1$s</string>
