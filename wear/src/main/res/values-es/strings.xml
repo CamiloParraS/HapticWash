@@ -34,6 +34,7 @@
     <string name="status_ok">Parece completado</string>
     <string name="status_brief">Parece incompleto</string>
     <string name="status_not_detected">No detectado</string>
+    <string name="focus_step">%1$s: a menudo sin detectar últimamente</string>
 
     <!-- Pasos del lavado -->
     <string-array name="steps">
@@ -42,6 +43,15 @@
         <item>Entre los dedos</item>
         <item>Pulgares</item>
         <item>Puntas de los dedos</item>
+    </string-array>
+
+    <!-- Step guide why lines (neutral tú; third person about the study). Škodová 2015, AJIC 43(12):1360-2. -->
+    <string-array name="step_whys">
+        <item>Palmas: casi nunca se omiten, pero es solo el primer paso</item>
+        <item>Dorso: en un estudio, más de la mitad omitió una zona</item>
+        <item>Entre los dedos: cerca de 1 de cada 4 la omitió en un estudio</item>
+        <item>Pulgares: la zona más omitida en un estudio de 705 personas</item>
+        <item>Puntas: cerca de la mitad omitió alguna en un estudio</item>
     </string-array>
 
     <!-- Historial -->
