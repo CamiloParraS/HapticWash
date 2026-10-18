@@ -111,6 +111,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -652,11 +653,11 @@ private fun TargetCheckCard() {
     if (undetected.isEmpty() || dismissed) return
     val steps = stringArrayResource(R.array.steps)
     Column(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).clickable { dismissed = true }.padding(horizontal = 24.dp, vertical = 36.dp),
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).clickable(onClickLabel = stringResource(R.string.close), role = Role.Button) { dismissed = true }.padding(horizontal = 24.dp, vertical = 36.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.target_todo), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.target_todo), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
         // One left edge for the icons, so the names line up whatever their width.
         Column(verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.Start) {
             undetected.forEach {

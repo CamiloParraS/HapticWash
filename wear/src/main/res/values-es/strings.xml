@@ -36,7 +36,8 @@
     <string name="status_brief">Parece incompleto</string>
     <string name="status_not_detected">No detectado</string>
     <string name="focus_step">Para la próxima: %1$s</string>
-    <string name="target_todo">Falta</string>
+    <string name="target_todo">Por hacer</string>
+    <string name="close">Cerrar</string>
     <string name="covered_steps">✓ %1$s</string>
 
     <!-- Pasos del lavado -->
