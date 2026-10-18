@@ -43,3 +43,18 @@ that a wash is happening.
 **Auto-end** — a Wash ending itself on sustained `NULL`: cancelled (not saved) if no washing is seen
 within 30 s of the start, a keep-going nudge if washing pauses before the 40 s target, ended normally if
 washing stops after it. Needs the model, so Timer-only Washes end by tap only.
+
+**Target check** — the one live prompt a Wash may give: at the 40 s target, if any Step is
+`NOT_DETECTED`, a single nudge and a screen naming those Steps. Not continuous prompting. An
+estimate like any Step Status. Ships only if M6 passes its gate; has a Settings toggle.
+
+**Focus Step** — the one Step a user habitually misses: `NOT_DETECTED` or `BRIEF` in at least 60 % of
+their last 10 Washes with Coverage (and `NOT_DETECTED` alone in at least 30 %), at least 5 such Washes
+needed. Worked out from History each time, never stored; there is none when no Step qualifies. An
+estimate like any Step Status.
+
+**Step guide** — the page behind a Summary row: the Step's name, an illustration and its why line.
+Reached only from Summary (or the Focus Step card), never from Start or Settings.
+
+**Why line** — the one short sentence on a Step guide saying why that part of the hand needs its own attention, as contact reasoning
+(what it touches and picks up). No statistics, no named germs or illnesses, no prevention or outcome claims.

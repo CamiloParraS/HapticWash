@@ -258,6 +258,123 @@ wash detection (spotting) is Future Work (Core §13, D30).
 
 ---
 
+### Coaching — Step guide, Focus Step, Target check _(post-M6)_
+
+**Objective.** Help people stop skipping particular Steps, classically Thumbs and Fingertips, with
+knowing the five Steps as support. Decisions: D33 (Target check), D34 (artwork); Core §1.4 amended.
+Nothing here claims a Wash was good or hands are clean (§4.1.9); every output is an estimate.
+
+**Evidence base (why it is shaped this way).** Showing missed Steps after a Wash helps (Lehotsky
+2015: inadequate rubs 50 % → 15 %), so Summary stays. Live per-step feedback helps only while it
+stays on (Lacey 2020), and nothing tests a single check at 40 s, so the Target check is a bet gated
+on M6, not a proven effect. Thumbs, then Fingertips, are the most skipped Steps (Arias 2016). Full
+notes: `research/feedback-timing-and-missed-steps.md` and `research/why-lines-and-who-licence.md`
+(branches of the same names).
+
+**Deliverables**
+
+1. **Step guide.** A detail page behind each of the five Summary rows (Step name, illustration,
+   why line, in that order), reached by tapping the row. All five rows are tappable whatever their
+   status. History needs nothing new: its rows open the same Summary. No entry from Start or
+   Settings (Start keeps its single action; Summary → page is two levels, §4.1.5). WHO's sixth
+   motion ("backs of fingers to opposing palms") has no Step: it is left out, with no row and no
+   claim that it is covered. Summary rows themselves carry no illustration (too small at watch size).
+2. **Why lines.** One line per Step, ≤ ~60 characters, saying why that part of the hand needs its
+   own attention in a Wash. Allowed: contact reasoning, meaning what that part of the hand does and
+   picks up ("pick up whatever you touch", "gets trapped") and why the other rubbing misses it.
+   Not allowed: named germs, bacteria, viruses or illnesses; "prevent", "protect", "safe" or any
+   promise of an outcome ("clean hands", "kills"); study statistics (they need the paywalled figures
+   checked, and a percentage does not say what to do differently); poster wording. A line says why
+   the Step is worth doing, never that doing it makes hands clean or safe. Fingertips are never
+   called "the most missed" (contested: Szilágyi 2013). The lines carry no figures, so they are
+   unsourced; that is deliberate. The page leads with a one-line technique, then the why line.
+   English:
+   - Palms: "Palms handle the most, so they pick up the most"
+   - Back of hands: "Backs of hands touch things too; palms never reach them"
+   - Between fingers: "What you touch gets trapped between fingers and skipped"
+   - Thumbs: "Thumbs grip everything, so they pick up whatever you touch"
+   - Fingertips: "Fingertips touch first, and only get soap if aimed there"
+
+   Strings are English and Spanish; `LanguageTest` scans both for the banned words. (Replaces the
+   earlier "in one study" lines from Škodová 2015; see SPEC-CHANGELOG.)
+3. **Step artwork.** The Hegasy sheet "Hand Disinfection according to DIN EN 1500" (Wikimedia
+   Commons, CC BY-SA 4.0), cropped to one asset per Step and kept as separate files with a licence
+   notice in the repo and in the app (credit, link, licence, note that the images were cropped).
+   If the crops do not read on a round watch display, the guide falls back to the app's current
+   per-Step icons (D34). WHO and CDC poster images are not used.
+4. **Focus Step.** One Step shown on Summary only, as one estimate-language line under the Coverage
+   rows (for example "Thumbs: often not detected lately"), opening the same Step guide page as that
+   Step's row.
+   - Window: the last 10 `sensor` Washes that have Coverage. Timer-only and too-short Washes are
+     skipped (they neither count as misses nor fill the window). None until at least 5 qualify.
+   - Candidate: `NOT_DETECTED` or `BRIEF` in ≥ 60 % of the window **and** `NOT_DETECTED` alone in
+     ≥ 30 %. Both numbers are calibration knobs in the single configuration object (§M4).
+   - Highest `NOT_DETECTED` rate wins; on equal rates the later Step in canonical order. Exactly one
+     at a time; nothing shown if none qualifies (no praise, no streak, no "you improved").
+   - Computed on demand from History: no stored state, no new permission. It disappears when the
+     window stops qualifying it. Not shown on Start or the Tile.
+5. **Target check.** At the 40 s target of a `sensor` Wash, if any Step is `NOT_DETECTED`:
+   - `Pulse.MISSED` plays **instead of** the time-reached `TARGET` ticks (one vibration event, no
+     new pattern). If every Step has some detection, `TARGET` plays as today.
+   - The in-progress screen swaps to a card naming the undetected Steps (name + icon, not colour
+     alone), in "not detected" language, never "you missed". It closes after 6 s or on tap; the
+     Wash keeps running behind it.
+   - Fires at most once per Wash. If the Wash ends while the card is up, the card closes and the
+     end pulses play after the usual 3 s gap. A washing pause does not dismiss it. If a keep-going
+     nudge moved the target, the check follows the rescheduled 40 s, as the ticks do, and respects
+     the 3 s gap (§4.1.6).
+   - No Focus Step emphasis: the card names only this Wash's undetected Steps. Timer-only Washes
+     have no Coverage and get no check.
+   - **Gated.** Ships enabled only if M6 meets the gate (Core M6, D33). Settings gets a "Target
+     check" toggle, on by default once the gate passes. If the gate is missed, the code ships
+     disabled behind a build flag with no UI mention, and `LIMITATIONS.md` records the miss and the
+     numbers.
+   - Every Wash with the check on logs the nudge timestamp, so its post-nudge windows stay
+     separable from untouched ones.
+6. **Language rules.** Claim words (the terms the Step guide could drift into when describing what
+   a Step reaches) join the banned-word list of the M4 string lint (D29), English and Spanish. New
+   strings go through that lint.
+
+**Acceptance criteria**
+
+- Focus Step unit tests: fewer than 5 qualifying Washes → none; Timer-only and too-short Washes
+  neither count nor fill the window; a Step at 60 % but under 30 % `NOT_DETECTED` → none; two
+  qualifying Steps → higher `NOT_DETECTED` rate wins; equal rates → later canonical Step; a window
+  that stops qualifying → none again.
+- Target check unit tests: nothing `NOT_DETECTED` → `TARGET` ticks, no card; any `NOT_DETECTED` →
+  `MISSED` and no `TARGET`; fires once; Wash ending while the card is up closes it and orders the
+  end pulses ≥ 3 s later; a washing pause leaves it up; a nudge-shifted target moves the check;
+  Timer-only → nothing; toggle off or gate flag off → `TARGET` as today.
+- Haptics test: still no two vibrations within 3 s and every pattern distinct.
+- Navigation test: each of the five Summary rows (and the Focus Step line) opens its guide page;
+  Start and Settings hold no route to it; no screen deeper than two levels.
+- String lint passes over all new EN and ES strings. No new permission; the manifest still has no
+  `INTERNET` (R1).
+- UI audit entry in `docs/UX_AUDIT.md` with round-AVD screenshots of the guide page (all five
+  Steps, one of them with a long Spanish line) and the Target check card, against every §4.1 item.
+- Artwork: all five crops are checked on a round display, with particular attention to Back of hands
+  against Between fingers, which are near-identical silhouettes. Record the outcome (use the crops,
+  or fall back to icons).
+
+**Verification**
+
+- `./gradlew :wear:testDebugUnitTest`
+- Replay a labelled session with a Step missing past 40 s: the card and `MISSED` appear once.
+- M6 on `own_watch`: report the gate numbers in **Core M6**. Any number is acceptable; omitting it
+  is not.
+
+**Open gaps (not decided; do not invent answers while slicing)**
+
+- **Spanish wording** of the why lines and every new string.
+- **Where the artwork credit appears in the app** (the licence needs credit, link and licence
+  notice; only "separate assets with a notice" is settled), and whether CC BY-SA ShareAlike reaches
+  the app's own licence.
+- **Panel-to-Step mapping** of the Hegasy sheet is the researcher's reading; confirm when cropping.
+- **Gate numbers are calibration knobs** (Core M6): 10–20 Washes is a tiny sample, so report raw
+  counts.
+
+---
+
 ## 8. App Contracts
 
 ### 8.4 `MotionSource`

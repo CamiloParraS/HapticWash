@@ -30,6 +30,23 @@ data class Truth(val subject: String, val session: String, val wrist: String, va
     }
 }
 
+/** Raw `NOT_DETECTED` confusion for one Step over a set of Washes (Target check gate, D33). */
+data class GateCounts(val tp: Int, val fp: Int, val fn: Int) {
+    /** Null when the app never said `NOT_DETECTED`: precision is undefined, not 1. */
+    val precision get() = (tp + fp).takeIf { it > 0 }?.let { tp.toFloat() / it }
+}
+
+/** One entry per Step: app statuses vs ground-truth statuses, one pair per Wash. */
+fun gateCounts(washes: List<Pair<List<StepStatus>, List<StepStatus>>>): List<GateCounts> =
+    (0 until 5).map { i ->
+        val nd = StepStatus.NOT_DETECTED
+        GateCounts(
+            tp = washes.count { (a, g) -> a[i] == nd && g[i] == nd },
+            fp = washes.count { (a, g) -> a[i] == nd && g[i] != nd },
+            fn = washes.count { (a, g) -> a[i] != nd && g[i] == nd },
+        )
+    }
+
 /**
  * M4 replay report (SPEC 9.3). Always: ground-truth arithmetic. Gated: the report itself,
  * run by `scripts/replay_batch.sh` with `-Dreplay.dir=<results> -Dreplay.csv=<csv dir>`.
@@ -47,6 +64,20 @@ class ReplayReportTest {
         assertEquals(listOf(StepStatus.OK, StepStatus.NOT_DETECTED, StepStatus.NOT_DETECTED, StepStatus.BRIEF, StepStatus.NOT_DETECTED), t.statuses)
         assertEquals((labels.size - 1) * 0.02f, t.durationS, 1e-4f)
         assertEquals("right", t.wrist)
+    }
+
+    @Test
+    fun gateCountsSplitNotDetectedIntoTpFpFn() {
+        val nd = StepStatus.NOT_DETECTED
+        val ok = StepStatus.OK
+        val app = listOf(listOf(nd, ok, ok, nd, ok), listOf(nd, ok, ok, ok, ok))
+        val truth = listOf(listOf(nd, nd, ok, ok, ok), listOf(ok, ok, ok, ok, ok))
+        val c = gateCounts(app.zip(truth))
+        assertEquals(GateCounts(tp = 1, fp = 1, fn = 0), c[0])
+        assertEquals(0.5f, c[0].precision!!, 1e-6f)
+        assertEquals(GateCounts(tp = 0, fp = 0, fn = 1), c[1])
+        assertEquals(null, c[1].precision)
+        assertEquals(GateCounts(tp = 0, fp = 1, fn = 0), c[3])
     }
 
     @Test
@@ -112,6 +143,21 @@ class ReplayReportTest {
         for (r in primary.filter { it.mirrored }) {
             val un = rows.firstOrNull { !it.primary && !it.mirrored && it.truth.session == r.truth.session && it.truth.subject == r.truth.subject }
             appendLine("| ${r.truth.subject} | ${r.truth.session} | ${r.matches}/5 | ${un?.let { "${it.matches}/5" } ?: "–"} |")
+        }
+        appendLine()
+        appendLine("## Target check gate numbers (D33)")
+        appendLine()
+        appendLine("Per-Step `NOT_DETECTED` precision over the primary-wrist Washes above, with raw counts " +
+            "(tiny sample: read the counts, not just the ratio). Gate: precision ≥ 0.80. " +
+            "Step macro-F1 ≥ 0.70 is sample-level and comes from `make eval-holdout --dataset own_watch` " +
+            "in HapticWash-AI, not from here. Gate Washes must be recorded with the Target check off.")
+        appendLine()
+        appendLine("| Step | TP | FP | FN | precision | ≥ 0.80 |")
+        appendLine("|---|---|---|---|---|---|")
+        val steps = listOf("Palms", "Back of hands", "Between fingers", "Thumbs", "Fingertips")
+        gateCounts(primary.map { r -> r.wash.coverage.map { it.status } to r.truth.statuses }).forEachIndexed { i, c ->
+            val p = c.precision
+            appendLine("| ${steps[i]} | ${c.tp} | ${c.fp} | ${c.fn} | ${p?.let { "%.2f".format(it) } ?: "n/a"} | ${if (p == null) "n/a" else if (p >= 0.8f) "yes" else "no"} |")
         }
         appendLine()
         appendLine("## Budgets (§4.3, indicative: emulator)")

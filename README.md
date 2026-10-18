@@ -30,6 +30,7 @@ Needs `JAVA_HOME` (JDK 17+), `ANDROID_HOME` (or `sdk.dir` in `local.properties`)
 ./gradlew :wear:connectedDebugAndroidTest    # inference parity + latency, model-load failure (Wear AVD)
 scripts/replay_demo.sh session.csv [speed]   # replay a canonical CSV on the AVD, stream predictions
 scripts/replay_batch.sh <csv dir> [speed]    # replay 10 held-out sessions, write reports/M4_replay.md
+# the report also lists per-Step NOT_DETECTED precision with raw counts (Target check gate, ticket 07); run it on labelled own_watch CSVs with the Target check off
 scripts/showcase.sh [good|mixed|right|csv] [speed]  # demo: replay a Wash with the screens following along
 scripts/release_smoke.sh                     # R8 release build loads the model
 ```

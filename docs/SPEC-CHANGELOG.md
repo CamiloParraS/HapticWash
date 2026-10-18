@@ -3,6 +3,32 @@
 Changes to [SPEC-APP.md](SPEC-APP.md) after M4, newest first. Each entry says what changed,
 why, and where it is implemented. The Core spec is unaffected unless an entry says so.
 
+## 2026-10-18 — Coaching milestone specified (branch `docs/m5-rescope`)
+
+This entry changes the Core spec too (§1.4, §6 M6, section index). Decisions: D33, D34. Spec only,
+nothing implemented. Full text: SPEC-APP "Coaching".
+
+### C14 — §4.1.6: the time-reached tick is replaced by `MISSED` when a Step is undetected
+
+- **Was:** three quick ticks at the 40 s target, always.
+- **Now:** if any Step is `NOT_DETECTED` at 40 s (Target check, gated on M6), `Pulse.MISSED` plays
+  instead and a card names the Steps; otherwise the ticks play as before.
+- **Why:** name the skipped Step while hands are still soapy. One vibration event keeps the
+  once-per-3 s rule.
+
+### C15 — M4 Summary: tappable Step rows open a Step guide; Focus Step line
+
+- **Was:** Summary rows are static; no illustrations or reasons.
+- **Now:** each row opens a page with the Step's name, illustration and a sourced why line. A
+  habitually undetected Step gets one estimate-language line on Summary.
+- **Why:** knowing what a Step reaches supports the Steps people skip; evidence for post-Wash
+  feedback is stronger than for live feedback.
+
+### C16 — M4 banned-word list: claim words
+
+- **Was:** health-result words only (D29).
+- **Now:** claim words (EN + ES) join the list so why lines cannot drift into infection claims.
+
 ## 2026-10-17 — Twist start opens the app (branch `docs/m5-rescope`)
 
 ### C13 — §2.1: `USE_FULL_SCREEN_INTENT`
@@ -158,3 +184,17 @@ Accepted on the rule "spec changes are welcome when they give better functionali
 - **Why:** a disabled switch that does nothing costs a scroll and a moment of thought on a small
   screen. It was removed in the polish pass (`UX_AUDIT.md`), which this entry makes official.
 - **How:** already implemented in `fcf6652`.
+
+## Coaching: why lines reworded (2026-10-18)
+
+Why lines no longer cite a study ("about 1 in 4 missed it in one study"). They say why the Step matters
+in terms of what hands do, with no figures, so the Škodová figure check is no longer an open gap. The Guide
+also leads with a one-line technique. SPEC-APP §Coaching deliverable 2 and Open gaps, CONTEXT "Why line",
+`step_whys` (EN, ES) and `StepGuideTest` updated.
+
+## Coaching: why lines allow contact reasoning (2026-10-18)
+
+SPEC-APP §Coaching deliverable 2 now allows contact reasoning ("pick up whatever you touch", "gets trapped
+between fingers") so a why line can say why a Step is worth doing. Still banned: named germs or illnesses,
+prevent/protect/safe, any outcome promise, statistics. `step_whys` (EN, ES) and `StepGuideTest` updated.
+
