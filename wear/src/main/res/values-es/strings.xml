@@ -28,20 +28,24 @@
     </plurals>
 
     <!-- Resultados -->
-    <string name="wash_cancelled">No se detectó lavado</string>
+    <string name="wash_cancelled">No se detectó lavado. No se guardó.</string>
     <string name="too_short">No hay datos suficientes</string>
     <string name="too_short_to_save">Lavado demasiado breve para guardar</string>
     <string name="too_short_short">Muy breve</string>
+    <string name="none_detected_short">Ningún paso detectado</string>
+    <string name="start_intro">Frota 5 pasos de manos. El anillo muestra lo que parece cubierto.</string>
     <string name="status_ok">Parece completado</string>
     <string name="status_brief">Parece incompleto</string>
     <string name="status_not_detected">No detectado</string>
     <string name="focus_step">Para la próxima: %1$s</string>
-    <string name="target_todo">Por hacer</string>
+    <string name="target_todo">Aún sin detectar</string>
     <string name="close">Cerrar</string>
-    <string name="focus_count">Sin detectar en %1$d de los últimos %2$d</string>
+    <string name="focus_count">Sin detectar en %1$d&#160;de&#160;los&#160;últimos&#160;%2$d</string>
     <string name="focus_row">Para la próxima · %1$d de los últimos %2$d</string>
     <string name="page_of">Página %1$d de %2$d</string>
     <string name="covered_steps">✓ %1$s</string>
+    <string name="timer_only_why">Se midió la duración. Ahora no se pueden estimar los pasos en este reloj.</string>
+    <string name="too_short_why">Lávate un poco más la próxima vez para ver la cobertura.</string>
 
     <!-- Pasos del lavado -->
     <string-array name="steps">
@@ -71,7 +75,7 @@
 
     <!-- Historial -->
     <string name="history">Historial</string>
-    <string name="history_empty">Todavía no hay lavados</string>
+    <string name="history_empty">Todavía no hay lavados. Aquí aparecen los últimos 20. Desliza a la derecha para volver a Inicio.</string>
     <string name="steps_covered">pasos completados</string>
     <string name="coverage_count">%1$d de 5</string>
     <string name="history_hint">%1$d de 5 pasos detectados</string>
@@ -92,6 +96,8 @@
     <string name="progress_ring">Anillo de progreso</string>
     <string name="target_check">Aviso a los 40 s</string>
     <string name="twist_start">Empezar con un giro</string>
+    <string name="progress_ring_desc">Se llena al lavar</string>
+    <string name="twist_start_desc">Escucha en segundo plano</string>
     <string name="twist_warning_title">Gasta más batería</string>
     <string name="twist_warning">El reloj espera un giro todo el día, así que la batería dura menos.</string>
     <string name="twist_listening">Esperando un giro</string>

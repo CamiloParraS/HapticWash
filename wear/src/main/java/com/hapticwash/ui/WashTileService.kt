@@ -49,12 +49,11 @@ class WashTileService : Material3TileService() {
         timeline(
             timelineEntry(
                 primaryLayout(
-                    // A daily habit number, like Apple Health's handwashing count. The app's name until the first Wash of the day.
-                    titleSlot = {
+                    // A daily habit number, like Apple Health's handwashing count. No app-name title: it spent the top
+                    // third of the Tile, so before the first Wash of the day the slot is dropped and the main slot grows.
+                    titleSlot = History.get(this@WashTileService).read().count { DateUtils.isToday(it.startedAtEpochMs) }
                         // ponytail: History keeps 20 Washes, so the count tops out at 20 a day.
-                        val today = History.get(this@WashTileService).read().count { DateUtils.isToday(it.startedAtEpochMs) }
-                        text((if (today > 0) resources.getQuantityString(R.plurals.washes_today, today, today) else getString(R.string.app_name)).layoutString)
-                    },
+                        .takeIf { it > 0 }?.let { today -> val title: MaterialScope.() -> LayoutElement = { text(resources.getQuantityString(R.plurals.washes_today, today, today).layoutString) }; title },
                     // Start's words and hierarchy: a small grey label over the takeaway, so the Tile and the app read as one.
                     mainSlot = {
                         val last = History.get(this@WashTileService).read().firstOrNull()
@@ -76,7 +75,7 @@ class WashTileService : Material3TileService() {
                             .addContent(text(lastWashLabel(this@WashTileService, last).layoutString, typography = Typography.LABEL_SMALL, color = colorScheme.onSurfaceVariant))
                             .addContent(takeaway)
                             // Breathing room above the EdgeButton once the ring pushes the words down.
-                            .apply { if (last.coverageShown) addContent(Spacer.Builder().setHeight(dp(10f)).build()) }
+                            .apply { if (last.coverageShown) addContent(Spacer.Builder().setHeight(dp(14f)).build()) }
                             .build()
                     },
                     bottomSlot = {
@@ -118,6 +117,6 @@ class WashTileService : Material3TileService() {
             if (filled > 0f) fills.addContent(line(filled, if (allCovered(coverage)) colorScheme.tertiary else colorScheme.primary))
             fills.addContent(gap(sweep - filled + RING_GAP_DEG / 2))
         }
-        return Box.Builder().setWidth(dp(40f)).setHeight(dp(40f)).addContent(tracks.build()).addContent(fills.build()).build()
+        return Box.Builder().setWidth(dp(36f)).setHeight(dp(36f)).addContent(tracks.build()).addContent(fills.build()).build()
     }
 }

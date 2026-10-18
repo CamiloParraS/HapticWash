@@ -148,7 +148,7 @@ class WashService : Service() {
         nm.notify(
             OPEN_ID,
             Notification.Builder(this, CHANNEL_OPEN)
-                .setSmallIcon(R.drawable.splash_icon)
+                .setSmallIcon(R.drawable.ic_wash)
                 .setContentTitle(getString(R.string.session_running))
                 .setContentIntent(open)
                 .setFullScreenIntent(open, true)
@@ -269,7 +269,7 @@ class WashService : Service() {
             NotificationChannel(CHANNEL, getString(R.string.channel_session), NotificationManager.IMPORTANCE_LOW),
         )
         return Notification.Builder(this, CHANNEL)
-            .setSmallIcon(R.drawable.splash_icon)
+            .setSmallIcon(R.drawable.ic_wash)
             .setContentTitle(getString(text))
             .setOngoing(true)
             .build()

@@ -3,7 +3,6 @@ package com.hapticwash.ui
 import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
-import android.widget.Toast
 import android.content.Intent
 import android.content.res.Resources
 import android.content.pm.PackageManager
@@ -158,6 +157,7 @@ import androidx.wear.compose.material3.ProgressIndicatorDefaults
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.SwitchButton
+import androidx.wear.compose.material3.SwitchButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.lazy.TransformationSpec
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
@@ -203,7 +203,7 @@ private const val ENTRANCE_MS = 360 // ROW_MS + 4 × STAGGER_MS, for five rows
 private val ROW_HALF_HEIGHT = 26.dp
 
 /** Summary ring: diameter, stroke, and the gap between Step arcs. */
-private val RING_SIZE = 124.dp
+private val RING_SIZE = 108.dp
 private val RING_STROKE = 8.dp
 internal const val RING_GAP_DEG = 14f
 
@@ -365,6 +365,8 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
     val running by WashService.status.collectAsState()
     val ambientNow = ambient().takeIf { running.running }
     var answered by rememberSaveable { mutableIntStateOf(0) }
+    // Shown on Start after auto-end cancels a Wash, until the user acts.
+    var cancelledNotice by rememberSaveable { mutableStateOf(false) }
     // A Tile or complication tap: back to Start, which then starts (or rejoins) the Wash.
     LaunchedEffect(startRequests()) { if (startRequests() > answered) nav.popBackStack(Routes.START, inclusive = false) }
     // A Wash that began without a tap on Start (a Twist): show it. A tap has already navigated, so Start is no longer current.
@@ -384,16 +386,17 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
             SwipeDismissableNavHost(nav, startDestination = Routes.START) {
                 composable(Routes.START) {
                     StartScreen(
-                        onWash = { nav.navigate(Routes.WASH) },
-                        onHistory = { nav.navigate(Routes.HISTORY) },
-                        onSettings = { nav.navigate(Routes.SETTINGS) },
+                        onWash = { cancelledNotice = false; nav.navigate(Routes.WASH) },
+                        onHistory = { cancelledNotice = false; nav.navigate(Routes.HISTORY) },
+                        onSettings = { cancelledNotice = false; nav.navigate(Routes.SETTINGS) },
+                        cancelledNotice = cancelledNotice,
                         autoStart = startRequests() > answered,
                         onAutoStarted = { answered = startRequests() },
                     )
                 }
                 composable(Routes.WASH) { WashScreen(onGuide = { nav.navigate(Routes.guide(it)) }, onCancelled = {
                     nav.popBackStack(Routes.START, inclusive = false)
-                    Toast.makeText(context, R.string.wash_cancelled, Toast.LENGTH_LONG).show()
+                    cancelledNotice = true
                 }) }
                 composable(Routes.HISTORY) { HistoryScreen(onOpen = { nav.navigate(Routes.summary(it)) }) }
                 composable(Routes.SUMMARY) { SummaryScreen(it.arguments?.getString("id")?.toLongOrNull(), onGuide = { l -> nav.navigate(Routes.guide(l)) }) }
@@ -495,7 +498,7 @@ private fun TransformingLazyColumnItemScope.morphContent(spec: TransformationSpe
     morph(spec).graphicsLayer { with(spec) { applyContainerTransformation(scrollProgress) } }
 
 @Composable
-private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: () -> Unit, autoStart: Boolean, onAutoStarted: () -> Unit) {
+private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: () -> Unit, autoStart: Boolean, onAutoStarted: () -> Unit, cancelledNotice: Boolean = false) {
     val context = LocalContext.current
     val status by WashService.status.collectAsState()
     val washes by remember { History.get(context).washes }.collectAsState()
@@ -545,9 +548,12 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
             item {
                 val last = washes.firstOrNull()
                 val label = last?.let { lastWashLabel(context, it) }
-                val sentence = last?.let { hint(context.resources, it) } ?: stringResource(R.string.history_empty)
+                // First run: one line on what the ring is; it goes by itself once there is a Wash.
+                val sentence = last?.let { hint(context.resources, it) } ?: stringResource(R.string.start_intro)
                 val description = listOfNotNull(label, sentence).joinToString(". ")
                 val ok = last?.coverage?.count { it.status == StepStatus.OK } ?: 0
+                // An empty ring reads as a score of zero, so no ring (and a plain sentence) when nothing looked covered.
+                val ring = last?.takeIf { it.coverageShown && ok > 0 }
                 // Only recomposes when the shown digit changes.
                 val shown by remember(ok) { derivedStateOf { (ok * fillIn.value).roundToInt() } }
                 if (compact) {
@@ -557,8 +563,8 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                             .fillMaxWidth().padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (last?.coverageShown == true) {
-                            MiniRing(last.coverage, START_RING_SIZE_COMPACT, START_RING_STROKE_COMPACT, MaterialTheme.colorScheme.surfaceContainerHigh) { staggered(fillIn.value, it) }
+                        if (ring != null) {
+                            MiniRing(ring.coverage, START_RING_SIZE_COMPACT, START_RING_STROKE_COMPACT, MaterialTheme.colorScheme.surfaceContainerHigh) { staggered(fillIn.value, it) }
                             Column {
                                 Text(stringResource(R.string.coverage_count, shown), style = MaterialTheme.typography.titleMedium.rounded().copy(fontFeatureSettings = "tnum"))
                                 // Steps, not when: "Last wash · Oct 1" read as a daily habit. The time stays in the spoken description.
@@ -571,9 +577,9 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                         }
                     }
                 } else Column(morphContent(spec).rise({ entrance.value }, 0).clearAndSetSemantics { contentDescription = description }, horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (last?.coverageShown == true) {
+                    if (ring != null) {
                         Box(contentAlignment = Alignment.Center) {
-                            MiniRing(last.coverage, START_RING_SIZE, START_RING_STROKE, MaterialTheme.colorScheme.surfaceContainerHigh) { staggered(fillIn.value, it) }
+                            MiniRing(ring.coverage, START_RING_SIZE, START_RING_STROKE, MaterialTheme.colorScheme.surfaceContainerHigh) { staggered(fillIn.value, it) }
                             Text(
                                 shown.toString(),
                                 style = MaterialTheme.typography.titleLarge.rounded().copy(fontFeatureSettings = "tnum"),
@@ -583,6 +589,9 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                     if (label != null) Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                     if (timerOnly) Text(stringResource(R.string.timer_only_short), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                 }
+            }
+            if (cancelledNotice) item {
+                Text(stringResource(R.string.wash_cancelled), Modifier.fillMaxWidth().padding(horizontal = 12.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             }
             // The one primary action, in the middle with the secondary actions below it.
             item {
@@ -618,8 +627,16 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
             // Not edge-scaled: this low on the screen the transformation would shrink them below 48 dp.
             item {
                 Row(Modifier.fillMaxWidth().rise({ entrance.value }, 2).padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
-                    FilledTonalIconButton(onHistory, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
-                    FilledTonalIconButton(onSettings, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
+                    // Captioned until the first Wash, so a first-timer learns the icons; icon-only after that. Not on small screens, where there is no room.
+                    val captions = washes.isEmpty() && !compact
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        FilledTonalIconButton(onHistory, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_history), stringResource(R.string.history)) }
+                        if (captions) Text(stringResource(R.string.history), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        FilledTonalIconButton(onSettings, Modifier.size(48.dp), shapes = IconButtonDefaults.animatedShapes()) { Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings)) }
+                        if (captions) Text(stringResource(R.string.settings), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }
@@ -642,7 +659,7 @@ private fun WashScreen(onGuide: (Int) -> Unit, onCancelled: () -> Unit = {}) {
         // Gone once faded: nothing under the Summary should take a press.
         if (leave.value < 1f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = 1 - leave.value }) { WashBody(onEnd = { result = it }, handedOver = result != null, onCancelled = onCancelled) }
         result?.let { SummaryScreen(it, fromWash = fresh, onGuide = onGuide) }
-        if (result == null) TargetCheckCard()
+        if (result == null) TargetCheckCard(onGuide)
     }
 }
 
@@ -651,7 +668,7 @@ private fun WashScreen(onGuide: (Int) -> Unit, onCancelled: () -> Unit = {}) {
  * runs on behind it. The service clears the Steps when the Wash ends, which closes it too.
  */
 @Composable
-private fun TargetCheckCard() {
+private fun TargetCheckCard(onGuide: (Int) -> Unit) {
     val undetected = WashService.status.collectAsState().value.undetected
     var dismissed by remember { mutableStateOf(false) }
     LaunchedEffect(undetected) {
@@ -665,11 +682,14 @@ private fun TargetCheckCard() {
         verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.target_todo), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
-        // One left edge for the icons, so the names line up whatever their width.
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.Start) {
+        Text(stringResource(R.string.target_todo), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
+        // One left edge for the icons, so the names line up whatever their width. A row opens that Step's guide.
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.Start) {
             undetected.forEach {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.heightIn(min = 48.dp).clickable(onClickLabel = stringResource(R.string.open_guide, steps[it - 1]), role = Role.Button) { dismissed = true; onGuide(it) },
+                    horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Icon(painterResource(STEP_ICONS[it - 1]), contentDescription = null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
                     Text(steps[it - 1], style = MaterialTheme.typography.titleMedium)
                 }
@@ -845,6 +865,18 @@ private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean, onCancelled: ()
                         }
                     },
                 )
+            } else {
+                // Timer-only quiet cue: a hairline of the same arc, filling with the target. Static between ticks (no motion to
+                // reduce), it shows the watch is running and how far along, without the full ring the user kept off.
+                val track = MaterialTheme.colorScheme.onSurfaceVariant
+                val cueStroke = CircularProgressIndicatorDefaults.largeStrokeWidth
+                Spacer(Modifier.fillMaxSize().graphicsLayer { alpha = enter.value }.drawBehind {
+                    val inset = CircularProgressIndicatorDefaults.FullScreenPadding.toPx() + cueStroke.toPx() / 2
+                    val arc = Size(size.width - 2 * inset, size.height - 2 * inset)
+                    val line = Stroke(2.dp.toPx(), cap = StrokeCap.Round)
+                    drawArc(track.copy(alpha = 0.25f), RING_START_DEG, RING_SWEEP_DEG, false, Offset(inset, inset), arc, style = line)
+                    drawArc(ringColor.copy(alpha = 0.8f), RING_START_DEG, RING_SWEEP_DEG * (elapsedS / RING_TARGET_S).coerceAtMost(1f), false, Offset(inset, inset), arc, style = line)
+                })
             }
             // Hold to stop: the same ring, drawn the same way, filling a second time in the stop colour, so it reads as
             // the ring turning into "end" rather than a new bar. Drawn even with the progress ring off.
@@ -955,10 +987,17 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
             }
             else item { Header(spec, duration(wash.durationS)) }
             when {
-                wash.modelVersion == null -> item { Notice(stringResource(R.string.timer_only), morphContent(spec)) }
-                !wash.coverageShown -> item { Notice(stringResource(R.string.too_short), morphContent(spec)) }
+                // End states: what happened, why in one line, and a way out.
+                wash.modelVersion == null || !wash.coverageShown -> {
+                    item {
+                        Column(morphContent(spec).padding(horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(stringResource(if (wash.modelVersion == null) R.string.timer_only_short else R.string.too_short), style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
+                            Text(stringResource(if (wash.modelVersion == null) R.string.timer_only_why else R.string.too_short_why), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                        }
+                    }
+                    item { FilledTonalButton(onClick = { (context as? ComponentActivity)?.onBackPressedDispatcher?.onBackPressed() }, modifier = morph(spec), transformation = SurfaceTransformation(spec), label = { Text(stringResource(R.string.close)) }) }
+                }
                 else -> {
-                    item { Notice(stringResource(if (allCovered(wash.coverage)) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec)) }
                     // The Focus Step first: one estimate-language card, opening the same guide as a row.
                     // Merged into its own row when that Step is on screen as one (below); a card only when it is not.
                     val attention = wash.coverage.filter { it.status != StepStatus.OK }.ifEmpty { wash.coverage }
@@ -967,13 +1006,15 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                         Column(
                             morphContent(spec).clip(RoundedCornerShape(16.dp)).background(colors.primary.copy(alpha = 0.12f))
                                 .clickable(onClickLabel = stringResource(R.string.open_guide, steps[label - 1]), role = Role.Button) { onGuide(label) }
-                                .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp).semantics(mergeDescendants = true) {},
+                                .heightIn(min = 48.dp).padding(horizontal = 24.dp, vertical = 8.dp).semantics(mergeDescendants = true) {},
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text("${stringResource(R.string.focus_step, steps[label - 1])} ›", style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
                             Text(stringResource(R.string.focus_count, counts.first, counts.second), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
                         }
                     }
+                    // The duration is context, not the answer: quieter than the ring and the Focus card above it.
+                    item { Text(stringResource(if (allCovered(wash.coverage)) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center) }
                     // Only Steps that need attention get a row; the covered ones are one line, since they all say the same.
                     // Everything covered: all five stay as rows, so every Step's guide is still one tap away.
                     items(attention.size) { i ->
@@ -995,8 +1036,8 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                             Column {
                                 Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
                                 // The Status as a mark and in words, never colour alone (§4.1.10); the mark is read as the words.
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Text(glyph(c.status), Modifier.clearAndSetSemantics {}, color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(glyph(c.status), Modifier.clearAndSetSemantics {}, color = colors.onSurface, style = MaterialTheme.typography.titleSmall)
                                     Text(stringResource(statusText(c.status)), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 }
                                 if (c.label == focusLabel) Text(stringResource(R.string.focus_row, focus!!.second.first, focus.second.second), color = colors.primary, style = MaterialTheme.typography.labelSmall)
@@ -1006,12 +1047,16 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                     val covered = wash.coverage.filter { it.status == StepStatus.OK }
                     if (covered.isNotEmpty() && attention.size < wash.coverage.size) item {
                         // Opens the guides at the first covered Step; the pager walks the rest.
-                        Text(
-                            stringResource(R.string.covered_steps, covered.joinToString(", ") { steps[it.label - 1] }),
+                        // Same row pattern as a flagged Step: circle mark, left-aligned text, 48 dp target.
+                        Row(
                             morphContent(spec).clip(RoundedCornerShape(16.dp)).clickable(onClickLabel = stringResource(R.string.open_guide, steps[covered.first().label - 1]), role = Role.Button) { onGuide(covered.first().label) }
-                                .heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 8.dp),
-                            color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center,
-                        )
+                                .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 4.dp).semantics(mergeDescendants = true) {},
+                            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(32.dp).clip(CircleShape).background(colors.primary.copy(alpha = 0.18f)).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+                                Text(glyph(StepStatus.OK), color = colors.primary, style = MaterialTheme.typography.titleSmall)
+                            }
+                            Text(covered.joinToString(", ") { steps[it.label - 1] }, Modifier.weight(1f), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
@@ -1060,14 +1105,14 @@ private fun GuidePage(label: Int) {
             drawContent()
             val fade = 20.dp.toPx()
             drawRect(Brush.verticalGradient(listOf(Color.Black, Color.Transparent), startY = size.height - fade, endY = size.height), blendMode = BlendMode.DstIn)
-        }.verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = 16.dp, bottom = 8.dp).semantics(mergeDescendants = true) { stateDescription = page },
+        }.verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = if (compact) 28.dp else 34.dp, bottom = 8.dp).semantics(mergeDescendants = true) { stateDescription = page },
         verticalArrangement = Arrangement.spacedBy(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         // A dark ring around the light crop, so it does not glare against the black.
         Box(Modifier.size(art + 8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer), contentAlignment = Alignment.Center) {
-            Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(art).clip(CircleShape))
+            Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(art).clip(CircleShape), alpha = 0.7f)
         }
         Text(stringArrayResource(R.array.step_how)[label - 1], style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
@@ -1105,15 +1150,32 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
     ListScreen { spec ->
         item { Header(spec, stringResource(R.string.history)) }
         if (washes.isEmpty()) item { Notice(stringResource(R.string.history_empty), morphContent(spec)) }
-        items(washes) { w ->
-            FilledTonalButton(
-                onClick = { onOpen(w.id) },
-                modifier = morph(spec),
-                transformation = SurfaceTransformation(spec),
-                icon = if (w.coverageShown) ({ MiniRing(w.coverage, 28.dp, 3.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)) }) else null,
-                label = { Text(DateUtils.formatDateTime(context, w.startedAtEpochMs, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH)) },
-                secondaryLabel = { Text("${duration(w.durationS)} · ${hint(LocalContext.current.resources, w)}") },
-            )
+        // Newest first, one small day label per run of Washes so the rows don't repeat the date.
+        val zone = java.time.ZoneId.systemDefault()
+        val now = System.currentTimeMillis()
+        washes.groupBy { java.time.Instant.ofEpochMilli(it.startedAtEpochMs).atZone(zone).toLocalDate() }.forEach { (_, day) ->
+            item {
+                Text(
+                    DateUtils.getRelativeTimeSpanString(day.first().startedAtEpochMs, now, DateUtils.DAY_IN_MILLIS, DateUtils.FORMAT_ABBREV_RELATIVE).toString(),
+                    morphContent(spec).fillMaxWidth().padding(top = 6.dp).semantics { heading() },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            items(day) { w ->
+                // The outcome leads (ring, then the count); the time and length follow. Washes with no Coverage sit quieter.
+                FilledTonalButton(
+                    onClick = { onOpen(w.id) },
+                    modifier = morph(spec).then(if (w.coverageShown) Modifier else Modifier.graphicsLayer { alpha = 0.6f }),
+                    transformation = SurfaceTransformation(spec),
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    icon = if (w.coverageShown) ({ MiniRing(w.coverage, 28.dp, 3.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)) }) else null,
+                    label = { Text(hint(LocalContext.current.resources, w), maxLines = 1) },
+                    secondaryLabel = { Text("${DateUtils.formatDateTime(context, w.startedAtEpochMs, DateUtils.FORMAT_SHOW_TIME)} · ${duration(w.durationS)}", maxLines = 1) },
+                )
+            }
         }
     }
 }
@@ -1150,9 +1212,38 @@ private fun SettingsScreen(onCredits: () -> Unit) {
         settings.twistStart = on
         if (on) WashService.listen(context) else WashService.unlisten(context)
     }
+    val quiet = SwitchButtonDefaults.switchButtonColors(
+        checkedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        checkedContentColor = MaterialTheme.colorScheme.onSurface,
+        checkedSecondaryContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        checkedIconColor = MaterialTheme.colorScheme.onSurface,
+    )
     // One row per setting: each row names the setting, and its current value, with an icon to scan by.
     ListScreen(backdrop = false) { spec ->
         item { Header(spec, stringResource(R.string.settings)) }
+        // Order by how often it changes: toggles first, set-once rows (Twist start, Wrist side) last. The ON fill is the
+        // neutral container, so the switch itself carries the state and no row outweighs the others.
+        item {
+            SwitchButton(haptics, { haptics = it; settings.haptics = it }, morph(spec), transformation = SurfaceTransformation(spec), colors = quiet,
+                icon = { Icon(painterResource(R.drawable.ic_vibration), contentDescription = null) }, label = { Text(stringResource(R.string.haptics)) })
+        }
+        item {
+            SwitchButton(ring, { ring = it; settings.progressRing = it }, morph(spec), transformation = SurfaceTransformation(spec), colors = quiet,
+                icon = { Icon(painterResource(R.drawable.ic_ring), contentDescription = null) }, label = { Text(stringResource(R.string.progress_ring)) },
+                secondaryLabel = { Text(stringResource(R.string.progress_ring_desc)) })
+        }
+        // Absent entirely when the build flag ships the check disabled.
+        if (BuildConfig.TARGET_CHECK) item {
+            SwitchButton(targetCheck, { targetCheck = it; settings.targetCheck = it }, morph(spec), transformation = SurfaceTransformation(spec), colors = quiet,
+                icon = { Icon(painterResource(R.drawable.ic_step_tips), contentDescription = null) }, label = { Text(stringResource(R.string.target_check)) })
+        }
+        // Turning it on asks first (§4.1 item 8); turning it off doesn't. The secondary line is the background-listening disclosure.
+        item {
+            SwitchButton(twist, { on -> if (on) warn = true else setTwist(false) },
+                morph(spec), transformation = SurfaceTransformation(spec), colors = quiet,
+                icon = { Icon(painterResource(R.drawable.ic_wash), contentDescription = null) }, label = { Text(stringResource(R.string.twist_start)) },
+                secondaryLabel = { Text(stringResource(R.string.twist_start_desc)) })
+        }
         // Two values, so a tap flips it and the row shows the new one: no dialog, and a second tap undoes it (§4.1.5).
         item {
             FilledTonalButton(
@@ -1163,25 +1254,6 @@ private fun SettingsScreen(onCredits: () -> Unit) {
                 label = { Text(stringResource(R.string.wrist_side)) },
                 secondaryLabel = { Text(stringResource(if (wrist == Wrist.LEFT) R.string.wrist_left else R.string.wrist_right)) },
             )
-        }
-        item {
-            SwitchButton(haptics, { haptics = it; settings.haptics = it }, morph(spec), transformation = SurfaceTransformation(spec),
-                icon = { Icon(painterResource(R.drawable.ic_vibration), contentDescription = null) }, label = { Text(stringResource(R.string.haptics)) })
-        }
-        item {
-            SwitchButton(ring, { ring = it; settings.progressRing = it }, morph(spec), transformation = SurfaceTransformation(spec),
-                icon = { Icon(painterResource(R.drawable.ic_ring), contentDescription = null) }, label = { Text(stringResource(R.string.progress_ring)) })
-        }
-        // Turning it on asks first (§4.1 item 8); turning it off doesn't.
-        item {
-            SwitchButton(twist, { on -> if (on) warn = true else setTwist(false) },
-                morph(spec), transformation = SurfaceTransformation(spec),
-                icon = { Icon(painterResource(R.drawable.ic_wash), contentDescription = null) }, label = { Text(stringResource(R.string.twist_start)) })
-        }
-        // Absent entirely when the build flag ships the check disabled.
-        if (BuildConfig.TARGET_CHECK) item {
-            SwitchButton(targetCheck, { targetCheck = it; settings.targetCheck = it }, morph(spec), transformation = SurfaceTransformation(spec),
-                icon = { Icon(painterResource(R.drawable.ic_step_tips), contentDescription = null) }, label = { Text(stringResource(R.string.target_check)) })
         }
         item {
             FilledTonalButton(onClick = onCredits, modifier = morph(spec), transformation = SurfaceTransformation(spec), label = { Text(stringResource(R.string.credits)) })
@@ -1308,6 +1380,7 @@ private fun Notice(text: String, modifier: Modifier = Modifier.fillMaxWidth()) =
 internal fun hint(res: Resources, w: WashSession): String = when {
     w.modelVersion == null -> res.getString(R.string.timer_only_short)
     !w.coverageShown -> res.getString(R.string.too_short_short)
+    w.coverage.none { it.status == StepStatus.OK } -> res.getString(R.string.none_detected_short)
     else -> res.getString(R.string.history_hint, w.coverage.count { it.status == StepStatus.OK })
 }
 
