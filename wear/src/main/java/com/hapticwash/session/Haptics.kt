@@ -56,17 +56,22 @@ object Haptics {
     }
 
     /** The start pulse, then the time-reached ticks; a Wash that ends first cancels the ticks. */
-    fun onStart(source: String, hapticsOn: Boolean) =
-        if (hapticsOn && source == "sensor") listOf(Buzz(0, Pulse.START), Buzz(TARGET_MS, Pulse.TARGET)) else emptyList()
+    fun onStart(source: String, hapticsOn: Boolean, checkOn: Boolean = false) =
+        if (hapticsOn && source == "sensor") listOf(Buzz(0, Pulse.START)) + if (checkOn) emptyList() else listOf(Buzz(TARGET_MS, Pulse.TARGET)) else emptyList()
 
     /**
      * Keep-going nudge [elapsedMs] into the Wash. Replaces the pending time-reached ticks
      * (Buzzer.play cancels them), so they are rescheduled for what is left of the target.
      */
-    fun onNudge(source: String, hapticsOn: Boolean, elapsedMs: Long): List<Buzz> {
+    fun onNudge(source: String, hapticsOn: Boolean, elapsedMs: Long, checkOn: Boolean = false): List<Buzz> {
         if (!hapticsOn || source != "sensor") return emptyList()
-        return listOf(Buzz(0, Pulse.KEEP_GOING), Buzz((TARGET_MS - elapsedMs).coerceAtLeast(0), Pulse.TARGET))
+        // With the Target check on, the check owns the 40 s moment ([TargetCheck]), so no ticks are scheduled here.
+        return listOf(Buzz(0, Pulse.KEEP_GOING)) + if (checkOn) emptyList() else listOf(Buzz((TARGET_MS - elapsedMs).coerceAtLeast(0), Pulse.TARGET))
     }
+
+    /** The 40 s moment with the Target check on: MISSED instead of the ticks when [undetected] Steps exist. */
+    fun onTarget(source: String, hapticsOn: Boolean, undetected: List<Int>) =
+        if (hapticsOn && source == "sensor") listOf(Buzz(0, if (undetected.isEmpty()) Pulse.TARGET else Pulse.MISSED)) else emptyList()
 
     /** A cancelled idle start: the end pattern only, no missed-step pulse. */
     fun onCancel(source: String, hapticsOn: Boolean) =

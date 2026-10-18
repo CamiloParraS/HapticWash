@@ -15,6 +15,8 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+        // Target check (SPEC-APP Coaching): false ships the code disabled, no UI, if M6 misses its gate.
+        buildConfigField("boolean", "TARGET_CHECK", "true")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,6 +41,7 @@ android {
     useLibrary("wear-sdk")
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

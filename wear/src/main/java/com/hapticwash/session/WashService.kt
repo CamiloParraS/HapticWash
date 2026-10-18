@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.PowerManager
+import android.os.SystemClock
 import android.util.Log
 import com.hapticwash.R
 import com.hapticwash.inference.StepModel
@@ -41,6 +42,8 @@ data class WashStatus(
     val running: Boolean = false,
     val startedAtEpochMs: Long = 0,
     val timerOnly: Boolean = false,
+    /** Target check card: Step labels (1..5) not detected at the target. Empty = no card. */
+    val undetected: List<Int> = emptyList(),
 )
 
 /**
@@ -184,7 +187,10 @@ class WashService : Service() {
         var cancelled = false
         val startedAtEpochMs = System.currentTimeMillis()
         _status.value = WashStatus(running = true, startedAtEpochMs = startedAtEpochMs, timerOnly = model == null)
-        Buzzer.play(this, Haptics.onStart(kind, Settings(this).haptics))
+        // Timer-only Washes have no Coverage, so no check: they keep the plain ticks.
+        val check = if (model != null && Settings(this).targetCheck) TargetCheck() else null
+        val washStartMs = SystemClock.elapsedRealtime()
+        Buzzer.play(this, Haptics.onStart(kind, Settings(this).haptics, checkOn = check != null))
         // The Tile's button says a Wash is in progress.
         if (real) TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
         Log.i(TAG, "Session started: source=$kind wrist=$wrist model=${model?.meta?.modelVersion ?: "none (timer-only)"}")
@@ -202,12 +208,21 @@ class WashService : Service() {
                 latencyNs += System.nanoTime() - t
                 val sm = smoother!!.push(p)
                 coverage.window(sm)
+                check?.poll(SystemClock.elapsedRealtime() - washStartMs, coverage.snapshot())?.let { undetected ->
+                    if (undetected.isNotEmpty()) _status.value = _status.value.copy(undetected = undetected)
+                    Buzzer.play(this, Haptics.onTarget(kind, Settings(this).haptics, undetected))
+                }
                 val top = p.indices.maxBy { p[it] }
                 val label = m.meta.labels[top]
                 Log.i(TAG, "window %d t=%.1fs %s p=%.2f".format(latencyNs.size, (last - first) / 1e9, label, p[top]))
                 when (autoEnd.window(sm)) {
-                    AutoEndAction.NUDGE ->
-                        Buzzer.play(this, Haptics.onNudge(kind, Settings(this).haptics, (autoEnd.elapsedS * 1000).toLong()))
+                    AutoEndAction.NUDGE -> {
+                        val elapsedMs = (autoEnd.elapsedS * 1000).toLong()
+                        val nowMs = SystemClock.elapsedRealtime() - washStartMs
+                        // Logged for every Wash with the check on, so post-nudge windows stay separable.
+                        if (check != null) { check.nudge(nowMs, elapsedMs); Log.i(TAG, "Target check: keep-going nudge at $nowMs ms") }
+                        Buzzer.play(this, Haptics.onNudge(kind, Settings(this).haptics, elapsedMs, checkOn = check != null))
+                    }
                     AutoEndAction.CANCEL -> { cancelled = true; throw AutoEnded() }
                     AutoEndAction.END -> throw AutoEnded()
                     AutoEndAction.NONE -> {}
