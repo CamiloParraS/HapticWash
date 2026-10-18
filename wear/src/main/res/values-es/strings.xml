@@ -45,6 +45,15 @@
         <item>Puntas de los dedos</item>
     </string-array>
 
+    <!-- Step guide why lines (neutral tú; third person about the study). Škodová 2015, AJIC 43(12):1360-2. -->
+    <string-array name="step_whys">
+        <item>Palmas: casi nunca se omiten, pero es solo el primer paso</item>
+        <item>Dorso: en un estudio, más de la mitad omitió una zona</item>
+        <item>Entre los dedos: cerca de 1 de cada 4 la omitió en un estudio</item>
+        <item>Pulgares: la zona más omitida en un estudio de 705 personas</item>
+        <item>Puntas: cerca de la mitad omitió alguna en un estudio</item>
+    </string-array>
+
     <!-- Historial -->
     <string name="history">Historial</string>
     <string name="history_empty">Todavía no hay lavados</string>
