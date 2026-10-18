@@ -28,14 +28,15 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.draw.drawBehind
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.wear.compose.material3.Icon
 import com.hapticwash.session.StepCoverage
@@ -351,27 +353,27 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
     val ambientNow = ambient().takeIf { running.running }
     var answered by rememberSaveable { mutableIntStateOf(0) }
     // A Tile or complication tap: back to Start, which then starts (or rejoins) the Wash.
-    LaunchedEffect(startRequests()) { if (startRequests() > answered) nav.popBackStack("start", inclusive = false) }
+    LaunchedEffect(startRequests()) { if (startRequests() > answered) nav.popBackStack(Routes.START, inclusive = false) }
     // A Wash that began without a tap on Start (a Twist): show it. A tap has already navigated, so Start is no longer current.
     LaunchedEffect(running.running) {
-        if (running.running && nav.currentBackStackEntry?.destination?.route == "start") nav.navigate("wash")
+        if (running.running && nav.currentBackStackEntry?.destination?.route == Routes.START) nav.navigate(Routes.WASH)
     }
     // A tap on the Tile's ring or words: that Wash's Summary, over Start, as if opened from History.
     LaunchedEffect(openRequest()) {
         val id = openRequest() ?: return@LaunchedEffect
-        nav.popBackStack("start", inclusive = false)
-        nav.navigate("summary/$id")
+        nav.popBackStack(Routes.START, inclusive = false)
+        nav.navigate(Routes.summary(id))
         onOpened()
     }
     // The Wash screen stays composed under ambient mode, so waking returns to it as it was; ambient only covers it.
     Box {
         CompositionLocalProvider(LocalAmbient provides (ambientNow != null)) {
-            SwipeDismissableNavHost(nav, startDestination = "start") {
+            SwipeDismissableNavHost(nav, startDestination = Routes.START) {
                 composable(Routes.START) {
                     StartScreen(
-                        onWash = { nav.navigate("wash") },
-                        onHistory = { nav.navigate("history") },
-                        onSettings = { nav.navigate("settings") },
+                        onWash = { nav.navigate(Routes.WASH) },
+                        onHistory = { nav.navigate(Routes.HISTORY) },
+                        onSettings = { nav.navigate(Routes.SETTINGS) },
                         autoStart = startRequests() > answered,
                         onAutoStarted = { answered = startRequests() },
                     )
@@ -614,7 +616,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
  * new screen, so the ring and the stop square can carry across it. Swiping back from either goes to Start.
  */
 @Composable
-private fun WashScreen(onGuide: (Int) -> Unit = {}) {
+private fun WashScreen(onGuide: (Int) -> Unit) {
     var result by remember { mutableStateOf<Long?>(null) }
     val leave = remember { Animatable(0f) }
     LaunchedEffect(result) { if (result != null) leave.animateTo(1f, tween(200)) }
@@ -889,7 +891,7 @@ private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean) {
 
 /** A Wash's Summary: the one just ended ([fromWash]), or one from History. */
 @Composable
-private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -> Unit = {}) {
+private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -> Unit) {
     val context = LocalContext.current
     val wash = remember(id) {
         WashService.lastWash.value?.takeIf { it.id == id } ?: History.get(context).read().find { it.id == id }
@@ -937,7 +939,9 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                                 val p = staggered(entrance.value, i)
                                 alpha = p
                                 translationY = (1 - p) * rise
-                            }.clip(RoundedCornerShape(16.dp)).clickable { onGuide(c.label) }.padding(horizontal = 16.dp).semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            }.clip(RoundedCornerShape(16.dp)).clickable(onClickLabel = stringResource(R.string.open_guide, steps[c.label - 1]), role = Role.Button) { onGuide(c.label) }
+                                .heightIn(min = 48.dp).padding(horizontal = 16.dp).semantics(mergeDescendants = true) {},
+                            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             // A soft chip behind the glyph, tinted only when the Step looks covered; the words and the mark say the rest.
                             Box(
                                 Modifier.size(32.dp).clip(CircleShape).background(if (c.status == StepStatus.OK) colors.primary.copy(alpha = 0.18f) else colors.surfaceContainer).clearAndSetSemantics {},
@@ -958,11 +962,14 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                     // The Focus Step: at most one estimate-language line, opening the same guide as its row.
                     focus?.let { label ->
                         item {
-                            Text(
-                                stringResource(R.string.focus_step, steps[label - 1]),
-                                morphContent(spec).clip(RoundedCornerShape(16.dp)).clickable { onGuide(label) }.padding(horizontal = 16.dp, vertical = 8.dp),
-                                color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center,
-                            )
+                            Box(
+                                morphContent(spec).clip(RoundedCornerShape(16.dp))
+                                    .clickable(onClickLabel = stringResource(R.string.open_guide, steps[label - 1]), role = Role.Button) { onGuide(label) }
+                                    .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(stringResource(R.string.focus_step, steps[label - 1]), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                            }
                         }
                     }
                 }
@@ -1049,12 +1056,13 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
 private fun CreditsScreen() {
     ListScreen(backdrop = false) { spec ->
         item { Header(spec, stringResource(R.string.credits)) }
-        item { Notice(stringResource(R.string.credits_body), morphContent(spec)) }
+        // The URL has no spaces; a zero-width space after "/" and "_" lets it wrap on the round edge instead of mid-word.
+        item { Notice(stringResource(R.string.credits_body).replace("/", "/\u200B").replace("_", "_\u200B"), morphContent(spec)) }
     }
 }
 
 @Composable
-private fun SettingsScreen(onCredits: () -> Unit = {}) {
+private fun SettingsScreen(onCredits: () -> Unit) {
     val context = LocalContext.current
     val settings = remember { Settings(context) }
     val status by WashService.status.collectAsState()
@@ -1210,7 +1218,7 @@ private fun ink(coverage: List<StepCoverage>) =
 
 /** One glyph per Step, in canonical order (labels 1..5). */
 private val STEP_ART = intArrayOf(R.drawable.step_art_palms, R.drawable.step_art_backs, R.drawable.step_art_between, R.drawable.step_art_thumbs, R.drawable.step_art_tips)
-private val STEP_ICONS =intArrayOf(R.drawable.ic_step_palms, R.drawable.ic_step_backs, R.drawable.ic_step_between, R.drawable.ic_step_thumbs, R.drawable.ic_step_tips)
+private val STEP_ICONS = intArrayOf(R.drawable.ic_step_palms, R.drawable.ic_step_backs, R.drawable.ic_step_between, R.drawable.ic_step_thumbs, R.drawable.ic_step_tips)
 
 /** How much of a Step's arc is filled: shape carries the Status, not colour (§4.1.10). */
 internal fun share(s: StepStatus) = when (s) {
@@ -1261,12 +1269,12 @@ private fun PreviewFrame(content: @Composable () -> Unit) = HapticWashTheme { Ap
 @WearPreviewDevices
 @WearPreviewFontScales
 @Composable
-private fun WashPreview() = PreviewFrame { WashScreen() }
+private fun WashPreview() = PreviewFrame { WashScreen(onGuide = {}) }
 
 @WearPreviewDevices
 @WearPreviewFontScales
 @Composable
-private fun SettingsPreview() = PreviewFrame { SettingsScreen() }
+private fun SettingsPreview() = PreviewFrame { SettingsScreen(onCredits = {}) }
 
 @WearPreviewDevices
 @Composable

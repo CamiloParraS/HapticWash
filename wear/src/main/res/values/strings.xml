@@ -60,6 +60,7 @@
 
     <string name="settings">Settings</string>
     <string name="credits">Credits</string>
+    <string name="open_guide">Open %1$s guide</string>
     <string name="credits_body">Illustrations: Hegasy (Guido4 / hegasy.de), \"Hand Disinfection according to DIN EN 1500\", CC BY-SA 4.0, cropped. commons.wikimedia.org/wiki/File:04_Hegasy_Hand_Disinfection_Wiki_EN_CCBYSA.png</string>
     <string name="wrist_side">Wrist side</string>
     <string name="wrist_left">Left</string>
