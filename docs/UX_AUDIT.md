@@ -416,3 +416,5 @@ Retaken: summary_coaching (+scrolled), summary_mixed (+scrolled), target_check, 
 _from_focus), guide_between_fingers, credits (+scrolled). Guides are now a pager across the five Steps
 (page dots, swipe sideways; edge swipe or back leaves): all five guide shots and guide_between_fingers_es
 (+ _scrolled, small round AVD) retaken. Not retaken: credits_es. summary_focus_step is now a scrolled Summary.
+
+Second critique (30/40) fixes: the Focus Step shows on its own row (tinted, "Focus next time · N of last M") or, when that Step is not listed, as a card with a count line (`focusCounts`). The covered line is tappable and opens the guide pager. Guide pages have a dark ring round the art, bottom fade above the page dots and a "Page N of 5" state description.

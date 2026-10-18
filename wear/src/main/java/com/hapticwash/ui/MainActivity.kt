@@ -46,6 +46,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.hapticwash.ui.theme.rounded
 import androidx.compose.ui.geometry.center
@@ -113,6 +116,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.ambient.AmbientLifecycleObserver
@@ -170,6 +174,7 @@ import com.hapticwash.session.Settings
 import com.hapticwash.session.StepStatus
 import com.hapticwash.session.WashService
 import com.hapticwash.session.allCovered
+import com.hapticwash.session.focusCounts
 import com.hapticwash.session.focusStep
 import com.hapticwash.session.WashSession
 import com.hapticwash.session.worthSaving
@@ -920,7 +925,8 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
         WashService.lastWash.value?.takeIf { it.id == id } ?: History.get(context).read().find { it.id == id }
     }
     val steps = stringArrayResource(R.array.steps)
-    val focus = remember(id) { focusStep(History.get(context).read()) }
+    val focus = remember(id) { History.get(context).read().let { h -> focusStep(h)?.let { it to focusCounts(h, it) } } }
+    val focusLabel = focus?.first
     val colors = MaterialTheme.colorScheme
     // Rows arrive in a short cascade as the end pulses play. Decorative: scrolling is never blocked.
     val entrance = remember { Animatable(0f) }
@@ -954,21 +960,22 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                 else -> {
                     item { Notice(stringResource(if (allCovered(wash.coverage)) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec)) }
                     // The Focus Step first: one estimate-language card, opening the same guide as a row.
-                    focus?.let { label ->
-                        item {
-                            Box(
-                                morphContent(spec).clip(RoundedCornerShape(16.dp)).background(colors.primary.copy(alpha = 0.18f))
-                                    .clickable(onClickLabel = stringResource(R.string.open_guide, steps[label - 1]), role = Role.Button) { onGuide(label) }
-                                    .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text("${stringResource(R.string.focus_step, steps[label - 1])} ›", style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
-                            }
+                    // Merged into its own row when that Step is on screen as one (below); a card only when it is not.
+                    val attention = wash.coverage.filter { it.status != StepStatus.OK }.ifEmpty { wash.coverage }
+                    if (focus != null && attention.none { it.label == focus.first }) item {
+                        val (label, counts) = focus
+                        Column(
+                            morphContent(spec).clip(RoundedCornerShape(16.dp)).background(colors.primary.copy(alpha = 0.12f))
+                                .clickable(onClickLabel = stringResource(R.string.open_guide, steps[label - 1]), role = Role.Button) { onGuide(label) }
+                                .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp).semantics(mergeDescendants = true) {},
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text("${stringResource(R.string.focus_step, steps[label - 1])} ›", style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+                            Text(stringResource(R.string.focus_count, counts.first, counts.second), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
                         }
                     }
                     // Only Steps that need attention get a row; the covered ones are one line, since they all say the same.
                     // Everything covered: all five stay as rows, so every Step's guide is still one tap away.
-                    val attention = wash.coverage.filter { it.status != StepStatus.OK }.ifEmpty { wash.coverage }
                     items(attention.size) { i ->
                         val c = attention[i]
                         val rise = with(LocalDensity.current) { 6.dp.toPx() }
@@ -978,7 +985,8 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                                 val p = staggered(entrance.value, i)
                                 alpha = p
                                 translationY = (1 - p) * rise
-                            }.clip(RoundedCornerShape(16.dp)).clickable(onClickLabel = stringResource(R.string.open_guide, steps[c.label - 1]), role = Role.Button) { onGuide(c.label) }
+                            }.clip(RoundedCornerShape(16.dp)).background(if (c.label == focusLabel) colors.primary.copy(alpha = 0.12f) else Color.Transparent)
+                                .clickable(onClickLabel = stringResource(R.string.open_guide, steps[c.label - 1]), role = Role.Button) { onGuide(c.label) }
                                 .heightIn(min = 48.dp).padding(horizontal = 16.dp).semantics(mergeDescendants = true) {},
                             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(32.dp).clip(CircleShape).background(if (c.status == StepStatus.OK) colors.primary.copy(alpha = 0.18f) else colors.surfaceContainer).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
@@ -991,12 +999,19 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                                     Text(glyph(c.status), Modifier.clearAndSetSemantics {}, color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                     Text(stringResource(statusText(c.status)), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 }
+                                if (c.label == focusLabel) Text(stringResource(R.string.focus_row, focus!!.second.first, focus.second.second), color = colors.primary, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
                     val covered = wash.coverage.filter { it.status == StepStatus.OK }
                     if (covered.isNotEmpty() && attention.size < wash.coverage.size) item {
-                        Text(stringResource(R.string.covered_steps, covered.joinToString(", ") { steps[it.label - 1] }), morphContent(spec), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                        // Opens the guides at the first covered Step; the pager walks the rest.
+                        Text(
+                            stringResource(R.string.covered_steps, covered.joinToString(", ") { steps[it.label - 1] }),
+                            morphContent(spec).clip(RoundedCornerShape(16.dp)).clickable(onClickLabel = stringResource(R.string.open_guide, steps[covered.first().label - 1]), role = Role.Button) { onGuide(covered.first().label) }
+                                .heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 8.dp),
+                            color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center,
+                        )
                     }
                 }
             }
@@ -1025,8 +1040,9 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
 private fun GuideScreen(label: Int?) {
     if (label == null || label !in 1..5) return
     val pager = rememberPagerState(initialPage = label - 1) { 5 }
+    // The scrolling area ends above the page dots, so text is clipped cleanly rather than running under them.
     HorizontalPagerScaffold(pager) {
-        HorizontalPager(pager, Modifier.fillMaxSize()) { page -> GuidePage(page + 1) }
+        HorizontalPager(pager, Modifier.fillMaxSize().padding(bottom = 30.dp)) { page -> GuidePage(page + 1) }
     }
 }
 
@@ -1034,14 +1050,25 @@ private fun GuideScreen(label: Int?) {
 private fun GuidePage(label: Int) {
     val colors = MaterialTheme.colorScheme
     val scroll = rememberScrollState()
+    val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 220.dp
+    val art = if (compact) 52.dp else 56.dp
+    val page = stringResource(R.string.page_of, label, 5)
     // Scrolls: on a small screen, or in Spanish, the title, technique and why line don't all fit at once.
     Column(
-        Modifier.fillMaxSize().verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = 22.dp, bottom = 36.dp).semantics(mergeDescendants = true) {},
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        // The last 20 dp fade out, so text that runs past the page dots dissolves rather than being cut by a hard edge.
+        Modifier.fillMaxSize().graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }.drawWithContent {
+            drawContent()
+            val fade = 20.dp.toPx()
+            drawRect(Brush.verticalGradient(listOf(Color.Black, Color.Transparent), startY = size.height - fade, endY = size.height), blendMode = BlendMode.DstIn)
+        }.verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = 16.dp, bottom = 8.dp).semantics(mergeDescendants = true) { stateDescription = page },
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(68.dp).clip(CircleShape))
+        // A dark ring around the light crop, so it does not glare against the black.
+        Box(Modifier.size(art + 8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer), contentAlignment = Alignment.Center) {
+            Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(art).clip(CircleShape))
+        }
         Text(stringArrayResource(R.array.step_how)[label - 1], style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
     }

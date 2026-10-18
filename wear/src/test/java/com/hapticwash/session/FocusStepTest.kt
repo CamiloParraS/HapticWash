@@ -62,4 +62,11 @@ class FocusStepTest {
         assertNull(focusStep(times(5, allOk) + times(5, thumbsN))) // 50 % of the window
         assertNull(focusStep(times(10, allOk) + times(10, thumbsN))) // older ones fall out
     }
+
+    @Test
+    fun countsAreNotDetectedWashesOutOfTheWindow() {
+        assertEquals(5 to 5, focusCounts(times(5, thumbsN), 4))
+        assertEquals(0 to 6, focusCounts(times(6, allOk), 4))
+        assertEquals(3 to 5, focusCounts(times(3, thumbsN) + times(2, allOk), 4))
+    }
 }

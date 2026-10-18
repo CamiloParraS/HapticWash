@@ -51,7 +51,7 @@ data class CoverageConfig(
  * [CoverageConfig.focusWindow] `sensor` Washes that show Coverage; no stored state.
  */
 fun focusStep(washes: List<WashSession>, config: CoverageConfig = CoverageConfig()): Int? {
-    val window = washes.filter { it.source == "sensor" && it.coverageShown }.take(config.focusWindow)
+    val window = focusWindow(washes, config)
     if (window.size < config.focusMinWashes) return null
     fun rate(label: Int, vararg statuses: StepStatus) = window.count { w -> w.coverage[label - 1].status in statuses }.toFloat() / window.size
     return (1..5).filter {
@@ -59,6 +59,15 @@ fun focusStep(washes: List<WashSession>, config: CoverageConfig = CoverageConfig
             rate(it, StepStatus.NOT_DETECTED) >= config.focusNotDetectedRate
     } // Highest not-detected rate wins; a tie goes to the later Step (larger label).
         .maxWithOrNull(compareBy({ rate(it, StepStatus.NOT_DETECTED) }, { it }))
+}
+
+private fun focusWindow(washes: List<WashSession>, config: CoverageConfig) =
+    washes.filter { it.source == "sensor" && it.coverageShown }.take(config.focusWindow)
+
+/** What backs the Focus Step: in how many (first) of the last (second) qualifying Washes [label] was NOT_DETECTED. */
+fun focusCounts(washes: List<WashSession>, label: Int, config: CoverageConfig = CoverageConfig()): Pair<Int, Int> {
+    val window = focusWindow(washes, config)
+    return window.count { it.coverage[label - 1].status == StepStatus.NOT_DETECTED } to window.size
 }
 
 /** Causal trailing mean of the last [ModelMeta.movingAverageK] vectors; averages what it has during warm-up. */
