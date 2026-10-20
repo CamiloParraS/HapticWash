@@ -12,6 +12,24 @@
     <string name="last_wash_title">Último lavado</string>
     <string name="complication_label">Lavado de manos</string>
     <string name="ring_caption">de 5 pasos\ncompletados</string>
+    <!-- Frases de la sesión: una nueva cada 5 s hasta los 40 s, luego un ánimo en bucle. Ánimo para seguir y lavar a fondo: sin pasos ni movimientos. -->
+    <string-array name="wash_cues">
+        <item>Buen comienzo</item>
+        <item>Con calma</item>
+        <item>Vas muy bien</item>
+        <item>Sigue así</item>
+        <item>Dale con ganas</item>
+        <item>Vas por la mitad</item>
+        <item>Sin prisa, a fondo</item>
+        <item>Ya casi</item>
+    </string-array>
+    <string-array name="wash_cues_after">
+        <item>¡Lo lograste! ¿Seguimos?</item>
+        <item>Cada segundo cuenta</item>
+        <item>Buen trabajo</item>
+    </string-array>
+    <!-- Shown while holding to stop before the target: a nudge, not a block. -->
+    <string name="stop_early">Aún no terminas. ¿Sigues?</string>
     <string name="time_left">restantes</string>
     <string name="ambient_washing">Lavando manos…</string>
     <string name="target_reached">¡%1$d segundos completados!</string>
@@ -82,6 +100,9 @@
 
     <!-- Ajustes -->
     <string name="settings">Ajustes</string>
+    <string name="settings_wash">Durante el lavado</string>
+    <string name="settings_start">Iniciar un lavado</string>
+    <string name="language">Idioma</string>
     <string name="credits">Créditos</string>
     <string name="open_guide">Abrir guía: %1$s</string>
     <string name="credits_illustrations">Ilustraciones</string>

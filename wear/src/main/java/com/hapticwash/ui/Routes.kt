@@ -9,6 +9,8 @@ internal object Routes {
     const val WASH = "wash"
     const val HISTORY = "history"
     const val SETTINGS = "settings"
+    const val SETTINGS_WASH = "settings/wash"
+    const val SETTINGS_START = "settings/start"
     const val SUMMARY = "summary/{id}"
     const val GUIDE = "guide/{label}"
     const val CREDITS = "credits"

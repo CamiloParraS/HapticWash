@@ -11,6 +11,24 @@
     <string name="complication_label">Wash</string>
     <!-- Two lines: the ring is too narrow for one. -->
     <string name="ring_caption">of 5 look\ncovered</string>
+    <!-- Live Wash cues: one new line every 5 s up to the 40 s target, then a looping cheer. Encouragement to keep going and wash thoroughly: no Steps, no movements, never a Step Status. -->
+    <string-array name="wash_cues">
+        <item>Good start</item>
+        <item>Nice and steady</item>
+        <item>You\'ve got this</item>
+        <item>Keep it going</item>
+        <item>Dig in a little</item>
+        <item>Halfway there</item>
+        <item>Slow and thorough</item>
+        <item>Almost there</item>
+    </string-array>
+    <string-array name="wash_cues_after">
+        <item>You did it! Keep going?</item>
+        <item>Every bit counts</item>
+        <item>Great job</item>
+    </string-array>
+    <!-- Shown while holding to stop before the target: a nudge, not a block. -->
+    <string name="stop_early">Not done yet. Keep going?</string>
     <string name="time_left">to go</string>
     <!-- Ambient mode, mid-Wash: the one thing it says. -->
     <string name="ambient_washing">Washing</string>
@@ -79,6 +97,9 @@
     <string name="history_hint">%1$d of 5 look covered</string>
 
     <string name="settings">Settings</string>
+    <string name="settings_wash">During a wash</string>
+    <string name="settings_start">Starting a wash</string>
+    <string name="language">Language</string>
     <string name="credits">Credits</string>
     <string name="open_guide">Open %1$s guide</string>
     <string name="credits_illustrations">Illustrations</string>
