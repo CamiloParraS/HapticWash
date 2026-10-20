@@ -1086,6 +1086,8 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
         ListScreen { spec ->
             if (wash == null) return@ListScreen
             // The takeaway first, so the answer is on screen before any scrolling.
+            // Clear of the clock, so the top arc is not tucked under it.
+            if (wash.coverageShown) item { Spacer(Modifier.height(6.dp)) }
             if (wash.coverageShown) item {
                 CoverageRing(wash.coverage, { entrance.value }, morphContent(spec)
                     .onGloballyPositioned { ring -> screen?.let { ringCentre = it.localBoundingBoxOf(ring).center } }
@@ -1104,23 +1106,12 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                     item { FilledTonalButton(onClick = { (context as? ComponentActivity)?.onBackPressedDispatcher?.onBackPressed() }, modifier = morph(spec), transformation = SurfaceTransformation(spec), label = { Text(stringResource(R.string.close)) }) }
                 }
                 else -> {
-                    // The Focus Step first: one estimate-language card, opening the same guide as a row.
-                    // Merged into its own row when that Step is on screen as one (below); a card only when it is not.
-                    val attention = wash.coverage.filter { it.status != StepStatus.OK }.ifEmpty { wash.coverage }
-                    if (focus != null && attention.none { it.label == focus.first }) item {
-                        val (label, counts) = focus
-                        Column(
-                            morphContent(spec).clip(RoundedCornerShape(16.dp)).background(colors.primary.copy(alpha = 0.12f))
-                                .clickable(onClickLabel = stringResource(R.string.open_guide, steps[label - 1]), role = Role.Button) { onGuide(label) }
-                                .heightIn(min = 48.dp).padding(horizontal = 24.dp, vertical = 8.dp).semantics(mergeDescendants = true) {},
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Text("${stringResource(R.string.focus_step, steps[label - 1])} ›", style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
-                            Text(stringResource(R.string.focus_count, counts.first, counts.second), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-                        }
-                    }
+                    // One hierarchy: the ring, then the Steps this Wash missed, then the rest. The Focus Step is never a card of its own:
+                    // it is a row too (its history line is the highlight), after the missed ones, so two Steps never compete for the top.
+                    val missed = wash.coverage.filter { it.status != StepStatus.OK }
+                    val attention = missed.ifEmpty { wash.coverage } + wash.coverage.filter { c -> focus != null && c.label == focus.first && missed.isNotEmpty() && c.status == StepStatus.OK }
                     // The duration is context, not the answer: quieter than the ring and the Focus card above it.
-                    item { Text(stringResource(if (allCovered(wash.coverage)) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center) }
+                    item { Text(stringResource(if (allCovered(wash.coverage)) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec).padding(vertical = 6.dp), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center) }
                     // Only Steps that need attention get a row; the covered ones are one line, since they all say the same.
                     // Everything covered: all five stay as rows, so every Step's guide is still one tap away.
                     items(attention.size) { i ->
@@ -1134,7 +1125,7 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                                 translationY = (1 - p) * rise
                             }.clip(RoundedCornerShape(16.dp)).background(if (c.label == focusLabel) colors.primary.copy(alpha = 0.12f) else Color.Transparent)
                                 .clickable(onClickLabel = stringResource(R.string.open_guide, steps[c.label - 1]), role = Role.Button) { onGuide(c.label) }
-                                .heightIn(min = 48.dp).padding(horizontal = 16.dp).semantics(mergeDescendants = true) {},
+                                .heightIn(min = 48.dp).padding(horizontal = 22.dp).semantics(mergeDescendants = true) {},
                             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(32.dp).clip(CircleShape).background(if (c.status == StepStatus.OK) colors.primary.copy(alpha = 0.18f) else colors.surfaceContainer).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
                                 Icon(painterResource(STEP_ICONS[c.label - 1]), null, Modifier.size(20.dp), tint = if (c.status == StepStatus.OK) colors.primary else colors.onSurfaceVariant)
@@ -1150,13 +1141,13 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                             }
                         }
                     }
-                    val covered = wash.coverage.filter { it.status == StepStatus.OK }
-                    if (covered.isNotEmpty() && attention.size < wash.coverage.size) item {
+                    val covered = wash.coverage.filter { c -> c.status == StepStatus.OK && attention.none { it.label == c.label } }
+                    if (covered.isNotEmpty()) item {
                         // Opens the guides at the first covered Step; the pager walks the rest.
                         // Same row pattern as a flagged Step: circle mark, left-aligned text, 48 dp target.
                         Row(
                             morphContent(spec).clip(RoundedCornerShape(16.dp)).clickable(onClickLabel = stringResource(R.string.open_guide, steps[covered.first().label - 1]), role = Role.Button) { onGuide(covered.first().label) }
-                                .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 4.dp).semantics(mergeDescendants = true) {},
+                                .heightIn(min = 48.dp).padding(horizontal = 22.dp, vertical = 4.dp).semantics(mergeDescendants = true) {},
                             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(32.dp).clip(CircleShape).background(colors.primary.copy(alpha = 0.18f)).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
                                 Text(glyph(StepStatus.OK), color = colors.primary, style = MaterialTheme.typography.titleSmall)
@@ -1637,8 +1628,10 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
         // A Step that needs attention is named by its own glyph just inside its arc, so a dim segment is never anonymous.
         // Only those: five glyphs would crowd the numeral, and the list below names the rest.
         val slot = 360.0 / coverage.size
+        // Two at most: with more missed, glyphs collide with the numeral and caption, and the rows below name every one anyway.
+        val glyphs = coverage.count { it.status != StepStatus.OK } <= 2
         coverage.forEachIndexed { i, c ->
-            if (c.status == StepStatus.OK) return@forEachIndexed
+            if (!glyphs || c.status == StepStatus.OK) return@forEachIndexed
             val a = Math.toRadians(-90.0 + (i + 0.5) * slot)
             val r = RING_SIZE / 2 - RING_STROKE - 9.dp
             Icon(painterResource(STEP_ICONS[c.label - 1]), null,
@@ -1651,7 +1644,7 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
                 ok.toString(),
                 style = MaterialTheme.typography.displayMedium.rounded().copy(fontFeatureSettings = "tnum", letterSpacing = (-0.02).em),
             )
-            Text(stringResource(R.string.ring_caption), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.ring_caption), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
         }
     }
 }

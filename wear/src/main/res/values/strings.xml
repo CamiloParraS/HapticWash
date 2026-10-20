@@ -54,10 +54,8 @@
     <string name="status_brief">May have been brief</string>
     <string name="status_not_detected">Not detected</string>
     <!-- Summary only: the Focus Step, one estimate-language line. %1$s is the Step name. -->
-    <string name="focus_step">Focus next time: %1$s</string>
     <string name="target_todo">Not detected yet</string>
     <string name="close">Close</string>
-    <string name="focus_count">Not detected in %1$d&#160;of&#160;last&#160;%2$d</string>
     <string name="focus_row">Focus next time · %1$d of last %2$d</string>
     <string name="page_of">Page %1$d of %2$d</string>
     <string name="covered_steps">✓ %1$s</string>

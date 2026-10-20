@@ -55,10 +55,8 @@
     <string name="status_ok">Parece completado</string>
     <string name="status_brief">Parece incompleto</string>
     <string name="status_not_detected">No detectado</string>
-    <string name="focus_step">Para la próxima: %1$s</string>
     <string name="target_todo">Aún sin detectar</string>
     <string name="close">Cerrar</string>
-    <string name="focus_count">Sin detectar en %1$d&#160;de&#160;los&#160;últimos&#160;%2$d</string>
     <string name="focus_row">Para la próxima · %1$d de los últimos %2$d</string>
     <string name="page_of">Página %1$d de %2$d</string>
     <string name="covered_steps">✓ %1$s</string>
