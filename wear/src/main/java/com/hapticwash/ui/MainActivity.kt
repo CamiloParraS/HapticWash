@@ -18,6 +18,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -72,6 +75,9 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.res.painterResource
@@ -293,6 +299,14 @@ private const val BURST_DROPS = 10
 private const val BURST_MS = 650
 private val BURST_REACH = 20.dp
 
+/** Before the burst, a light rolls over the five arcs in order over [ROLL_MS]; the burst goes as it leaves the last. */
+private const val ROLL_MS = 700
+private const val ROLL_BURST_AT = 0.75f
+
+/** The 40 s target reached: a bead of light runs once round the live ring over [SHINE_MS], [SHINE_DEG] long. */
+private const val SHINE_MS = 650
+private const val SHINE_DEG = 48f
+
 /** Strong ease-out: moves at once, settles gently. */
 private val EaseOutStrong = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
 
@@ -492,8 +506,11 @@ private fun ListScreen(backdrop: Boolean = true, content: TransformingLazyColumn
     }
 }
 
-/** Start's entrance plays once per process: coming back from History or Settings shows it settled. */
-private object StartEntrance { var played = false }
+/** Start's entrance plays once per process: coming back from History or Settings shows it settled. [filled] is the Wash its ring last filled for. */
+private object StartEntrance {
+    var played = false
+    var filled: Long? = null
+}
 
 /** Row [i] of Start fades and rises with the Summary's stagger, driven by [entrance] (0..1 over [ENTRANCE_MS]). */
 private fun Modifier.rise(entrance: () -> Float, i: Int) = graphicsLayer {
@@ -585,12 +602,20 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
         timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
     }
     val entrance = remember { Animatable(if (StartEntrance.played) 1f else 0f) }
-    // The ring's arcs fill in just after the rows start rising, and the count climbs with them.
-    val fillIn = remember { Animatable(if (StartEntrance.played) 1f else 0f) }
     LaunchedEffect(Unit) {
         StartEntrance.played = true
-        launch { delay(120); fillIn.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing)) }
         entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing))
+    }
+    // The ring's arcs fill in just after the rows start rising, and the count climbs with them. Again each time there
+    // is a Wash Start has not shown yet: back from a Summary, the result lands here too rather than already being there.
+    val lastId = washes.firstOrNull()?.id
+    val fillIn = remember { Animatable(if (lastId != null && lastId == StartEntrance.filled) 1f else 0f) }
+    LaunchedEffect(lastId) {
+        if (lastId == null || (lastId == StartEntrance.filled && fillIn.value == 1f)) return@LaunchedEffect
+        StartEntrance.filled = lastId
+        fillIn.snapTo(0f)
+        delay(120)
+        fillIn.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing))
     }
     val state = rememberTransformingLazyColumnState()
     val spec = rememberTransformationSpec()
@@ -732,14 +757,33 @@ private fun WashScreen(onGuide: (Int) -> Unit, onCancelled: () -> Unit = {}) {
 private fun TargetCheckCard(onGuide: (Int) -> Unit) {
     val undetected = WashService.status.collectAsState().value.undetected
     var dismissed by remember { mutableStateOf(false) }
+    // The Steps last named, so the card still has them while it leaves after the service has cleared them.
+    var shown by remember { mutableStateOf(undetected) }
     LaunchedEffect(undetected) {
         dismissed = false
-        if (undetected.isNotEmpty()) { delay(TARGET_CARD_MS); dismissed = true }
+        if (undetected.isNotEmpty()) { shown = undetected; delay(TARGET_CARD_MS); dismissed = true }
     }
-    if (undetected.isEmpty() || dismissed) return
+    // It rises out of the Wash and sinks back into it, so the Wash is felt to run on behind it.
+    AnimatedVisibility(
+        undetected.isNotEmpty() && shown.isNotEmpty() && !dismissed,
+        enter = fadeIn(tween(200)) + scaleIn(tween(360, easing = EaseOutStrong), initialScale = 0.9f),
+        exit = fadeOut(tween(180)) + scaleOut(tween(180), targetScale = 0.94f),
+    ) { TargetCheckBody(shown, onGuide) { dismissed = true } }
+}
+
+@Composable
+private fun TargetCheckBody(undetected: List<Int>, onGuide: (Int) -> Unit, onDismiss: () -> Unit) {
     val steps = stringArrayResource(R.array.steps)
+    // The time it has left, as a hairline on the Wash ring's path that drains to its start: it closes by itself.
+    val left = remember { Animatable(1f) }
+    LaunchedEffect(Unit) { left.animateTo(0f, tween(TARGET_CARD_MS.toInt(), easing = LinearEasing)) }
+    val line = MaterialTheme.colorScheme.primary
     Column(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).clickable(onClickLabel = stringResource(R.string.close), role = Role.Button) { dismissed = true }.padding(horizontal = 24.dp, vertical = 36.dp),
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).drawBehind {
+            val stroke = 3.dp.toPx()
+            val inset = CircularProgressIndicatorDefaults.FullScreenPadding.toPx() + stroke / 2
+            drawArc(line, RING_START_DEG, RING_SWEEP_DEG * left.value, false, Offset(inset, inset), Size(size.width - 2 * inset, size.height - 2 * inset), alpha = 0.6f, style = Stroke(stroke, cap = StrokeCap.Round))
+        }.clickable(onClickLabel = stringResource(R.string.close), role = Role.Button) { onDismiss() }.padding(horizontal = 24.dp, vertical = 36.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -748,7 +792,7 @@ private fun TargetCheckCard(onGuide: (Int) -> Unit) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.Start) {
             undetected.forEach {
                 Row(
-                    Modifier.heightIn(min = 48.dp).clickable(onClickLabel = stringResource(R.string.open_guide, steps[it - 1]), role = Role.Button) { dismissed = true; onGuide(it) },
+                    Modifier.heightIn(min = 48.dp).clickable(onClickLabel = stringResource(R.string.open_guide, steps[it - 1]), role = Role.Button) { onDismiss(); onGuide(it) },
                     horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(painterResource(STEP_ICONS[it - 1]), contentDescription = null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
@@ -815,11 +859,14 @@ private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean, onCancelled: ()
     // the three ticks play. Only for a target reached while watching, not one that passed while the screen was away.
     val ripple = remember { Animatable(1f) }
     val pop = remember { Animatable(1f) }
+    // And the ring, now whole, is run round once by a bead of light as it turns colour.
+    val shine = remember { Animatable(1f) }
     val startedFull = remember { full }
     val watching by rememberUpdatedState(!ambient)
     LaunchedEffect(full) {
         if (!full || startedFull || !watching) return@LaunchedEffect
         launch { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 2f) }
+        launch { shine.snapTo(0f); shine.animateTo(1f, tween(SHINE_MS, easing = FastOutSlowInEasing)) }
         ripple.snapTo(0f)
         ripple.animateTo(1f, tween(RIPPLE_MS, easing = EaseOutStrong))
     }
@@ -944,6 +991,7 @@ private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean, onCancelled: ()
                             scale(s, s, centre)
                         }) {
                             drawCircularProgressIndicator((elapsedS / RING_TARGET_S).coerceAtMost(1f), colors, stroke, startAngle = RING_START_DEG, endAngle = RING_START_DEG + RING_SWEEP_DEG)
+                            bead(shine.value, stroke.toPx())
                         }
                     },
                 )
@@ -1111,7 +1159,9 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                     val missed = wash.coverage.filter { it.status != StepStatus.OK }
                     val attention = missed.ifEmpty { wash.coverage } + wash.coverage.filter { c -> focus != null && c.label == focus.first && missed.isNotEmpty() && c.status == StepStatus.OK }
                     // The duration is context, not the answer: quieter than the ring and the Focus card above it.
-                    item { Text(stringResource(if (allCovered(wash.coverage)) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec).padding(vertical = 6.dp), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center) }
+                    // All five covered, it is the praise line instead, so it speaks up in the ring's colour.
+                    val all = allCovered(wash.coverage)
+                    item { Text(stringResource(if (all) R.string.washed_for_all else R.string.washed_for, duration(wash.durationS)), morphContent(spec).padding(vertical = 6.dp), color = if (all) colors.tertiary else colors.onSurfaceVariant, style = if (all) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center) }
                     // Only Steps that need attention get a row; the covered ones are one line, since they all say the same.
                     // Everything covered: all five stay as rows, so every Step's guide is still one tap away.
                     items(attention.size) { i ->
@@ -1133,8 +1183,9 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                             Column {
                                 Text(steps[c.label - 1], style = MaterialTheme.typography.titleSmall)
                                 // The Status as a mark and in words, never colour alone (§4.1.10); the mark is read as the words.
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Text(glyph(c.status), Modifier.clearAndSetSemantics {}, color = colors.onSurface, style = MaterialTheme.typography.titleSmall)
+                                Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    // Fills as the row rises, the way its arc fills on the ring.
+                                    StatusMark(c.status) { staggered(entrance.value, i) }
                                     Text(stringResource(statusText(c.status)), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 }
                                 if (c.label == focusLabel) Text(stringResource(R.string.focus_row, focus!!.second.first, focus.second.second), color = colors.primary, style = MaterialTheme.typography.labelSmall)
@@ -1144,13 +1195,19 @@ private fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -
                     val covered = wash.coverage.filter { c -> c.status == StepStatus.OK && attention.none { it.label == c.label } }
                     if (covered.isNotEmpty()) item {
                         // Opens the guides at the first covered Step; the pager walks the rest.
-                        // Same row pattern as a flagged Step: circle mark, left-aligned text, 48 dp target.
+                        // Same row pattern as a flagged Step: circle mark, left-aligned text, 48 dp target. It arrives last in the cascade.
+                        val rise = with(LocalDensity.current) { 6.dp.toPx() }
+                        val at = attention.size
                         Row(
-                            morphContent(spec).clip(RoundedCornerShape(16.dp)).clickable(onClickLabel = stringResource(R.string.open_guide, steps[covered.first().label - 1]), role = Role.Button) { onGuide(covered.first().label) }
+                            morphContent(spec).graphicsLayer {
+                                val p = staggered(entrance.value, at)
+                                alpha = p
+                                translationY = (1 - p) * rise
+                            }.clip(RoundedCornerShape(16.dp)).clickable(onClickLabel = stringResource(R.string.open_guide, steps[covered.first().label - 1]), role = Role.Button) { onGuide(covered.first().label) }
                                 .heightIn(min = 48.dp).padding(horizontal = 22.dp, vertical = 4.dp).semantics(mergeDescendants = true) {},
                             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(32.dp).clip(CircleShape).background(colors.primary.copy(alpha = 0.18f)).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
-                                Text(glyph(StepStatus.OK), color = colors.primary, style = MaterialTheme.typography.titleSmall)
+                                CheckMark(colors.primary) { staggered(entrance.value, at) }
                             }
                             Text(covered.joinToString(", ") { steps[it.label - 1] }, Modifier.weight(1f), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                         }
@@ -1194,16 +1251,19 @@ private fun GuideScreen(label: Int?, onClose: () -> Unit) {
             alpha = 1f - 0.75f * (pull.offset / pull.limit)
         },
     ) {
-        HorizontalPager(pager, Modifier.fillMaxSize().padding(bottom = 30.dp)) { page -> GuidePage(page + 1, pull) }
+        HorizontalPager(pager, Modifier.fillMaxSize().padding(bottom = 30.dp)) { page ->
+            GuidePage(page + 1, pull) { pager.currentPage - page + pager.currentPageOffsetFraction }
+        }
     }
 }
 
+/** One Step's guide page. [offset] is how far the page is from the middle of the pager, in pages, signed. */
 @Composable
-private fun GuidePage(label: Int, pull: PullToDismiss) {
+private fun GuidePage(label: Int, pull: PullToDismiss, offset: () -> Float = { 0f }) {
     val colors = MaterialTheme.colorScheme
     val scroll = rememberScrollState()
     val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 220.dp
-    val art = if (compact) 52.dp else 56.dp
+    val art = if (compact) 52.dp else 60.dp
     val page = stringResource(R.string.page_of, label, 5)
     val closeLabel = stringResource(R.string.close)
     // Scrolls: on a small screen, or in Spanish, the title, technique and why line don't all fit at once.
@@ -1213,7 +1273,7 @@ private fun GuidePage(label: Int, pull: PullToDismiss) {
             drawContent()
             val fade = 20.dp.toPx()
             drawRect(Brush.verticalGradient(listOf(Color.Black, Color.Transparent), startY = size.height - fade, endY = size.height), blendMode = BlendMode.DstIn)
-        }.nestedScroll(remember(pull, scroll) { pull.attach(scroll) }).verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = if (compact) 28.dp else 34.dp, bottom = 8.dp).semantics(mergeDescendants = true) {
+        }.nestedScroll(remember(pull, scroll) { pull.attach(scroll) }).verticalScroll(scroll).padding(start = 28.dp, end = 28.dp, top = if (compact) 30.dp else 36.dp, bottom = 8.dp).semantics(mergeDescendants = true) {
             stateDescription = page
             // The pull is a touch gesture; this gives TalkBack and switch access the same way out.
             customActions = listOf(CustomAccessibilityAction(closeLabel) { pull.dismiss(); true })
@@ -1221,11 +1281,21 @@ private fun GuidePage(label: Int, pull: PullToDismiss) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringArrayResource(R.array.steps)[label - 1], style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        // A dark ring around the light crop, so it does not glare against the black.
-        Box(Modifier.size(art + 8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer), contentAlignment = Alignment.Center) {
+        // The picture leads: a circle sits in the narrow top of a round screen where a line of text would meet the clock.
+        // A dark ring around the light crop, so it does not glare against the black. Paging, it shrinks and rolls a
+        // little with the swipe, as if the hands turned over, while the page itself slides.
+        Box(
+            Modifier.size(art + 8.dp).graphicsLayer {
+                val o = offset().coerceIn(-1f, 1f)
+                val k = lerp(1f, 0.7f, kotlin.math.abs(o))
+                scaleX = k; scaleY = k
+                rotationZ = -16f * o
+            }.clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer),
+            contentAlignment = Alignment.Center,
+        ) {
             Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(art).clip(CircleShape), alpha = 0.7f)
         }
+        Text(stringArrayResource(R.array.steps)[label - 1], Modifier.padding(top = 2.dp), style = MaterialTheme.typography.titleMedium.rounded(), color = colors.primary, textAlign = TextAlign.Center)
         Text(stringArrayResource(R.array.step_how)[label - 1], style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         Text(stringArrayResource(R.array.step_whys)[label - 1], color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
     }
@@ -1304,7 +1374,7 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
     val context = LocalContext.current
     val washes by remember { History.get(context).washes }.collectAsState()
     ListScreen { spec ->
-        item { Header(spec, stringResource(R.string.history)) }
+        item { Header(spec, stringResource(R.string.history), bold = true) }
         if (washes.isEmpty()) item { Notice(stringResource(R.string.history_empty), morphContent(spec)) }
         // Newest first, one small day label per run of Washes so the rows don't repeat the date.
         val zone = java.time.ZoneId.systemDefault()
@@ -1339,7 +1409,7 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
 @Composable
 private fun CreditsScreen() {
     ListScreen(backdrop = false) { spec ->
-        item { Header(spec, stringResource(R.string.credits)) }
+        item { Header(spec, stringResource(R.string.credits), bold = true) }
         // The URL has no spaces; a zero-width space after "/" and "_" lets it wrap on the round edge instead of mid-word.
         item {
             Column(morphContent(spec).fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -1354,35 +1424,29 @@ private fun CreditsScreen() {
 
 private val HUB_ROW_MIN = 56.dp
 
-/** One hue per setting, so each row is found by colour. [fill] is the lit container; [ink] is the text and glyph on it. */
+/** A settings row's colour: [fill] is the lit container; [ink] is the text and glyph on it. */
 private class Hue(val fill: Color, val ink: Color)
-// Every row takes the theme's primary (the Start button's colour), pulled toward grey so it sits back.
-private val HueHaptics @Composable get() = softPrimary()
-private val HueRing @Composable get() = softPrimary()
-private val HueCheck @Composable get() = softPrimary()
-private val HueTwist @Composable get() = softPrimary()
-private val HueWrist @Composable get() = softPrimary()
-private val HueLang @Composable get() = softPrimary()
 
-@Composable
-private fun softPrimary() = MaterialTheme.colorScheme.let { Hue(lerp(it.primary, Color(0xFF8A8A8A), 0.4f), it.onPrimary) }
+/** Every row takes the theme's primary (the Start button's colour), pulled toward grey so it sits back. */
+private val SettingHue @Composable get() = MaterialTheme.colorScheme.let { Hue(lerp(it.primary, Color(0xFF8A8A8A), 0.4f), it.onPrimary) }
 
-/** A settings row arrives: it slides in from alternating sides, overshoots on a loose spring, 45 ms after the row above. */
+/**
+ * A settings row arrives: it rises into place on a spring with a trace of overshoot, [STAGGER_MS] after the row above.
+ * The same rise as Start's and the Summary's rows, so the app has one way of arriving; the bounce is saved for the toggles.
+ */
 @Composable
 private fun settle(i: Int): Modifier {
     val p = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         // Animator scale 0 finishes the spring at once; the stagger delay is not scaled, so skip it.
-        if (coroutineContext[MotionDurationScale]?.scaleFactor != 0f) delay(i * 45L)
-        p.animateTo(1f, spring(dampingRatio = 0.58f, stiffness = Spring.StiffnessMediumLow))
+        if (coroutineContext[MotionDurationScale]?.scaleFactor != 0f) delay(i * STAGGER_MS.toLong())
+        p.animateTo(1f, spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow))
     }
-    val side = if (i % 2 == 0) 1f else -1f
     return Modifier.graphicsLayer {
-        alpha = (p.value * 2.5f).coerceIn(0f, 1f)
-        val k = 0.8f + 0.2f * p.value
+        alpha = (p.value * 2f).coerceIn(0f, 1f)
+        val k = 0.94f + 0.06f * p.value
         scaleX = k; scaleY = k
-        translationX = (1 - p.value) * 28.dp.toPx() * side
-        translationY = (1 - p.value) * 10.dp.toPx()
+        translationY = (1 - p.value) * 14.dp.toPx()
     }
 }
 
@@ -1438,7 +1502,7 @@ private fun TransformingLazyColumnItemScope.LanguageRow(spec: TransformationSpec
         },
         modifier = modifier.heightIn(min = HUB_ROW_MIN), interactionSource = source, transformation = SurfaceTransformation(spec),
     ) {
-        Icon(painterResource(R.drawable.ic_language), null, Modifier.graphicsLayer { rotationZ = spin }, tint = HueLang.fill)
+        Icon(painterResource(R.drawable.ic_language), null, Modifier.graphicsLayer { rotationZ = spin }, tint = SettingHue.fill)
         Spacer(Modifier.width(8.dp))
         Text(stringResource(R.string.language), Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall)
         LanguagePill(spanish)
@@ -1450,10 +1514,10 @@ private fun LanguagePill(spanish: Boolean) {
     val pos by animateFloatAsState(if (spanish) 1f else 0f, spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium))
     val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f)
     val dim = MaterialTheme.colorScheme.onSurfaceVariant
-    val en by animateColorAsState(if (spanish) dim else HueLang.ink, tween(120))
-    val es by animateColorAsState(if (spanish) HueLang.ink else dim, tween(120))
+    val en by animateColorAsState(if (spanish) dim else SettingHue.ink, tween(120))
+    val es by animateColorAsState(if (spanish) SettingHue.ink else dim, tween(120))
     val style = MaterialTheme.typography.labelSmall
-    val lit = HueLang.fill
+    val lit = SettingHue.fill
     Row(
         Modifier.width(56.dp).height(24.dp).drawBehind {
             val r = CornerRadius(size.height / 2)
@@ -1475,13 +1539,13 @@ private fun SettingsScreen(onWash: () -> Unit, onStart: () -> Unit, onCredits: (
         item { Header(spec, stringResource(R.string.settings), bold = true) }
         item {
             val (source, modifier) = settingRow(spec, 1)
-            Button(onClick = onWash, modifier = modifier.heightIn(min = HUB_ROW_MIN), interactionSource = source, transformation = SurfaceTransformation(spec), colors = filledHue(HueHaptics),
-                icon = { SettingIcon(R.drawable.ic_vibration, onTint = HueHaptics.ink) }, label = { Text(stringResource(R.string.settings_wash), style = MaterialTheme.typography.titleMedium.rounded()) })
+            Button(onClick = onWash, modifier = modifier.heightIn(min = HUB_ROW_MIN), interactionSource = source, transformation = SurfaceTransformation(spec), colors = filledHue(SettingHue),
+                icon = { SettingIcon(R.drawable.ic_vibration, onTint = SettingHue.ink) }, label = { Text(stringResource(R.string.settings_wash), style = MaterialTheme.typography.titleMedium.rounded()) })
         }
         item {
             val (source, modifier) = settingRow(spec, 2)
-            Button(onClick = onStart, modifier = modifier.heightIn(min = HUB_ROW_MIN), interactionSource = source, transformation = SurfaceTransformation(spec), colors = filledHue(HueTwist),
-                icon = { SettingIcon(R.drawable.ic_wash, onTint = HueTwist.ink) }, label = { Text(stringResource(R.string.settings_start), style = MaterialTheme.typography.titleMedium.rounded()) })
+            Button(onClick = onStart, modifier = modifier.heightIn(min = HUB_ROW_MIN), interactionSource = source, transformation = SurfaceTransformation(spec), colors = filledHue(SettingHue),
+                icon = { SettingIcon(R.drawable.ic_wash, onTint = SettingHue.ink) }, label = { Text(stringResource(R.string.settings_start), style = MaterialTheme.typography.titleMedium.rounded()) })
         }
         // Per-app language needs LocaleManager (API 33); older watches keep following the system language.
         if (Build.VERSION.SDK_INT >= 33) item { LanguageRow(spec, 3) }
@@ -1492,7 +1556,7 @@ private fun SettingsScreen(onWash: () -> Unit, onStart: () -> Unit, onCredits: (
     }
 }
 
-/** What the watch does during a Wash. Each row has its own hue: lit rows fill with it, off rows keep the glyph in it. */
+/** What the watch does during a Wash. Lit rows fill with [SettingHue]; off rows keep the glyph in it. */
 @Composable
 private fun WashSettingsScreen() {
     val context = LocalContext.current
@@ -1507,20 +1571,20 @@ private fun WashSettingsScreen() {
         item { Header(spec, stringResource(R.string.settings_wash), bold = true) }
         item {
             val (source, modifier) = settingRow(spec, 1)
-            SwitchButton(haptics, { haptics = it; settings.haptics = it; tick(it) }, modifier.then(swell(haptics)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = hueSwitchColors(HueHaptics),
-                icon = { SettingIcon(R.drawable.ic_vibration, haptics, onTint = HueHaptics.ink, offTint = HueHaptics.fill) }, label = { Text(stringResource(R.string.haptics)) })
+            SwitchButton(haptics, { haptics = it; settings.haptics = it; tick(it) }, modifier.then(swell(haptics)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = hueSwitchColors(SettingHue),
+                icon = { SettingIcon(R.drawable.ic_vibration, haptics, onTint = SettingHue.ink, offTint = SettingHue.fill) }, label = { Text(stringResource(R.string.haptics)) })
         }
         item {
             val (source, modifier) = settingRow(spec, 2)
-            SwitchButton(ring, { ring = it; settings.progressRing = it; tick(it) }, modifier.then(swell(ring)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = hueSwitchColors(HueRing),
-                icon = { SettingIcon(R.drawable.ic_ring, ring, onTint = HueRing.ink, offTint = HueRing.fill) }, label = { Text(stringResource(R.string.progress_ring)) },
+            SwitchButton(ring, { ring = it; settings.progressRing = it; tick(it) }, modifier.then(swell(ring)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = hueSwitchColors(SettingHue),
+                icon = { SettingIcon(R.drawable.ic_ring, ring, onTint = SettingHue.ink, offTint = SettingHue.fill) }, label = { Text(stringResource(R.string.progress_ring)) },
                 secondaryLabel = { Text(stringResource(R.string.progress_ring_desc)) })
         }
         // Absent entirely when the build flag ships the check disabled.
         if (BuildConfig.TARGET_CHECK) item {
             val (source, modifier) = settingRow(spec, 3)
-            SwitchButton(targetCheck, { targetCheck = it; settings.targetCheck = it; tick(it) }, modifier.then(swell(targetCheck)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = hueSwitchColors(HueCheck),
-                icon = { SettingIcon(R.drawable.ic_step_tips, targetCheck, onTint = HueCheck.ink, offTint = HueCheck.fill) }, label = { Text(stringResource(R.string.target_check)) })
+            SwitchButton(targetCheck, { targetCheck = it; settings.targetCheck = it; tick(it) }, modifier.then(swell(targetCheck)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = hueSwitchColors(SettingHue),
+                icon = { SettingIcon(R.drawable.ic_step_tips, targetCheck, onTint = SettingHue.ink, offTint = SettingHue.fill) }, label = { Text(stringResource(R.string.target_check)) })
         }
         // Only said when it matters: the ring is read at Wash start.
         if (status.running) item { Notice(stringResource(R.string.applies_next_wash), morphContent(spec)) }
@@ -1548,8 +1612,8 @@ private fun StartSettingsScreen() {
         item {
             val (source, modifier) = settingRow(spec, 1)
             SwitchButton(twist, { on -> if (on) warn = true else { setTwist(false); feedback.performHapticFeedback(HapticFeedbackType.ToggleOff) } },
-                modifier.then(swell(twist)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = hueSwitchColors(HueTwist),
-                icon = { SettingIcon(R.drawable.ic_wash, twist, onTint = HueTwist.ink, offTint = HueTwist.fill) }, label = { Text(stringResource(R.string.twist_start)) },
+                modifier.then(swell(twist)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = hueSwitchColors(SettingHue),
+                icon = { SettingIcon(R.drawable.ic_wash, twist, onTint = SettingHue.ink, offTint = SettingHue.fill) }, label = { Text(stringResource(R.string.twist_start)) },
                 secondaryLabel = { Text(stringResource(R.string.twist_start_desc)) })
         }
         // Two values, so a tap flips it and the row shows the new one: no dialog, and a second tap undoes it (§4.1.5).
@@ -1559,9 +1623,9 @@ private fun StartSettingsScreen() {
                 onClick = { wrist = if (wrist == Wrist.LEFT) Wrist.RIGHT else Wrist.LEFT; settings.wrist = wrist; feedback.performHapticFeedback(HapticFeedbackType.ToggleOn) },
                 modifier = modifier.then(swell(wrist)),
                 interactionSource = source,
-                colors = filledHue(HueWrist),
+                colors = filledHue(SettingHue),
                 transformation = SurfaceTransformation(spec),
-                icon = { SettingIcon(R.drawable.ic_watch, flip = wrist == Wrist.RIGHT, onTint = HueWrist.ink) },
+                icon = { SettingIcon(R.drawable.ic_watch, flip = wrist == Wrist.RIGHT, onTint = SettingHue.ink) },
                 label = { Text(stringResource(R.string.wrist_side)) },
                 secondaryLabel = { Crossfade(wrist, label = "wrist") { Text(stringResource(if (it == Wrist.LEFT) R.string.wrist_left else R.string.wrist_right)) } },
             )
@@ -1595,32 +1659,41 @@ private fun staggered(entrance: Float, i: Int) =
 /**
  * The five Steps as arcs around the takeaway, clockwise from 12 o'clock in list order. Shape
  * carries the Status, not colour (§4.1.10): Looks covered fills the arc, May have been brief fills
- * half, Not detected leaves only the track, like the ✓ ◐ ○ glyphs below. The list says it in words.
+ * half, Not detected leaves only the track, like the [StatusMark]s below. The list says it in words.
  */
 @Composable
 private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, modifier: Modifier, numeral: () -> Float = { 1f }) {
     val colors = MaterialTheme.colorScheme
     val ok = coverage.count { it.status == StepStatus.OK }
     val takeaway = stringResource(R.string.history_hint, ok)
-    // All five covered: once the last arc lands, the ring gives one small spring pop and a burst of droplets.
+    // All five covered: once the last arc lands, a light passes over the five Steps in order, a roll call, and as it
+    // leaves the last one the ring gives one small spring pop and a burst of droplets.
     val pop = remember { Animatable(1f) }
     val burst = remember { Animatable(1f) }
+    val roll = remember { Animatable(0f) }
     if (ok == coverage.size) LaunchedEffect(Unit) {
         snapshotFlow(entrance).first { it >= 1f } // follows the system animation scale, unlike a fixed delay
+        launch { roll.animateTo(1f, tween(ROLL_MS, easing = LinearEasing)) }
+        snapshotFlow { roll.value }.first { it >= ROLL_BURST_AT }
         launch { burst.snapTo(0f); burst.animateTo(1f, tween(BURST_MS, easing = EaseOutStrong)) }
         pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 2f)
     }
     Box(modifier.height(RING_SIZE).clearAndSetSemantics { contentDescription = takeaway }, contentAlignment = Alignment.Center) {
         val ink = ink(coverage)
         Canvas(Modifier.size(RING_SIZE).graphicsLayer { scaleX = pop.value; scaleY = pop.value }) {
-            coverageArcs(coverage, RING_STROKE.toPx(), colors.surfaceContainer, ink) { staggered(entrance(), it) }
+            coverageArcs(coverage, RING_STROKE.toPx(), colors.surfaceContainer, ink, { staggered(entrance(), it) }) { i ->
+                // The light's place runs from before the first arc to past the last, so it enters and leaves dark.
+                val w = roll.value * (coverage.size + 2) - 1
+                (1 - kotlin.math.abs(w - i)).coerceIn(0f, 1f)
+            }
         }
         // Drawn past the ring's bounds: the droplets leave from its outer edge.
         Canvas(Modifier.size(RING_SIZE)) {
             val b = burst.value
             if (b < 1f) repeat(BURST_DROPS) { i ->
                 val a = Math.toRadians(-90.0 + i * 360.0 / BURST_DROPS)
-                val r = size.minDimension / 2 + BURST_REACH.toPx() * b
+                // Three reaches and two sizes, so the splash reads as water, not a clock face.
+                val r = size.minDimension / 2 + BURST_REACH.toPx() * b * (1f - 0.15f * (i % 3))
                 val drop = (if (i % 2 == 0) 4.dp else 3.dp).toPx() * (1 - b)
                 drawCircle(ink, drop, center + Offset(cos(a).toFloat(), sin(a).toFloat()) * r, alpha = 1 - b)
             }
@@ -1662,7 +1735,7 @@ private fun MiniRing(coverage: List<StepCoverage>, size: Dp = MINI_RING_SIZE, st
  * The five Steps as arcs, clockwise from 12 o'clock in list order, filling this canvas. [fill] is the
  * drawn part of each arc's [share], for the Summary's entrance. The Tile draws the same ring ([WashTileService]).
  */
-private fun DrawScope.coverageArcs(coverage: List<StepCoverage>, stroke: Float, track: Color, ink: Color, fill: (Int) -> Float = { 1f }) {
+private fun DrawScope.coverageArcs(coverage: List<StepCoverage>, stroke: Float, track: Color, ink: Color, fill: (Int) -> Float = { 1f }, light: (Int) -> Float = { 0f }) {
     val topLeft = Offset(stroke / 2, stroke / 2)
     val arc = Size(size.width - stroke, size.height - stroke)
     val style = Stroke(stroke, cap = StrokeCap.Round)
@@ -1673,6 +1746,28 @@ private fun DrawScope.coverageArcs(coverage: List<StepCoverage>, stroke: Float, 
         drawArc(track, start, sweep, false, topLeft, arc, style = style)
         val share = share(c.status)
         if (share > 0f) drawArc(ink, start, sweep * share * fill(i), false, topLeft, arc, style = style)
+        val l = light(i)
+        if (l > 0f && share > 0f) drawArc(Color.White, start, sweep * share, false, topLeft, arc, alpha = 0.6f * l, style = style)
+    }
+}
+
+/**
+ * A bead of light at [p] (0..1) along the live ring's arc, with a fading tail behind it, a little wider than the ring
+ * so it reads as a swell running round. It comes in from nothing and goes out to nothing; drawn only while 0 < p < 1.
+ */
+private fun DrawScope.bead(p: Float, stroke: Float) {
+    if (p <= 0f || p >= 1f) return
+    val inset = stroke / 2
+    val arc = Size(size.width - stroke, size.height - stroke)
+    val head = RING_START_DEG + RING_SWEEP_DEG * p
+    val fade = sin(PI.toFloat() * p)
+    val parts = 6
+    val seg = SHINE_DEG / parts
+    repeat(parts) { k ->
+        // Butt caps: round ones would overlap and double the light where the parts meet.
+        val from = (head - (k + 1) * seg).coerceAtLeast(RING_START_DEG)
+        val sweep = head - k * seg - from
+        if (sweep > 0f) drawArc(Color.White, from, sweep, false, Offset(inset, inset), arc, alpha = 0.7f * fade * (1 - k / parts.toFloat()), style = Stroke(stroke * 1.4f))
     }
 }
 
@@ -1713,10 +1808,37 @@ private fun duration(s: Float): String {
     return "${t / 60}:${(t % 60).toString().padStart(2, '0')}"
 }
 
-private fun glyph(s: StepStatus) = when (s) {
-    StepStatus.OK -> "✓"
-    StepStatus.BRIEF -> "◐"
-    StepStatus.NOT_DETECTED -> "○"
+/**
+ * A Step Status as a shape, like its arc on the ring: a full disc, a half, or an empty outline, filling clockwise from
+ * the top as [fill] goes 0 → 1. Drawn, not a ✓ ◐ ○ glyph, which every font sets at a different size. Read as the words beside it.
+ */
+@Composable
+private fun StatusMark(s: StepStatus, fill: () -> Float = { 1f }) {
+    val ink = MaterialTheme.colorScheme.onSurface
+    Canvas(Modifier.size(10.dp).clearAndSetSemantics {}) {
+        val line = 1.5.dp.toPx()
+        drawCircle(ink, size.minDimension / 2 - line / 2, style = Stroke(line))
+        val sweep = 360f * share(s) * fill()
+        if (sweep > 0f) drawArc(ink, -90f, sweep, true)
+    }
+}
+
+/** A check that draws itself as [progress] goes 0 → 1, for the covered Steps' row. */
+@Composable
+private fun CheckMark(color: Color, progress: () -> Float = { 1f }) {
+    val path = remember { Path() }
+    val part = remember { Path() }
+    val measure = remember { PathMeasure() }
+    Canvas(Modifier.size(14.dp).clearAndSetSemantics {}) {
+        path.reset()
+        path.moveTo(size.width * 0.1f, size.height * 0.55f)
+        path.lineTo(size.width * 0.4f, size.height * 0.82f)
+        path.lineTo(size.width * 0.9f, size.height * 0.2f)
+        measure.setPath(path, false)
+        part.reset()
+        measure.getSegment(0f, measure.length * progress(), part, true)
+        drawPath(part, color, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+    }
 }
 
 private fun statusText(s: StepStatus) = when (s) {
