@@ -8,10 +8,10 @@
     <string name="stopping">Deteniendo…</string>
     <string name="hold_to_stop">Mantén para parar</string>
     <string name="washed_for">Duración: %1$s</string>
-    <string name="washed_for_all">¡Buen trabajo! Duración: %1$s</string>
+    <string name="praise">¡Buen trabajo!</string>
     <string name="last_wash_title">Último lavado</string>
-    <string name="complication_label">Lavado de manos</string>
-    <string name="ring_caption">de 5 pasos\ncompletados</string>
+    <string name="complication_label">Lavado</string>
+    <string name="complication_long">Último lavado · %1$d de 5</string>
     <!-- Frases de la sesión: una nueva cada 5 s hasta los 40 s, luego un ánimo en bucle. Ánimo para seguir y lavar a fondo: sin pasos ni movimientos. -->
     <string-array name="wash_cues">
         <item>Buen comienzo</item>
@@ -51,7 +51,7 @@
     <string name="too_short_to_save">Lavado demasiado breve para guardar</string>
     <string name="too_short_short">Muy breve</string>
     <string name="none_detected_short">Ningún paso detectado</string>
-    <string name="start_intro">Frota 5 pasos de manos. El anillo muestra lo que parece cubierto.</string>
+    <string name="start_intro">Frota 5 pasos de manos. Los anillos muestran lo que parece cubierto.</string>
     <string name="status_ok">Parece completado</string>
     <string name="status_brief">Parece incompleto</string>
     <string name="status_not_detected">No detectado</string>

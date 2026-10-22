@@ -6,11 +6,13 @@
     <string name="hold_to_stop">Hold to stop</string>
     <string name="washed_for">Washed for %1$s</string>
     <!-- When all five Steps look covered. Warm, still an estimate (§4.1.9). -->
-    <string name="washed_for_all">Nice work. Washed for %1$s</string>
+    <!-- Summary, all five covered: the praise line under the rings. -->
+    <string name="praise">Nice work.</string>
     <string name="last_wash_title">Last wash</string>
     <string name="complication_label">Wash</string>
+    <!-- Long-text complication: the last result. -->
+    <string name="complication_long">Last wash · %1$d of 5</string>
     <!-- Two lines: the ring is too narrow for one. -->
-    <string name="ring_caption">of 5 look\ncovered</string>
     <!-- Live Wash cues: one new line every 5 s up to the 40 s target, then a looping cheer. Encouragement to keep going and wash thoroughly: no Steps, no movements, never a Step Status. -->
     <string-array name="wash_cues">
         <item>Good start</item>
@@ -49,7 +51,7 @@
     <string name="too_short_to_save">Too short to save</string>
     <string name="too_short_short">Too short</string>
     <string name="none_detected_short">No steps detected</string>
-    <string name="start_intro">Rub through 5 hand steps. The ring shows what looks covered.</string>
+    <string name="start_intro">Rub through 5 hand steps. The rings show what looks covered.</string>
     <string name="status_ok">Looks covered</string>
     <string name="status_brief">May have been brief</string>
     <string name="status_not_detected">Not detected</string>
