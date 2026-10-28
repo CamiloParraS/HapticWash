@@ -1,0 +1,1715 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>HapticWash · the current design, refined</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,ROND@6..144,300..800,0..100&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --tint: #d9c9ff;
+                --tint-deep: #0a84ff;
+                --done: #63e6be;
+                --stop: #ff453a;
+                --stop-deep: #5c0e0a;
+                --t1: #fff;
+                --t2: #c9c4d4;
+                --t3: rgba(235, 235, 245, 0.38);
+                --plat: #2f2b3a;
+                --plat-hi: #3a3646;
+                --page: #000;
+                --card: #0d0d0f;
+                --line: #1f1f23;
+                --font:
+                    "Google Sans Flex", system-ui, -apple-system, "Segoe UI",
+                    sans-serif;
+                --z: 1.3;
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html {
+                background: var(--page);
+                color: var(--t1);
+                font-family: var(--font);
+                -webkit-font-smoothing: antialiased;
+            }
+            ::selection {
+                background: var(--tint);
+                color: #000;
+            }
+            body {
+                padding: 56px 28px 120px;
+            }
+            a {
+                color: var(--tint);
+                text-underline-offset: 3px;
+            }
+            a:focus-visible,
+            button:focus-visible {
+                outline: 2px solid var(--tint);
+                outline-offset: 3px;
+                border-radius: 6px;
+            }
+            .wrap {
+                max-width: 1320px;
+                margin: 0 auto;
+            }
+
+            /* page */
+            .top {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 32px;
+                align-items: end;
+                border-bottom: 1px solid var(--line);
+                padding-bottom: 36px;
+            }
+            h1 {
+                font-size: clamp(34px, 4.4vw, 58px);
+                font-weight: 700;
+                letter-spacing: -0.025em;
+                line-height: 1.02;
+                font-variation-settings: "ROND" 100;
+                text-wrap: balance;
+            }
+            h1 span {
+                color: var(--tint);
+            }
+            .lead {
+                color: var(--t2);
+                font-size: 17px;
+                line-height: 1.5;
+                max-width: 62ch;
+                margin-top: 16px;
+                text-wrap: pretty;
+            }
+            .lead b {
+                color: var(--t1);
+                font-weight: 600;
+            }
+            .meta {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-end;
+            }
+            .fit {
+                font-size: 14px;
+                font-weight: 600;
+                padding: 10px 16px;
+                border-radius: 99px;
+                background: var(--plat);
+                white-space: nowrap;
+            }
+            .fit.ok {
+                color: var(--done);
+            }
+            .fit.bad {
+                color: var(--stop);
+            }
+            .swatches {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                font-size: 13px;
+                color: var(--t2);
+            }
+            .sw {
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+            }
+            .other {
+                font-size: 14px;
+            }
+            nav.jump {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin: 26px 0 8px;
+            }
+            nav.jump a {
+                font-size: 13.5px;
+                color: var(--t2);
+                text-decoration: none;
+                background: var(--card);
+                border: 1px solid var(--line);
+                padding: 8px 14px;
+                border-radius: 99px;
+            }
+            nav.jump a:hover {
+                color: var(--t1);
+                border-color: #333;
+            }
+
+            h2 {
+                font-size: 30px;
+                font-weight: 700;
+                letter-spacing: -0.015em;
+                margin: 64px 0 6px;
+                font-variation-settings: "ROND" 100;
+            }
+            .h2note {
+                color: var(--t2);
+                max-width: 72ch;
+                font-size: 15px;
+                line-height: 1.5;
+                text-wrap: pretty;
+            }
+            .screen {
+                margin-top: 22px;
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: 30px;
+                padding: 22px 24px 26px;
+            }
+            .shead {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px 14px;
+                align-items: baseline;
+            }
+            .shead h3 {
+                font-size: 19px;
+                font-weight: 650;
+            }
+            .shead .why {
+                color: var(--t2);
+                font-size: 14.5px;
+                line-height: 1.45;
+                flex-basis: 100%;
+                max-width: 90ch;
+                text-wrap: pretty;
+            }
+            .flag {
+                font-size: 12px;
+                font-weight: 600;
+                padding: 3px 10px;
+                border-radius: 99px;
+                background: #2a1a0a;
+                color: #ffb35c;
+            }
+            .flag.err {
+                background: #2c0f0d;
+                color: #ff8a80;
+            }
+            .row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 18px 26px;
+                margin-top: 18px;
+                align-items: flex-start;
+            }
+            figure {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            figcaption {
+                font-size: 12.5px;
+                color: var(--t2);
+                display: flex;
+                gap: 6px;
+                align-items: center;
+            }
+            figcaption b {
+                color: var(--t1);
+                font-weight: 600;
+            }
+            .lang {
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                padding: 2px 7px;
+                border-radius: 6px;
+                background: var(--plat);
+                color: var(--t1);
+            }
+            .cur .lang {
+                background: #1a1a1a;
+                color: var(--t3);
+            }
+            .row.multi {
+                display: grid;
+                grid-template-columns: repeat(4, auto);
+                justify-content: start;
+            }
+            .row.multi > .cur {
+                grid-row: span 2;
+            }
+            .row.multi > .divider {
+                grid-row: span 2;
+            }
+            .divider {
+                width: 1px;
+                align-self: stretch;
+                background: var(--line);
+            }
+
+            /* watch frame: 227 dp round, drawn 1 css px = 1 dp, scaled for reading */
+            .wf {
+                width: calc(227px * var(--z));
+                height: calc(227px * var(--z));
+                position: relative;
+                flex: none;
+                border-radius: 50%;
+                box-shadow:
+                    0 0 0 calc(4px * var(--z)) #1b1b1e,
+                    0 0 0 calc(7px * var(--z)) #070708,
+                    0 18px 40px -12px rgba(0, 0, 0, 0.9);
+            }
+            .watch {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 227px;
+                height: 227px;
+                transform: scale(var(--z));
+                transform-origin: 0 0;
+                border-radius: 50%;
+                overflow: hidden;
+                background: #000;
+                font-family: var(--font);
+                color: var(--t1);
+                line-height: 1.18;
+                isolation: isolate;
+            }
+            .wf img.shot {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                display: block;
+            }
+            .wf.missing {
+                display: grid;
+                place-items: center;
+                background: #08080a;
+            }
+            .wf.missing span {
+                font-size: 13px;
+                color: var(--t3);
+                text-align: center;
+                padding: 0 40px;
+                line-height: 1.4;
+            }
+            .overflow {
+                outline: 1.5px solid #ff2d55 !important;
+                outline-offset: 1px;
+                background: rgba(255, 45, 85, 0.18) !important;
+            }
+
+            /* inside the watch */
+            .wash {
+                position: absolute;
+                inset: 0;
+                z-index: -1;
+            }
+            .tt {
+                position: absolute;
+                left: 50%;
+                top: 6px;
+                transform: translateX(-50%);
+                font-size: 12.5px;
+                font-weight: 600;
+                font-feature-settings: "tnum";
+                letter-spacing: 0.01em;
+                white-space: nowrap;
+                z-index: 5;
+                color: #f2f2f7;
+            }
+            .scr {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 227px;
+            }
+            .col {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .num {
+                font-variation-settings: "ROND" 100;
+                font-feature-settings: "tnum";
+                font-weight: 650;
+                letter-spacing: -0.01em;
+            }
+            .title {
+                font-size: 15px;
+                font-weight: 650;
+                color: var(--tint);
+                font-variation-settings: "ROND" 100;
+            }
+            .b16 {
+                font-size: 16px;
+                font-weight: 600;
+            }
+            .b15 {
+                font-size: 15px;
+                font-weight: 600;
+            }
+            .b14 {
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .s13 {
+                font-size: 13px;
+                color: var(--t2);
+            }
+            .s12 {
+                font-size: 12px;
+                color: var(--t2);
+            }
+            .s11 {
+                font-size: 11px;
+                color: var(--t2);
+            }
+            .cell {
+                width: 198px;
+                min-height: 52px;
+                border-radius: 26px;
+                background: var(--plat);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 8px 14px;
+                text-align: left;
+            }
+            .cell .tx {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 1px;
+            }
+            .dot {
+                flex: none;
+                border-radius: 50%;
+                display: grid;
+                place-items: center;
+            }
+            .cap {
+                border-radius: 99px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+            }
+            .glass {
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.14);
+                display: grid;
+                place-items: center;
+                -webkit-backdrop-filter: blur(8px);
+                backdrop-filter: blur(8px);
+            }
+            .sw-t {
+                flex: none;
+                width: 40px;
+                height: 24px;
+                border-radius: 99px;
+                background: #39393d;
+                position: relative;
+            }
+            .sw-t::after {
+                content: "";
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #fff;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            }
+            .sw-t.on {
+                background: var(--tint);
+            }
+            .sw-t.on::after {
+                left: 18px;
+            }
+            .pager {
+                position: absolute;
+                right: 9px;
+                top: 50%;
+                transform: translateY(-50%);
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: center;
+            }
+            .pager i {
+                width: 5px;
+                height: 5px;
+                border-radius: 99px;
+                background: var(--t3);
+            }
+            .pager i.on {
+                height: 13px;
+                background: #fff;
+            }
+            .scrollbar {
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+            }
+            .fade-t {
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                height: 40px;
+                background: linear-gradient(#000 55%, transparent);
+                z-index: 4;
+            }
+            .fade-b {
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: 40px;
+                background: linear-gradient(transparent, #000 75%);
+                z-index: 4;
+            }
+
+            .notes {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 18px;
+                margin-top: 22px;
+            }
+            .note {
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: 24px;
+                padding: 20px 22px;
+            }
+            .note h3 {
+                font-size: 17px;
+                margin-bottom: 10px;
+            }
+            .note li {
+                list-style: none;
+                font-size: 14px;
+                line-height: 1.5;
+                color: var(--t2);
+                padding: 8px 0;
+                border-top: 1px solid var(--line);
+                text-wrap: pretty;
+            }
+            .note li b {
+                color: var(--t1);
+                font-weight: 600;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                font-size: 13.5px;
+            }
+            td,
+            th {
+                text-align: left;
+                padding: 8px 10px 8px 0;
+                border-top: 1px solid var(--line);
+                vertical-align: top;
+                color: var(--t2);
+            }
+            th {
+                color: var(--t1);
+                font-weight: 600;
+            }
+            @media (max-width: 760px) {
+                :root {
+                    --z: 1.12;
+                }
+                .top {
+                    grid-template-columns: 1fr;
+                }
+                .meta {
+                    align-items: flex-start;
+                }
+                .divider {
+                    display: none;
+                }
+            }
+            @media (prefers-reduced-motion: no-preference) {
+                .wf {
+                    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+                .wf:hover {
+                    transform: translateY(-3px);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <header class="top">
+                <div>
+                    <h1>
+                        HapticWash, <span>refined</span>.<br />Today's design,
+                        tightened.
+                    </h1>
+                    <p class="lead">
+                        The same app, the same Material You lavender, the same
+                        rounded type and layouts, every screen. Only what a
+                        critique pass found gets fixed: collisions on Start, a
+                        ring too small to read, unmarked laps, a pull-to-close
+                        nobody can see, a Settings hub that hides its state, a
+                        Spanish complication label that overflows. Each screen
+                        names its change. Each shows today's capture, then
+                        English and Spanish, and a checker measures every text
+                        line against the round edge.
+                    </p>
+                </div>
+                <div class="meta">
+                    <div class="fit" id="fit" role="status">Checking fit…</div>
+                    <div class="swatches" id="swatches"></div>
+                    <a class="other" href="redesign-watchos.html"
+                        >Compare: Five Rings, the watchOS-inspired redesign →</a
+                    >
+                </div>
+            </header>
+            <nav class="jump" id="jump" aria-label="Screens"></nav>
+            <main id="main"></main>
+
+            <h2 id="notes">Changes &amp; copy</h2>
+            <div class="notes">
+                <div class="note">
+                    <h3>What changes</h3>
+                    <ul>
+                        <li>
+                            <b>Start:</b> ring 52 → 68 dp with its count inside;
+                            the cancel notice replaces the time line instead of
+                            covering Start; Start stays put in Timer-only.
+                        </li>
+                        <li>
+                            <b>Live Wash:</b> lap ticks at 10, 20, 30 s on the
+                            ring track; Timer-only line as a tonal notice.
+                        </li>
+                        <li>
+                            <b>Summary:</b> a not-detected arc carries its Step
+                            glyph on the ring.
+                        </li>
+                        <li>
+                            <b>Target check:</b> tonal rows with glyph chips,
+                            matching Summary rows.
+                        </li>
+                        <li>
+                            <b>Step guide:</b> a grabber bar shows the
+                            pull-down-to-close.
+                        </li>
+                        <li>
+                            <b>Settings hub:</b> group rows show what is inside
+                            from existing strings.
+                        </li>
+                        <li>
+                            <b>Tile:</b> washes today and the ring instead of
+                            the app name.
+                        </li>
+                    </ul>
+                </div>
+                <div class="note">
+                    <h3>Copy</h3>
+                    <table>
+                        <tr>
+                            <th>Key</th>
+                            <th>EN</th>
+                            <th>ES</th>
+                        </tr>
+                        <tr>
+                            <td>complication_label</td>
+                            <td>Wash</td>
+                            <td>
+                                Lavado
+                                <span style="color: var(--t3)"
+                                    >(was "Lavado de manos", overflows the
+                                    short-text slot)</span
+                                >
+                            </td>
+                        </tr>
+                    </table>
+                    <p
+                        style="
+                            color: var(--t2);
+                            font-size: 14px;
+                            margin-top: 12px;
+                            line-height: 1.5;
+                        "
+                    >
+                        No other string changes. The hub's secondary lines reuse
+                        existing keys.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <script>
+            const S = {
+                en: {
+                    app_name: "HapticWash",
+                    start_wash: "Start wash",
+                    stop_wash: "Stop",
+                    stopping: "Stopping…",
+                    hold_to_stop: "Hold to stop",
+                    washed_for: "Washed for %1$s",
+                    washed_for_all: "Nice work. Washed for %1$s",
+                    last_wash_title: "Last wash",
+                    complication_label: "Wash",
+                    ring_caption: "of 5 look\\ncovered",
+                    wash_cues: [
+                        "Good start",
+                        "Nice and steady",
+                        "You\'ve got this",
+                        "Keep it going",
+                        "Dig in a little",
+                        "Halfway there",
+                        "Slow and thorough",
+                        "Almost there",
+                    ],
+                    wash_cues_after: [
+                        "You did it! Keep going?",
+                        "Every bit counts",
+                        "Great job",
+                    ],
+                    stop_early: "Not done yet. Keep going?",
+                    time_left: "to go",
+                    ambient_washing: "Washing",
+                    target_reached: "%1$d s reached",
+                    timer_only: "Timer only: step detection unavailable",
+                    timer_only_short: "Timer only",
+                    channel_session: "Wash session",
+                    session_running: "Wash in progress",
+                    tile_running: "Open wash",
+                    washes_today: {
+                        one: "%d wash today",
+                        other: "%d washes today",
+                    },
+                    wash_cancelled: "No washing detected. Wash not saved.",
+                    too_short: "Too short to estimate",
+                    too_short_to_save: "Too short to save",
+                    too_short_short: "Too short",
+                    none_detected_short: "No steps detected",
+                    start_intro:
+                        "Rub through 5 hand steps. The ring shows what looks covered.",
+                    status_ok: "Looks covered",
+                    status_brief: "May have been brief",
+                    status_not_detected: "Not detected",
+                    target_todo: "Not detected yet",
+                    close: "Close",
+                    focus_row: "Focus next time · %1$d of last %2$d",
+                    page_of: "Page %1$d of %2$d",
+                    covered_steps: "✓ %1$s",
+                    timer_only_why:
+                        "Your wash was timed. Steps can\'t be estimated on this watch right now.",
+                    too_short_why:
+                        "Wash a little longer next time to see Coverage.",
+                    steps: [
+                        "Palms",
+                        "Back of hands",
+                        "Between fingers",
+                        "Thumbs",
+                        "Fingertips",
+                    ],
+                    step_whys: [
+                        "Palms handle the most, so they pick up the most",
+                        "Backs of hands touch things too; palms never reach them",
+                        "What you touch gets trapped between fingers and skipped",
+                        "Thumbs grip everything, so they pick up whatever you touch",
+                        "Fingertips touch first, and only get soap if aimed there",
+                    ],
+                    step_how: [
+                        "Rub palm against palm",
+                        "Rub each back of hand with the other palm",
+                        "Interlace fingers and rub up and down",
+                        "Clasp each thumb and rub in a circle",
+                        "Rub fingertips in the opposite palm",
+                    ],
+                    history: "History",
+                    history_empty:
+                        "No washes yet. Your last 20 appear here. Swipe right to go back to Start.",
+                    steps_covered: "steps covered",
+                    coverage_count: "%1$d of 5",
+                    history_hint: "%1$d of 5 look covered",
+                    settings: "Settings",
+                    settings_wash: "During a wash",
+                    settings_start: "Starting a wash",
+                    language: "Language",
+                    credits: "Credits",
+                    open_guide: "Open %1$s guide",
+                    credits_illustrations: "Illustrations",
+                    credits_author: "Hegasy (Guido4 / hegasy.de)",
+                    credits_licence: "CC BY-SA 4.0, cropped",
+                    credits_body:
+                        'Illustrations: Hegasy (Guido4 / hegasy.de), "Hand Disinfection according to DIN EN 1500", CC BY-SA 4.0, cropped. commons.wikimedia.org/wiki/File:04_Hegasy_Hand_Disinfection_Wiki_EN_CCBYSA.png',
+                    wrist_side: "Wrist side",
+                    wrist_left: "Left",
+                    wrist_right: "Right",
+                    applies_next_wash: "Applies from the next wash",
+                    haptics: "Haptics",
+                    progress_ring: "Progress ring",
+                    target_check: "Target check",
+                    twist_start: "Start with a twist",
+                    progress_ring_desc: "Fills as you wash",
+                    twist_start_desc: "Listens in the background",
+                    twist_warning_title: "Uses more battery",
+                    twist_warning:
+                        "The watch listens for a twist all day, so the battery runs down sooner.",
+                    twist_listening: "Listening for a twist",
+                },
+                es: {
+                    app_name: "HapticWash",
+                    start_wash: "Empezar lavado",
+                    stop_wash: "Detener",
+                    stopping: "Deteniendo…",
+                    hold_to_stop: "Mantén para parar",
+                    washed_for: "Duración: %1$s",
+                    washed_for_all: "¡Buen trabajo! Duración: %1$s",
+                    last_wash_title: "Último lavado",
+                    complication_label: "Lavado de manos",
+                    ring_caption: "de 5 pasos\\ncompletados",
+                    wash_cues: [
+                        "Buen comienzo",
+                        "Con calma",
+                        "Vas muy bien",
+                        "Sigue así",
+                        "Dale con ganas",
+                        "Vas por la mitad",
+                        "Sin prisa, a fondo",
+                        "Ya casi",
+                    ],
+                    wash_cues_after: [
+                        "¡Lo lograste! ¿Seguimos?",
+                        "Cada segundo cuenta",
+                        "Buen trabajo",
+                    ],
+                    stop_early: "Aún no terminas. ¿Sigues?",
+                    time_left: "restantes",
+                    ambient_washing: "Lavando manos…",
+                    target_reached: "¡%1$d segundos completados!",
+                    timer_only:
+                        "Solo temporizador: no se pueden detectar los pasos",
+                    timer_only_short: "Solo temporizador",
+                    channel_session: "Lavado de manos",
+                    session_running: "Lavado en curso",
+                    tile_running: "Ver lavado",
+                    washes_today: {
+                        one: "%d lavado hoy",
+                        many: "%d lavados hoy",
+                        other: "%d lavados hoy",
+                    },
+                    wash_cancelled: "No se detectó lavado. No se guardó.",
+                    too_short: "No hay datos suficientes",
+                    too_short_to_save: "Lavado demasiado breve para guardar",
+                    too_short_short: "Muy breve",
+                    none_detected_short: "Ningún paso detectado",
+                    start_intro:
+                        "Frota 5 pasos de manos. El anillo muestra lo que parece cubierto.",
+                    status_ok: "Parece completado",
+                    status_brief: "Parece incompleto",
+                    status_not_detected: "No detectado",
+                    target_todo: "Aún sin detectar",
+                    close: "Cerrar",
+                    focus_row: "Para la próxima · %1$d de los últimos %2$d",
+                    page_of: "Página %1$d de %2$d",
+                    covered_steps: "✓ %1$s",
+                    timer_only_why:
+                        "Se midió la duración. Ahora no se pueden estimar los pasos en este reloj.",
+                    too_short_why:
+                        "Lávate un poco más la próxima vez para ver la cobertura.",
+                    steps: [
+                        "Palmas",
+                        "Dorso de las manos",
+                        "Entre los dedos",
+                        "Pulgares",
+                        "Puntas de los dedos",
+                    ],
+                    step_whys: [
+                        "Las palmas manejan más cosas, así que recogen más",
+                        "El dorso también toca cosas, pero las palmas no lo alcanzan",
+                        "Lo que tocas queda atrapado entre los dedos y sin frotar",
+                        "Los pulgares agarran todo, así que recogen lo que tocas",
+                        "Las puntas tocan primero y solo reciben jabón si las diriges",
+                    ],
+                    step_how: [
+                        "Frota palma contra palma",
+                        "Frota el dorso de cada mano con la otra palma",
+                        "Entrelaza los dedos y frota de arriba abajo",
+                        "Sujeta cada pulgar y frótalo en círculos",
+                        "Frota las puntas de los dedos en la palma contraria",
+                    ],
+                    history: "Historial",
+                    history_empty:
+                        "Todavía no hay lavados. Aquí aparecen los últimos 20. Desliza a la derecha para volver a Inicio.",
+                    steps_covered: "pasos completados",
+                    coverage_count: "%1$d de 5",
+                    history_hint: "%1$d de 5 pasos detectados",
+                    settings: "Ajustes",
+                    settings_wash: "Durante el lavado",
+                    settings_start: "Iniciar un lavado",
+                    language: "Idioma",
+                    credits: "Créditos",
+                    open_guide: "Abrir guía: %1$s",
+                    credits_illustrations: "Ilustraciones",
+                    credits_author: "Hegasy (Guido4 / hegasy.de)",
+                    credits_licence: "CC BY-SA 4.0, recortadas",
+                    credits_body:
+                        'Ilustraciones: Hegasy (Guido4 / hegasy.de), "Hand Disinfection according to DIN EN 1500", CC BY-SA 4.0, recortadas. commons.wikimedia.org/wiki/File:04_Hegasy_Hand_Disinfection_Wiki_EN_CCBYSA.png',
+                    wrist_side: "Muñeca",
+                    wrist_left: "Izquierda",
+                    wrist_right: "Derecha",
+                    applies_next_wash: "Se aplicará en el próximo lavado",
+                    haptics: "Vibración",
+                    progress_ring: "Anillo de progreso",
+                    target_check: "Aviso a los 40 s",
+                    twist_start: "Empezar con un giro",
+                    progress_ring_desc: "Se llena al lavar",
+                    twist_start_desc: "Escucha en segundo plano",
+                    twist_warning_title: "Gasta más batería",
+                    twist_warning:
+                        "El reloj espera un giro todo el día, así que la batería dura menos.",
+                    twist_listening: "Esperando un giro",
+                },
+            };
+            const ICONS = {
+                history: [
+                    "M13,3c-4.97,0 -9,4.03 -9,9L1,12l3.89,3.89 0.07,0.14L9,12L6,12c0,-3.87 3.13,-7 7,-7s7,3.13 7,7 -3.13,7 -7,7c-1.93,0 -3.68,-0.79 -4.94,-2.06l-1.42,1.42C8.27,19.99 10.51,21 13,21c4.97,0 9,-4.03 9,-9s-4.03,-9 -9,-9zM12,8v5l4.28,2.54 0.72,-1.21 -3.5,-2.08L13.5,8L12,8z",
+                ],
+                language: [
+                    "M11.99,2C6.47,2 2,6.48 2,12s4.47,10 9.99,10C17.52,22 22,17.52 22,12S17.52,2 11.99,2zM18.92,8h-2.95c-0.32,-1.25 -0.78,-2.45 -1.38,-3.56 1.84,0.63 3.37,1.91 4.33,3.56zM12,4.04c0.83,1.2 1.48,2.53 1.91,3.96h-3.82c0.43,-1.43 1.08,-2.76 1.91,-3.96zM4.26,14C4.1,13.36 4,12.69 4,12s0.1,-1.36 0.26,-2h3.38c-0.08,0.66 -0.14,1.32 -0.14,2 0,0.68 0.06,1.34 0.14,2L4.26,14zM5.08,16h2.95c0.32,1.25 0.78,2.45 1.38,3.56 -1.84,-0.63 -3.37,-1.9 -4.33,-3.56zM8.03,8L5.08,8c0.96,-1.66 2.49,-2.93 4.33,-3.56C8.81,5.55 8.35,6.75 8.03,8zM12,19.96c-0.83,-1.2 -1.48,-2.53 -1.91,-3.96h3.82c-0.43,1.43 -1.08,2.76 -1.91,3.96zM14.34,14L9.66,14c-0.09,-0.66 -0.16,-1.32 -0.16,-2 0,-0.68 0.07,-1.35 0.16,-2h4.68c0.09,0.65 0.16,1.32 0.16,2 0,0.68 -0.07,1.34 -0.16,2zM14.59,19.56c0.6,-1.11 1.06,-2.31 1.38,-3.56h2.95c-0.96,1.65 -2.49,2.93 -4.33,3.56zM16.36,14c0.08,-0.66 0.14,-1.32 0.14,-2 0,-0.68 -0.06,-1.34 -0.14,-2h3.38c0.16,0.64 0.26,1.31 0.26,2s-0.1,1.36 -0.26,2h-3.38z",
+                ],
+                ring: [
+                    "M11,5.08L11,2c-5,0.5 -9,4.81 -9,10s4,9.5 9,10v-3.08c-3,-0.48 -6,-3.4 -6,-6.92s3,-6.44 6,-6.92zM18.97,11L22,11c-0.47,-5 -4,-8.53 -9,-9v3.08C16,5.51 18.54,8 18.97,11zM13,18.92L13,22c5,-0.47 8.53,-4 9,-9h-3.03c-0.43,3 -2.97,5.49 -5.97,5.92z",
+                ],
+                settings: [
+                    "M19.14,12.94c0.04,-0.3 0.06,-0.61 0.06,-0.94c0,-0.32 -0.02,-0.64 -0.07,-0.94l2.03,-1.58c0.18,-0.14 0.23,-0.41 0.12,-0.61l-1.92,-3.32c-0.12,-0.22 -0.37,-0.29 -0.59,-0.22l-2.39,0.96c-0.5,-0.38 -1.03,-0.7 -1.62,-0.94L14.4,2.81c-0.04,-0.24 -0.24,-0.41 -0.48,-0.41h-3.84c-0.24,0 -0.43,0.17 -0.47,0.41L9.25,5.35C8.66,5.59 8.12,5.92 7.63,6.29L5.24,5.33c-0.22,-0.08 -0.47,0 -0.59,0.22L2.74,8.87C2.62,9.08 2.66,9.34 2.86,9.48l2.03,1.58C4.84,11.36 4.8,11.69 4.8,12s0.02,0.64 0.07,0.94l-2.03,1.58c-0.18,0.14 -0.23,0.41 -0.12,0.61l1.92,3.32c0.12,0.22 0.37,0.29 0.59,0.22l2.39,-0.96c0.5,0.38 1.03,0.7 1.62,0.94l0.36,2.54c0.05,0.24 0.24,0.41 0.48,0.41h3.84c0.24,0 0.44,-0.17 0.47,-0.41l0.36,-2.54c0.59,-0.24 1.13,-0.56 1.62,-0.94l2.39,0.96c0.22,0.08 0.47,0 0.59,-0.22l1.92,-3.32c0.12,-0.22 0.07,-0.47 -0.12,-0.61L19.14,12.94zM12,15.6c-1.98,0 -3.6,-1.62 -3.6,-3.6s1.62,-3.6 3.6,-3.6s3.6,1.62 3.6,3.6S13.98,15.6 12,15.6z",
+                ],
+                step_backs: [
+                    "M12.8 23q-2.05 0-3.85-.937T6 19.45L1.2 12.4l.475-.475q.5-.525 1.238-.6t1.337.35l2.75 1.9V4q0-.425.288-.712T8 3t.713.288T9 4v8h2V2q0-.425.288-.712T12 1t.713.288T13 2v10h2V3q0-.425.288-.712T16 2t.713.288T17 3v9h2V5q0-.425.288-.712T20 4t.713.288T21 5v9.8q0 3.425-2.387 5.813T12.8 23",
+                ],
+                step_between: [
+                    "M12.1 21q-.425 0-.712-.288T11.1 20q0-.175.075-.363t.225-.337l4.625-4.625l-.725-.725l-4.6 4.625q-.15.15-.325.225t-.375.075q-.425 0-.712-.287T9 17.875q0-.25.075-.413t.2-.287L13.9 12.55l-.7-.7l-4.625 4.6q-.15.15-.325.225t-.4.075q-.4 0-.7-.3t-.3-.7q0-.2.075-.375t.225-.325l4.625-4.625l-.725-.7l-4.6 4.625q-.125.125-.3.2t-.425.075q-.425 0-.713-.288t-.287-.712q0-.2.075-.375t.225-.325L10.6 7.35l3.75 3.775q.275.275.65.438t.75.162q.8 0 1.4-.562t.6-1.438q0-.35-.125-.725t-.45-.7L12.7 3.825q.425-.4.95-.612T14.7 3q.65 0 1.2.213t1 .662l4.225 4.25q.45.45.663 1T22 10.4q0 .5-.225 1.013t-.65.937L12.8 20.7q-.2.2-.35.25t-.35.05m-8.575-8l-.65-.65q-.425-.4-.65-.95T2 10.25q0-.65.25-1.2t.625-.925L7.1 3.875q.4-.4.95-.638T9.125 3q.675 0 1.2.188t1.025.687L16.475 9q.15.15.225.325t.075.375q0 .4-.3.7t-.7.3q-.225 0-.375-.062t-.325-.238l-4.5-4.45z",
+                ],
+                step_palms: [
+                    "M15.75 16v-2.8l-1.9-3.475q-.5.25-.8.725t-.3 1.05v8l1.425 2.5H22L21 9.5l-7-8l-.325.325q-.725.725-.862 1.7t.362 1.85L17.25 12.8V16zm-9 0v-3.2l4.075-7.425q.5-.875.338-1.85t-.863-1.7L10 1.5l-7 8L2 22h7.825l1.425-2.5v-8q0-.575-.312-1.05t-.788-.725L8.25 13.2V16z",
+                ],
+                step_thumbs: [
+                    "M18 21H8V8l7-7l1.25 1.25q.175.175.288.475t.112.575v.35L15.55 8H21q.8 0 1.4.6T23 10v2q0 .175-.037.375t-.113.375l-3 7.05q-.225.5-.75.85T18 21M6 8v13H2V8z",
+                ],
+                step_tips: [
+                    "M12.025 4.475q2.65 0 5 1.138T20.95 8.9q.175.225.113.4t-.213.3t-.35.113t-.35-.213q-1.375-1.95-3.537-2.987t-4.588-1.038t-4.55 1.038T3.95 9.5q-.15.225-.35.25t-.35-.1q-.175-.125-.213-.312t.113-.388q1.55-2.125 3.888-3.3t4.987-1.175m0 2.35q3.375 0 5.8 2.25t2.425 5.575q0 1.25-.887 2.088t-2.163.837t-2.187-.837t-.913-2.088q0-.825-.612-1.388t-1.463-.562t-1.463.563t-.612 1.387q0 2.425 1.438 4.05t3.712 2.275q.225.075.3.25t.025.375q-.05.175-.2.3t-.375.075q-2.6-.65-4.25-2.588T8.95 14.65q0-1.25.9-2.1t2.175-.85t2.175.85t.9 2.1q0 .825.625 1.388t1.475.562t1.45-.562t.6-1.388q0-2.9-2.125-4.875T12.05 7.8T6.975 9.775t-2.125 4.85q0 .6.113 1.5t.537 2.1q.075.225-.012.4t-.288.25t-.387-.012t-.263-.288q-.375-.975-.537-1.937T3.85 14.65q0-3.325 2.413-5.575t5.762-2.25m0-4.8q1.6 0 3.125.387t2.95 1.113q.225.125.263.3t-.038.35t-.25.275t-.425-.025q-1.325-.675-2.738-1.037t-2.887-.363q-1.45 0-2.85.338T6.5 4.425q-.2.125-.4.063t-.3-.263t-.05-.362t.25-.288q1.4-.75 2.925-1.15t3.1-.4m0 7.225q2.325 0 4 1.563T17.7 14.65q0 .225-.137.363t-.363.137q-.2 0-.35-.137t-.15-.363q0-1.875-1.388-3.137t-3.287-1.263t-3.262 1.263T7.4 14.65q0 2.025.7 3.438t2.05 2.837q.15.15.15.35t-.15.35t-.35.15t-.35-.15q-1.475-1.55-2.262-3.162T6.4 14.65q0-2.275 1.65-3.838t3.975-1.562M12 14.15q.225 0 .363.15t.137.35q0 1.875 1.35 3.075t3.15 1.2q.15 0 .425-.025t.575-.075q.225-.05.388.063t.212.337q.05.2-.075.35t-.325.2q-.45.125-.787.138t-.413.012q-2.225 0-3.863-1.5T11.5 14.65q0-.2.138-.35t.362-.15",
+                ],
+                vibration: [
+                    "M0,15h2L2,9L0,9v6zM3,17h2L5,7L3,7v10zM22,9v6h2L24,9h-2zM19,17h2L21,7h-2v10zM16.5,3h-9C6.67,3 6,3.67 6,4.5v15c0,0.83 0.67,1.5 1.5,1.5h9c0.83,0 1.5,-0.67 1.5,-1.5v-15c0,-0.83 -0.67,-1.5 -1.5,-1.5zM16,19L8,19L8,5h8v14z",
+                ],
+                wash: [
+                    "M12,2C6.67,6.55 4,10.48 4,13.8C4,18.78 7.8,22 12,22s8,-3.22 8,-8.2C20,10.48 17.33,6.55 12,2z",
+                ],
+                watch: [
+                    "M20,12c0,-2.54 -1.19,-4.81 -3.04,-6.27L16,0H8l-0.95,5.73C5.19,7.19 4,9.45 4,12s1.19,4.81 3.05,6.27L8,24h8l0.96,-5.73C18.81,16.81 20,14.54 20,12zM6,12c0,-3.31 2.69,-6 6,-6s6,2.69 6,6 -2.69,6 -6,6 -6,-2.69 -6,-6z",
+                ],
+            };
+            const ART = "../../wear/src/main/res/drawable-nodpi/step_art_";
+            const ARTS = ["palms", "backs", "between", "thumbs", "tips"];
+            const ST = ["palms", "backs", "between", "thumbs", "tips"];
+            const SC = [
+                ["#FF375F", "#FF8AA3"],
+                ["#FF9F0A", "#FFC66B"],
+                ["#FFD60A", "#FFEC80"],
+                ["#30D158", "#86EFA4"],
+                ["#BF5AF2", "#DFA6FF"],
+            ];
+            const TINT = "#64D2FF";
+            let uid = 0;
+
+            const fmt = (s, ...a) =>
+                s
+                    .replace(/%(\d)\$[sd]/g, (_, n) => a[n - 1])
+                    .replace(/%d/g, a[0]);
+            const icon = (n, size, color) =>
+                `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${ICONS[n].map((d) => `<path d="${d}" fill="${color}"/>`).join("")}</svg>`;
+            const stepIcon = (i, size, color) =>
+                icon("step_" + ST[i], size, color);
+            const val = (s) => ({ ok: 1, brief: 0.5, nd: 0 })[s];
+
+            /* Activity-style concentric rings, outer = Palms. fr: five statuses or fractions. */
+            function rings(size, cov, stroke, gap, opts = {}) {
+                const id = "r" + uid++,
+                    c = size / 2;
+                let s = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="overflow:visible"><defs>`;
+                SC.forEach(
+                    (k, i) =>
+                        (s += `<linearGradient id="${id}${i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${k[0]}"/><stop offset="1" stop-color="${k[1]}"/></linearGradient>`),
+                );
+                s += "</defs>";
+                cov.forEach((st, i) => {
+                    const f = typeof st === "number" ? st : val(st),
+                        r = c - stroke / 2 - i * (stroke + gap),
+                        L = 2 * Math.PI * r;
+                    s += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${opts.mono ? "#fff" : SC[i][0]}" stroke-opacity="${opts.mono ? 0.12 : 0.2}" stroke-width="${stroke}"/>`;
+                    if (f > 0)
+                        s += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${opts.mono ? opts.mono : `url(#${id}${i})`}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${f >= 1 ? L + " 0" : f * L + " " + L}" transform="rotate(-90 ${c} ${c})"/>`;
+                });
+                return s + "</svg>";
+            }
+
+            /* The live ring: 300° from 1 o'clock clockwise to 11 o'clock, gap at the top for TimeText. */
+            function liveRing(
+                f,
+                {
+                    color = TINT,
+                    color2 = "#B4E9FF",
+                    stroke = 12,
+                    track = "rgba(100,210,255,.16)",
+                    lap = 0,
+                    hair = false,
+                } = {},
+            ) {
+                const id = "l" + uid++,
+                    c = 113.5,
+                    r = 113.5 - 5 - stroke / 2,
+                    L = 2 * Math.PI * r,
+                    arc = (L * 300) / 360;
+                const sw = hair ? 2.5 : stroke;
+                let s = `<svg class="scrollbar" data-inner="${hair ? 0 : r - sw / 2 - 3}" width="227" height="227" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${color2}"/><stop offset="1" stop-color="${color}"/></linearGradient>
+    <filter id="${id}s" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="0" stdDeviation="2.4" flood-color="#000" flood-opacity=".75"/></filter></defs>
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${track}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${arc} ${L}" transform="rotate(-60 ${c} ${c})"/>`;
+                if (f > 0)
+                    s += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="url(#${id})" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${arc * f} ${L}" transform="rotate(-60 ${c} ${c})"/>`;
+                if (lap > 0) {
+                    // second lap over the first, its head shadowed like an Activity ring past 100 %
+                    const a = -60 + 300 * lap,
+                        rad = (a * Math.PI) / 180;
+                    s += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${arc * lap} ${L}" transform="rotate(-60 ${c} ${c})" filter="url(#${id}s)"/>`;
+                    s += `<circle cx="${c + r * Math.cos(rad)}" cy="${c + r * Math.sin(rad)}" r="${sw / 2}" fill="${color}"/>`;
+                }
+                return s + "</svg>";
+            }
+            /* A crown-scroll position indicator on the right arc. */
+            const scrollInd = (pos, len) => {
+                const c = 113.5,
+                    r = 106,
+                    a0 = -28 + 56 * pos * (1 - len),
+                    a1 = a0 + 56 * len,
+                    p = (a) => [
+                        c + r * Math.cos((a * Math.PI) / 180),
+                        c + r * Math.sin((a * Math.PI) / 180),
+                    ];
+                const [x0, y0] = p(a0),
+                    [x1, y1] = p(a1),
+                    [X0, Y0] = p(-28),
+                    [X1, Y1] = p(28);
+                return `<svg class="scrollbar" width="227" height="227" aria-hidden="true" style="z-index:6"><path d="M${X0} ${Y0} A${r} ${r} 0 0 1 ${X1} ${Y1}" stroke="rgba(255,255,255,.18)" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
+            };
+            /* Status as a drawn mark: full disc, half, outline. */
+            function mark(st, color, size = 11) {
+                const r = size / 2 - 1,
+                    c = size / 2;
+                if (st === "ok")
+                    return `<svg width="${size}" height="${size}" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${r + 0.5}" fill="${color}"/><path d="M${c - 2.6} ${c + 0.1}l1.8 1.8 3.4-3.6" stroke="#000" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+                if (st === "brief")
+                    return `<svg width="${size}" height="${size}" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="1.4"/><path d="M${c} ${c - r}A${r} ${r} 0 0 1 ${c} ${c + r}Z" fill="${color}"/></svg>`;
+                return `<svg width="${size}" height="${size}" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="1.4" stroke-dasharray="2.2 1.8"/></svg>`;
+            }
+            const stTxt = (t, st) =>
+                t[
+                    {
+                        ok: "status_ok",
+                        brief: "status_brief",
+                        nd: "status_not_detected",
+                    }[st]
+                ];
+
+            /* ---------- the current design's palette (Material You default on Wear, as in the app's screenshots) ---------- */
+            const P = "#d9c9ff",
+                PD = "#bda2ff",
+                TER = "#ffd6c0",
+                ONP = "#2a1458",
+                TRACK = "#3a3646",
+                TONAL = "#2f2b3a",
+                ONV = "#c9c4d4",
+                ERR = "#ff8a7a";
+            window.FRAME_LABEL = "refined";
+            const MIX = ["ok", "ok", "ok", "brief", "nd"];
+            const ALL = ["ok", "ok", "ok", "ok", "ok"];
+            const pt = (c, r, a) => [
+                c + r * Math.cos((a * Math.PI) / 180),
+                c + r * Math.sin((a * Math.PI) / 180),
+            ];
+            const arcD = (c, r, a0, a1) => {
+                const [x0, y0] = pt(c, r, a0),
+                    [x1, y1] = pt(c, r, a1);
+                return `M${x0} ${y0}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`;
+            };
+
+            /* The Coverage ring as the app draws it: five arcs clockwise from 12, full / half / track. Unmet arcs can carry their Step's glyph. */
+            function segRing(size, cov, stroke, { glyphs = false } = {}) {
+                const c = size / 2,
+                    r = c - stroke / 2,
+                    gap = (Math.max(7, stroke * 1.4) * 360) / (2 * Math.PI * r),
+                    all = cov.every((s) => s === "ok"),
+                    ink = all ? TER : P;
+                let s = `<svg width="${size}" height="${size}" aria-hidden="true" style="overflow:visible">`;
+                cov.forEach((st, i) => {
+                    const a0 = -90 + i * 72 + gap / 2,
+                        a1 = a0 + 72 - gap,
+                        f = val(st);
+                    s += `<path d="${arcD(c, r, a0, a1)}" stroke="${TRACK}" stroke-width="${stroke}" fill="none" stroke-linecap="round"/>`;
+                    if (f > 0)
+                        s += `<path d="${arcD(c, r, a0, a0 + (a1 - a0) * f)}" stroke="${ink}" stroke-width="${stroke}" fill="none" stroke-linecap="round"/>`;
+                    if (glyphs && st === "nd") {
+                        const [x, y] = pt(c, r, (a0 + a1) / 2),
+                            g = stroke * 1.5;
+                        s += `<g transform="translate(${x - g / 2} ${y - g / 2}) scale(${g / 24})">${ICONS["step_" + ST[i]].map((d) => `<path d="${d}" fill="#efeaf7"/>`).join("")}</g>`;
+                    }
+                });
+                return s + "</svg>";
+            }
+            const glow = (rgb = "217,201,255", a = 0.22) =>
+                `<div class="wash" style="background:radial-gradient(circle at 50% 45%,rgba(${rgb},${a}),rgba(${rgb},.04) 62%,#000 82%)"></div>`;
+            const tonalBtn = (n, label, x, y) =>
+                `<div class="dot" role="button" aria-label="${label}" style="position:absolute;left:${x}px;top:${y}px;width:48px;height:48px;background:${TONAL}">${icon(n, 22, "#efeaf7")}</div>`;
+            const rel = { en: "12 minutes ago", es: "hace 12 minutos" };
+            const plural = (t, n) => fmt(t.washes_today.other, n);
+
+            function start(t, L, o = {}) {
+                const hero = o.first
+                    ? `<div class="b14" style="width:158px;font-size:12.5px;line-height:1.24">${t.start_intro}</div>`
+                    : o.text
+                      ? `<div class="b15" style="width:170px">${o.text}</div><div class="s11" style="margin-top:2px;width:176px">${t.last_wash_title} · ${rel[L]}</div>`
+                      : `<div style="position:relative;width:68px;height:68px">${segRing(68, o.cov, 6)}<div class="num" style="position:absolute;inset:0;display:grid;place-items:center;font-size:24px">${o.cov.filter((s) => s === "ok").length}</div></div>
+       ${o.cancelled ? `<div class="s11" style="margin-top:6px;padding:4px 10px;border-radius:99px;background:${TONAL};color:#efeaf7;width:176px;line-height:1.2">${t.wash_cancelled}</div>` : `<div class="s11" style="margin-top:4px;width:176px">${t.last_wash_title} · ${rel[L]}</div>`}`;
+                const by = o.first ? 100 : 118;
+                return `${glow()}<div class="tt" data-nofit>8:19</div>
+    <div class="col" style="position:absolute;left:0;right:0;top:24px;height:${by - 28}px;justify-content:center">${hero}</div>
+    <div class="cap" role="button" style="position:absolute;left:24px;width:179px;top:${by}px;height:50px;background:${o.running ? TONAL : `linear-gradient(120deg,${PD},${P} 45%,${TER})`};color:${o.running ? P : ONP}">
+      ${o.running ? `<span style="width:9px;height:9px;border-radius:50%;background:${P}"></span>` : icon("wash", 20, ONP)}<span class="b16" style="font-size:${L === "es" ? 15.5 : 16}px">${o.running ? t.session_running : t.start_wash}</span></div>
+    ${tonalBtn("history", t.history, 62, o.first ? 156 : 174)}${tonalBtn("settings", t.settings, 117, o.first ? 156 : 174)}
+    ${o.first ? `<div class="s11" style="position:absolute;top:205px;left:50px;width:72px;text-align:center">${t.history}</div><div class="s11" style="position:absolute;top:205px;left:105px;width:72px;text-align:center">${t.settings}</div>` : ""}`;
+            }
+
+            function wearRing(f, color, { hair = false, ticks = true } = {}) {
+                const c = 113.5,
+                    sw = hair ? 2 : 10,
+                    r = 113.5 - 6 - sw / 2,
+                    a0 = -60,
+                    sweep = 300;
+                let s = `<svg class="scrollbar" data-inner="${hair ? 0 : r - sw / 2 - 3}" width="227" height="227" aria-hidden="true"><path d="${arcD(c, r, a0, a0 + sweep)}" stroke="${hair ? "rgba(201,196,212,.25)" : TRACK}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>`;
+                if (f > 0)
+                    s += `<path d="${arcD(c, r, a0, a0 + sweep * Math.min(f, 0.9999))}" stroke="${color}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>`;
+                if (ticks && !hair)
+                    [0.25, 0.5, 0.75].forEach((k) => {
+                        const [x, y] = pt(c, r, a0 + sweep * k);
+                        s += `<circle cx="${x}" cy="${y}" r="1.8" fill="${f >= k ? ONP : "#8f889e"}"/>`;
+                    });
+                return s + "</svg>";
+            }
+            function washLive(t, L, o) {
+                const color = o.done ? TER : P;
+                return `${o.timerOnly ? "" : glow(o.done ? "255,214,192" : "217,201,255", o.done ? 0.3 : 0.2)}<div class="tt" data-nofit>8:21</div>
+    ${o.timerOnly ? wearRing(0.55, "rgba(217,201,255,.8)", { hair: true }) : wearRing(o.done ? 1 : (o.f ?? 0.55), color)}
+    <div class="col" style="position:absolute;inset:0;justify-content:center;gap:4px;padding-top:4px">
+      <div class="num" style="font-size:50px;line-height:1">${o.time}</div>
+      <div class="s13">${o.done ? fmt(t.target_reached, 40) : t.time_left}</div>
+      ${o.timerOnly ? `<div class="s11" style="width:150px;margin-top:6px;padding:4px 8px;border-radius:12px;background:${TONAL};color:${ONV}">${t.timer_only}</div>` : `<div class="b14" style="margin-top:8px;width:150px;color:${color};font-weight:600">${o.cue}</div>`}</div>
+    ${o.hint ? `<div class="s11" style="position:absolute;left:0;right:0;top:174px;display:flex;justify-content:center;gap:5px;align-items:center"><span style="width:8px;height:8px;border-radius:2px;background:${ONV}"></span>${t.hold_to_stop}</div>` : ""}`;
+            }
+            function washHold(t, L, o) {
+                return `<div class="wash" style="background:radial-gradient(circle at 50% 50%,rgba(255,138,122,${o.stopping ? 0.34 : 0.26}),rgba(255,138,122,.05) 62%,#000 82%)"></div><div class="tt" data-nofit>8:21</div>
+    ${wearRing(0.55, "rgba(217,201,255,.35)", { ticks: false })}${wearRing(o.h, ERR, { ticks: false }).replace(/stroke="#3a3646"/, 'stroke="transparent"')}
+    <div class="col" style="position:absolute;inset:0;justify-content:center;gap:12px"><div style="width:${o.stopping ? 34 : 30}px;height:${o.stopping ? 34 : 30}px;border-radius:8px;background:${ERR}"></div>
+      <div class="b14" style="width:160px;font-weight:600">${o.stopping ? t.stopping : o.early ? t.stop_early : t.hold_to_stop}</div></div>`;
+            }
+            function ambient(t) {
+                return `<div class="tt" data-nofit style="color:#9a9a9f;font-weight:500">8:21</div>${wearRing(
+                    1,
+                    "transparent",
+                    { ticks: false },
+                )
+                    .replace(/stroke-width="10"/g, 'stroke-width="1.5"')
+                    .replace(`stroke="${TRACK}"`, 'stroke="#8a8a90"')}
+    <div class="col" style="position:absolute;inset:0;justify-content:center"><div style="font-size:18px;font-weight:500;color:#a8a8ad">${t.ambient_washing}</div></div>`;
+            }
+            function targetCheck(t, L) {
+                const row = (i) =>
+                    `<div style="display:flex;align-items:center;gap:10px;min-height:48px;width:180px;padding:0 12px;border-radius:24px;background:${TONAL}"><div class="dot" style="width:30px;height:30px;background:rgba(217,201,255,.18)">${stepIcon(i, 18, P)}</div><div class="b15" style="text-align:left;flex:1">${t.steps[i]}</div></div>`;
+                return `<div class="tt" data-nofit>8:21</div>${wearRing(0.62, "rgba(217,201,255,.6)", { hair: true })}
+    <div class="col" style="position:absolute;inset:0;justify-content:center;gap:6px;padding-top:6px"><div class="b14" style="color:#efeaf7;margin-bottom:2px">${t.target_todo}</div>${row(3)}${row(4)}</div>`;
+            }
+            function summary(t, L, o) {
+                const cov = o.cov,
+                    ok = cov.filter((s) => s === "ok").length,
+                    all = ok === 5,
+                    focus = 4;
+                const idx = all
+                    ? [0, 1, 2, 3, 4]
+                    : cov
+                          .map((s, i) => [s, i])
+                          .filter(([s]) => s !== "ok")
+                          .map(([, i]) => i)
+                          .sort((a) => (a === focus ? -1 : 1));
+                const row = (
+                    i,
+                ) => `<div class="cell" style="background:${i === focus && !all ? "rgba(217,201,255,.12)" : "transparent"}">
+      <div class="dot" style="width:32px;height:32px;background:${cov[i] === "ok" ? "rgba(217,201,255,.18)" : "#24222b"}">${stepIcon(i, 19, cov[i] === "ok" ? P : ONV)}</div>
+      <div class="tx"><div class="b14" style="font-weight:600">${t.steps[i]}</div><div class="s12" style="display:flex;gap:5px;align-items:center">${mark(cov[i], P)}${stTxt(t, cov[i])}</div>
+      ${i === focus && !all ? `<div class="s11" style="color:${P};font-weight:600">${fmt(t.focus_row, 7, 10)}</div>` : ""}</div></div>`;
+                const covered = cov
+                    .map((s, i) => [s, i])
+                    .filter(([s]) => s === "ok")
+                    .map(([, i]) => t.steps[i]);
+                const NL = String.fromCharCode(10),
+                    cap = t.ring_caption
+                        .replace(String.fromCharCode(92) + "n", NL)
+                        .split(NL);
+                return `<div class="fade-b"></div>${glow(all ? "255,214,192" : "217,201,255", 0.2)}<div class="tt" data-nofit>8:22</div>${o.scroll ? scrollInd(0.85, 0.45) : ""}
+    <div class="scr col" style="top:${-(o.scroll || 0)}px;padding-top:28px">
+      <div style="position:relative;width:118px;height:118px">${segRing(118, cov, 9, { glyphs: true })}
+        <div class="col" style="position:absolute;inset:0;justify-content:center"><div class="num" style="font-size:34px;line-height:1">${ok}</div><div class="s11" style="line-height:1.15;color:${ONV}">${cap[0]}<br>${cap[1]}</div></div></div>
+      <div class="b14" style="margin-top:8px;width:180px;font-weight:600;color:${all ? TER : "#efeaf7"}">${fmt(all ? t.washed_for_all : t.washed_for, all ? "1:12" : "1:25")}</div>
+      <div class="col" style="gap:2px;margin-top:10px">${idx.map(row).join("")}
+      ${!all ? `<div class="cell" style="background:transparent"><div class="dot" style="width:32px;height:32px;background:rgba(217,201,255,.18)">${mark("ok", P, 14)}</div><div class="s12" style="flex:1">${covered.join(", ")}</div></div>` : ""}</div><div style="height:60px"></div></div>`;
+            }
+            function summaryEnd(t, L, o) {
+                return `<div class="fade-b"></div><div class="tt" data-nofit>8:22</div>${o.scroll ? scrollInd(0.9, 0.5) : ""}
+    <div class="scr col" style="top:${-(o.scroll || 0)}px;padding-top:34px">
+      <div class="num" style="font-size:40px;line-height:1">${o.time}</div>
+      <div class="b15" style="margin-top:8px;width:176px">${o.timer ? t.timer_only_short : t.too_short}</div>
+      <div class="s12" style="margin-top:4px;width:166px;line-height:1.3">${o.timer ? t.timer_only_why : t.too_short_why}</div>
+      <div class="cap b15" role="button" style="margin-top:12px;width:128px;height:48px;background:${TONAL}">${t.close}</div>
+      ${o.timer ? "" : `<div class="s11" style="margin-top:10px;width:150px">${t.too_short_to_save}</div>`}<div style="height:40px"></div></div>`;
+            }
+            function guide(t, L, i, o = {}) {
+                return `<div class="fade-b"></div><div class="tt" data-nofit>8:23</div>
+    <div style="position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:5px;z-index:6" aria-hidden="true">${[0, 1, 2, 3, 4].map((k) => `<i style="width:6px;height:6px;border-radius:50%;background:${k === i ? "#fff" : "rgba(255,255,255,.3)"}"></i>`).join("")}</div>
+    <div class="scr col" style="top:${-(o.scroll || 0)}px;padding:26px 30px 0;gap:5px">
+      <div style="width:28px;height:4px;border-radius:2px;background:rgba(255,255,255,.28);margin-bottom:3px" title="Pull down to close"></div>
+      <div style="width:64px;height:64px;border-radius:50%;padding:4px;background:#24222b"><img src="${ART}${ARTS[i]}.png" alt="" style="width:56px;height:56px;border-radius:50%;display:block;opacity:.8"></div>
+      <div class="title" style="color:${P};font-size:16px;width:170px">${t.steps[i]}</div>
+      <div class="b14" style="font-size:13.5px;line-height:1.22;width:162px">${t.step_how[i]}</div>
+      <div class="s12" style="line-height:1.25;font-size:11.5px;width:146px">${t.step_whys[i]}</div><div style="height:40px"></div></div>`;
+            }
+            function history(t, L, o) {
+                if (o.empty)
+                    return `<div class="tt" data-nofit>8:24</div><div class="col" style="position:absolute;inset:0;justify-content:center;gap:10px;padding:0 30px">
+      <div class="title" style="color:#efeaf7">${t.history}</div><div class="s12" style="line-height:1.3;width:166px;padding:10px 12px;border-radius:18px;background:${TONAL};color:${ONV}">${t.history_empty}</div></div>`;
+                const day = { en: ["Today", "Yesterday"], es: ["Hoy", "Ayer"] }[
+                    L
+                ];
+                const items = [
+                    {
+                        h: 0,
+                        cov: ALL,
+                        time: L === "en" ? "8:07 AM" : "8:07",
+                        d: "1:12",
+                    },
+                    {
+                        cov: MIX,
+                        time: L === "en" ? "7:22 AM" : "7:22",
+                        d: "0:48",
+                    },
+                    {
+                        cov: null,
+                        time: L === "en" ? "7:20 AM" : "7:20",
+                        d: "0:06",
+                        label: t.too_short_short,
+                    },
+                    {
+                        h: 1,
+                        cov: ["ok", "ok", "brief", "nd", "nd"],
+                        time: L === "en" ? "9:41 PM" : "21:41",
+                        d: "0:44",
+                    },
+                    {
+                        cov: null,
+                        time: L === "en" ? "6:02 PM" : "18:02",
+                        d: "0:52",
+                        label: t.timer_only_short,
+                    },
+                ];
+                let body = "";
+                items.forEach((w) => {
+                    if (w.h !== undefined)
+                        body += `<div class="s11" style="padding-top:6px">${day[w.h]}</div>`;
+                    body += `<div class="cell" role="button" style="background:${TONAL};${w.cov ? "" : "opacity:.6"}">${w.cov ? segRing(28, w.cov, 3.2) : ""}
+      <div class="tx"><div class="b14" style="font-weight:600">${w.cov ? fmt(t.history_hint, w.cov.filter((s) => s === "ok").length) : w.label}</div><div class="s12">${w.time} · ${w.d}</div></div></div>`;
+                });
+                return `<div class="fade-b"></div><div class="tt" data-nofit>8:24</div>${scrollInd((o.scroll || 0) / 260, 0.4)}
+    <div class="scr col" style="top:${-(o.scroll || 0)}px;padding-top:30px;gap:5px"><div class="title" style="color:#efeaf7">${t.history}</div>${body}<div style="height:70px"></div></div>`;
+            }
+            const HUE = "#b3a8c9";
+            const hub = (ic, label, sub) =>
+                `<div class="cell" role="button" style="background:${HUE};color:${ONP};min-height:56px">${icon(ic, 22, ONP)}<div class="tx"><div class="b15" style="font-weight:650">${label}</div>${sub ? `<div class="s11" style="color:rgba(42,20,88,.8)">${sub}</div>` : ""}</div></div>`;
+            function settings(t, L, o) {
+                const pill = `<div style="flex:none;display:flex;width:56px;height:24px;border-radius:99px;background:rgba(239,234,247,.14);font-size:11px;font-weight:700;align-items:center"><span style="flex:1;text-align:center;line-height:24px;border-radius:99px;${L === "en" ? `background:${HUE};color:${ONP}` : `color:${ONV}`}">EN</span><span style="flex:1;text-align:center;line-height:24px;border-radius:99px;${L === "es" ? `background:${HUE};color:${ONP}` : `color:${ONV}`}">ES</span></div>`;
+                return `<div class="fade-b"></div><div class="tt" data-nofit>8:25</div>${scrollInd((o.scroll || 0) / 120, 0.55)}
+    <div class="scr col" style="top:${-(o.scroll || 0)}px;padding-top:30px;gap:5px"><div class="title" style="color:#efeaf7">${t.settings}</div>
+      ${hub("vibration", t.settings_wash, `${t.haptics} · ${t.progress_ring}`)}${hub("wash", t.settings_start, `${t.wrist_side}: ${t.wrist_left}`)}
+      <div class="cell" role="button" style="background:${TONAL}">${icon("language", 20, HUE)}<div class="tx"><div class="b14" style="font-weight:600">${t.language}</div></div>${pill}</div>
+      <div class="cell" role="button" style="background:${TONAL};min-height:48px"><div class="b14" style="font-weight:600">${t.credits}</div></div><div style="height:70px"></div></div>`;
+            }
+            const sw = (on) =>
+                `<div style="flex:none;width:34px;height:22px;border-radius:99px;position:relative;background:${on ? ONP : "transparent"};border:2px solid ${on ? ONP : "#8f889e"}"><div style="position:absolute;top:${on ? 2 : 3}px;left:${on ? 14 : 3}px;width:${on ? 14 : 12}px;height:${on ? 14 : 12}px;border-radius:50%;background:${on ? HUE : "#8f889e"}"></div></div>`;
+            const swRow = (ic, label, sub, on) =>
+                `<div class="cell" role="switch" aria-checked="${on}" style="background:${on ? HUE : TONAL};color:${on ? ONP : "#efeaf7"};min-height:56px;gap:8px;padding:8px 12px">${icon(ic, 20, on ? ONP : HUE)}<div class="tx"><div class="b14" style="font-weight:600">${label}</div>${sub ? `<div class="s11" style="color:${on ? "rgba(42,20,88,.8)" : ONV}">${sub}</div>` : ""}</div>${sw(on)}</div>`;
+            function settingsWash(t, L, o) {
+                return `<div class="fade-b"></div><div class="tt" data-nofit>8:25</div>${scrollInd((o.scroll || 0) / 120, 0.55)}
+    <div class="scr col" style="top:${-(o.scroll || 0)}px;padding-top:30px;gap:5px"><div class="title" style="color:#efeaf7;width:176px">${t.settings_wash}</div>
+      ${swRow("vibration", t.haptics, "", true)}${swRow("ring", t.progress_ring, t.progress_ring_desc, true)}${swRow("step_tips", t.target_check, "", false)}
+      <div class="s11" style="width:150px;padding-top:4px">${t.applies_next_wash}</div><div style="height:70px"></div></div>`;
+            }
+            function settingsStart(t, L, o) {
+                return `<div class="fade-b"></div><div class="tt" data-nofit>8:25</div>${scrollInd(0, 0.6)}
+    <div class="scr col" style="top:0;padding-top:30px;gap:5px"><div class="title" style="color:#efeaf7;width:176px">${t.settings_start}</div>
+      ${swRow("wash", t.twist_start, t.twist_start_desc, false)}
+      <div class="cell" role="button" style="background:${HUE};color:${ONP};min-height:56px;gap:8px;padding:8px 12px">${icon("watch", 20, ONP)}<div class="tx"><div class="b14" style="font-weight:600">${t.wrist_side}</div><div class="s11" style="color:rgba(42,20,88,.8)">${t.wrist_left}</div></div></div><div style="height:70px"></div></div>`;
+            }
+            function twistSheet(t, L) {
+                return `<div class="tt" data-nofit>8:25</div>
+    <div class="col" style="position:absolute;left:0;right:0;top:32px;gap:5px;padding:0 26px">
+      <svg width="30" height="18" viewBox="0 0 34 20" aria-hidden="true"><rect x="1" y="1" width="28" height="18" rx="5" fill="none" stroke="${P}" stroke-width="2"/><rect x="4.5" y="4.5" width="8" height="11" rx="2" fill="${P}"/><rect x="30.5" y="7" width="2.5" height="6" rx="1" fill="${P}"/></svg>
+      <div class="b15" style="margin-top:2px">${t.twist_warning_title}</div><div class="s12" style="line-height:1.28;width:170px;color:${ONV}">${t.twist_warning}</div></div>
+    <div class="dot" role="button" aria-label="Cancel" style="position:absolute;left:58px;top:166px;width:52px;height:52px;background:${TONAL}"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 3l12 12M15 3L3 15" stroke="#efeaf7" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+    <div class="dot" role="button" aria-label="Turn on" style="position:absolute;left:117px;top:166px;width:52px;height:52px;background:${P}"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 10.5l4.2 4.2 8.8-9.2" stroke="${ONP}" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+            }
+            function credits(t, L, o) {
+                const url = t.credits_body
+                    .split(/cropped\. |recortadas\. /)[1]
+                    .replace(/\//g, "/​")
+                    .replace(/_/g, "_​");
+                return `<div class="fade-b"></div><div class="tt" data-nofit>8:26</div>${scrollInd((o.scroll || 0) / 100, 0.6)}
+    <div class="scr col" style="top:${-(o.scroll || 0)}px;padding:30px 26px 0;gap:3px"><div class="title" style="color:#efeaf7;margin-bottom:6px">${t.credits}</div>
+      <div class="s11">${t.credits_illustrations}</div><div class="b14">${t.credits_author}</div><div class="s12">${t.credits_licence}</div>
+      <div class="s11" style="margin-top:6px;line-height:1.3;width:170px">${url}</div><div style="height:50px"></div></div>`;
+            }
+            function tile(t, L, o) {
+                return `<div class="tt" data-nofit>8:27</div>
+    <div class="col" style="position:absolute;left:0;right:0;top:34px;gap:4px">
+      <div class="s12" style="font-weight:600;color:#efeaf7">${o.running ? t.session_running : plural(t, 2)}</div>
+      ${
+          o.running
+              ? `<div class="num" style="font-size:34px;margin-top:10px">0:18</div><div class="s11">${t.time_left}</div>`
+              : `<div style="position:relative;width:60px;height:60px;margin-top:6px">${segRing(60, MIX, 5.5)}<div class="num" style="position:absolute;inset:0;display:grid;place-items:center;font-size:20px">3</div></div><div class="b14" style="width:170px">${fmt(t.history_hint, 3)}</div>`
+      }</div>
+    <div class="b15" role="button" style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:146px;height:58px;padding-top:11px;background:${o.running ? TONAL : P};color:${o.running ? P : ONP};border-radius:24px 24px 80px 80px / 24px 24px 60px 60px;text-align:center">${o.running ? t.tile_running : t.start_wash}</div>`;
+            }
+            function complication(t, L) {
+                const face = `<svg class="scrollbar" width="227" height="227" aria-hidden="true"><line x1="113.5" y1="113.5" x2="168" y2="62" stroke="#f2f2f7" stroke-width="3" stroke-linecap="round"/><line x1="113.5" y1="113.5" x2="70" y2="150" stroke="#3d64c4" stroke-width="7" stroke-linecap="round"/><circle cx="113.5" cy="113.5" r="4" fill="#fff"/></svg>`;
+                const label = L === "es" ? "Lavado" : t.complication_label;
+                return `${face}
+    <div class="col" style="position:absolute;left:84px;top:20px;width:60px;height:60px;border-radius:50%;background:#16161a;justify-content:center;gap:1px">${icon("wash", 14, "#8ab4f8")}<div class="b14" style="font-weight:700;font-size:13px">${label}</div></div>
+    <div style="position:absolute;left:84px;top:150px;width:60px;height:60px;border-radius:50%;background:#16161a;display:grid;place-items:center"><div style="position:relative;width:48px;height:48px">${segRing(48, MIX, 4)}<div style="position:absolute;inset:0;display:grid;place-items:center">${icon("wash", 14, P)}</div></div></div>`;
+            }
+
+            const CUE = { en: "Halfway there", es: "Vas por la mitad" },
+                CHEER = {
+                    en: "You did it! Keep going?",
+                    es: "¡Lo lograste! ¿Seguimos?",
+                };
+            const GROUPS = [
+                [
+                    "Start",
+                    "Same layout and colours: ring with its count, the gradient Start pill, two tonal buttons. Tightened so nothing collides.",
+                    [
+                        {
+                            n: "Start · first run",
+                            cur: "start.png",
+                            why: "The intro line, then Start, with History and Settings captioned until the first Wash, as the code already does.",
+                            r: (t, L) => start(t, L, { first: true }),
+                        },
+                        {
+                            n: "Start · after a Wash",
+                            cur: "start.png",
+                            why: "Change: the ring grows from 52 to 68 dp so its count is readable at a glance; the time line sits under it instead of fighting it.",
+                            r: (t, L) => start(t, L, { cov: MIX }),
+                        },
+                        {
+                            n: "Start · cancelled",
+                            cur: "wash_cancelled.png",
+                            why: "Change: the cancel notice takes the time line's place as a small tonal pill, instead of a toast over the Start button.",
+                            r: (t, L) =>
+                                start(t, L, { cov: MIX, cancelled: true }),
+                        },
+                        {
+                            n: "Start · timer only",
+                            cur: "start_timer_only.png",
+                            why: "Change: Start stays in the middle, where it always is; today it drops to the bottom in this state.",
+                            r: (t, L) =>
+                                start(t, L, { text: t.timer_only_short }),
+                        },
+                        {
+                            n: "Start · Wash running",
+                            cur: null,
+                            why: "The pill turns tonal with a dot: a way back to the running Wash, not a second Start.",
+                            r: (t, L) =>
+                                start(t, L, { cov: MIX, running: true }),
+                        },
+                    ],
+                ],
+                [
+                    "Live Wash",
+                    "The ring, the countdown, the cue. Hold anywhere to stop.",
+                    [
+                        {
+                            n: "Wash · counting down",
+                            cur: "in_progress_ring.png",
+                            stale: "Capture predates hold-to-stop",
+                            why: "Change: three lap ticks on the track at 10, 20 and 30 s, so the four laps the haptics mark are seen too. The one-time hint gets a stop square.",
+                            r: (t, L) =>
+                                washLive(t, L, {
+                                    time: "0:18",
+                                    cue: CUE[L],
+                                    hint: true,
+                                }),
+                        },
+                        {
+                            n: "Wash · target reached",
+                            cur: null,
+                            why: "Tertiary ring and cue, as today; the ticks are spent.",
+                            r: (t, L) =>
+                                washLive(t, L, {
+                                    time: "0:52",
+                                    done: true,
+                                    cue: CHEER[L],
+                                }),
+                        },
+                        {
+                            n: "Wash · holding to stop, early",
+                            cur: null,
+                            why: "The ring refills in the stop colour, the square grows in, the nudge underneath.",
+                            r: (t, L) =>
+                                washHold(t, L, { h: 0.6, early: true }),
+                        },
+                        {
+                            n: "Wash · stopping",
+                            cur: null,
+                            why: "Committed: full stop ring, square at full size.",
+                            r: (t, L) =>
+                                washHold(t, L, { h: 1, stopping: true }),
+                        },
+                        {
+                            n: "Wash · timer only",
+                            cur: "in_progress_timer_only.png",
+                            stale: "Capture predates hold-to-stop",
+                            why: "Change: the Timer-only line sits in a tonal notice, so it reads as a state, not a cue.",
+                            r: (t, L) =>
+                                washLive(t, L, {
+                                    time: "0:18",
+                                    timerOnly: true,
+                                }),
+                        },
+                        {
+                            n: "Wash · ambient",
+                            cur: null,
+                            why: "Outline and one word, as today.",
+                            r: (t) => ambient(t),
+                        },
+                        {
+                            n: "Target check",
+                            cur: "target_check.png",
+                            stale: 'Old copy "Still to do"',
+                            why: "Change: each Step is a tonal row with its glyph in a chip, the same row the Summary uses, so it reads as tappable.",
+                            r: (t, L) => targetCheck(t, L),
+                        },
+                    ],
+                ],
+                [
+                    "Summary",
+                    "Ring and count first, then the Steps that need a look.",
+                    [
+                        {
+                            n: "Summary · mixed, with Focus Step",
+                            cur: "summary_mixed.png",
+                            stale: "Capture predates Focus row",
+                            why: "Change: an arc that was not detected carries its Step's glyph on the track, so the ring names what is missing before you scroll.",
+                            frames: [0, 150],
+                            r: (t, L, s) =>
+                                summary(t, L, { cov: MIX, scroll: s }),
+                        },
+                        {
+                            n: "Summary · all five",
+                            cur: null,
+                            why: "Tertiary ring and praise line, as today.",
+                            r: (t, L) => summary(t, L, { cov: ALL }),
+                        },
+                        {
+                            n: "Summary · too short",
+                            cur: "summary_too_short.png",
+                            why: "Change: the duration leads at display size, then why and Close.",
+                            frames: [0, 40],
+                            r: (t, L, s) =>
+                                summaryEnd(t, L, { time: "0:08", scroll: s }),
+                        },
+                        {
+                            n: "Summary · timer only",
+                            cur: "summary_timer_only.png",
+                            why: "Same shape with the Timer-only reason.",
+                            frames: [0, 50],
+                            r: (t, L, s) =>
+                                summaryEnd(t, L, {
+                                    time: "1:05",
+                                    timer: true,
+                                    scroll: s,
+                                }),
+                        },
+                    ],
+                ],
+                [
+                    "Step guide",
+                    "Horizontal pager and pull-down to close, as today.",
+                    [0, 1, 2, 3, 4].map((i) => ({
+                        n: "Guide · " + S.en.steps[i],
+                        cur: [
+                            "guide_palms.png",
+                            "guide_back_of_hands.png",
+                            "guide_between_fingers.png",
+                            "guide_thumbs.png",
+                            "guide_fingertips.png",
+                        ][i],
+                        why: i
+                            ? "Same page."
+                            : "Change: a grabber bar above the picture says the page pulls down to close, which nothing shows today. The name moves under the picture, clear of the clock.",
+                        frames: [0, 44],
+                        r: (t, L, s) => guide(t, L, i, { scroll: s }),
+                    })),
+                ],
+                [
+                    "History",
+                    "Day labels and outcome-first rows.",
+                    [
+                        {
+                            n: "History",
+                            cur: "history.png",
+                            why: "Rows lead with the ring and the count; Washes with no Coverage are dimmed, as the code already does.",
+                            frames: [0, 190],
+                            r: (t, L, s) => history(t, L, { scroll: s }),
+                        },
+                        {
+                            n: "History · empty",
+                            cur: "history_empty.png",
+                            why: "Change: the empty sentence in a tonal card under the header, instead of floating.",
+                            r: (t, L) => history(t, L, { empty: true }),
+                        },
+                    ],
+                ],
+                [
+                    "Settings",
+                    "The hub and its two screens.",
+                    [
+                        {
+                            n: "Settings",
+                            cur: "settings.png",
+                            stale: "Capture predates the hub",
+                            why: "Change: each group row says what is inside (its settings, the wrist side), built from existing strings, so the hub reads without opening anything.",
+                            frames: [0, 60],
+                            r: (t, L, s) => settings(t, L, { scroll: s }),
+                        },
+                        {
+                            n: "During a wash",
+                            cur: "settings_target_check.png",
+                            why: "Switch rows as today; on rows fill with the hue.",
+                            frames: [0, 70],
+                            r: (t, L, s) => settingsWash(t, L, { scroll: s }),
+                        },
+                        {
+                            n: "Starting a wash",
+                            cur: null,
+                            why: "Twist start with its disclosure, wrist side as a tap-to-flip row.",
+                            r: (t, L) => settingsStart(t, L),
+                        },
+                        {
+                            n: "Twist battery warning",
+                            cur: null,
+                            why: "Change: a battery glyph above the title, so the cost is seen before it is read.",
+                            r: (t, L) => twistSheet(t, L),
+                        },
+                        {
+                            n: "Credits",
+                            cur: "credits.png",
+                            why: "As today.",
+                            frames: [0, 50],
+                            r: (t, L, s) => credits(t, L, { scroll: s }),
+                        },
+                    ],
+                ],
+                [
+                    "Tile and complication",
+                    "Outside the app.",
+                    [
+                        {
+                            n: "Tile",
+                            cur: "tile.png",
+                            why: "Change: washes today as the title and the last ring with its count, instead of the app name.",
+                            r: (t, L) => tile(t, L, {}),
+                        },
+                        {
+                            n: "Tile · Wash running",
+                            cur: null,
+                            why: "The countdown; the EdgeButton opens the Wash.",
+                            r: (t, L) => tile(t, L, { running: true }),
+                        },
+                        {
+                            n: "Complications",
+                            cur: "complication.png",
+                            why: 'Short text with "Lavado" in Spanish (today "Lavado de manos" overflows the slot); ranged value as the ring.',
+                            r: (t, L) => complication(t, L),
+                        },
+                    ],
+                ],
+            ];
+
+            /* ---------- render ---------- */
+            const main = document.getElementById("main"),
+                jump = document.getElementById("jump");
+            document.getElementById("swatches").innerHTML =
+                [P, PD, TER, TONAL]
+                    .map(
+                        (c) =>
+                            `<span class="sw" style="background:${c}"></span>`,
+                    )
+                    .join("") +
+                '<span style="margin-left:6px">the current Material You palette</span>';
+            const frameHTML = (inner, lang, scrolled) =>
+                `<div class="wf"><div class="watch" lang="${lang}">${inner}${scrolled ? '<div class="fade-t"></div>' : ""}</div></div>`;
+            const ONLY = new URLSearchParams(location.search).get("g");
+            GROUPS.forEach(([g, note, list], gi) => {
+                if (ONLY && !ONLY.split(",").includes(String(gi))) return;
+                const gid = "g" + gi;
+                jump.insertAdjacentHTML(
+                    "beforeend",
+                    `<a href="#${gid}">${g}</a>`,
+                );
+                let h = `<h2 id="${gid}">${g}</h2><p class="h2note">${note}</p>`;
+                list.forEach((sc) => {
+                    const frames = sc.frames || [0];
+                    const cur = sc.cur
+                        ? `<div class="wf"><img class="shot" src="${sc.cur}" alt="Current ${sc.n} screen" loading="lazy"></div>`
+                        : `<div class="wf missing"><span>No capture of this state yet</span></div>`;
+                    let figs = `<figure class="cur">${cur}<figcaption><span class="lang">NOW</span> current app${sc.stale ? "" : ""}</figcaption></figure><div class="divider"></div>`;
+                    ["en", "es"].forEach((L) =>
+                        frames.forEach((f, fi) => {
+                            figs += `<figure data-screen="${sc.n}" data-lang="${L}">${frameHTML(sc.r(S[L], L, f), L, f > 0)}<figcaption><span class="lang">${L.toUpperCase()}</span>${frames.length > 1 ? (fi ? "scrolled" : "top") : window.FRAME_LABEL || "redesign"}</figcaption></figure>`;
+                        }),
+                    );
+                    h += `<section class="screen"><div class="shead"><h3>${sc.n}</h3>${sc.stale ? `<span class="flag">${sc.stale}</span>` : ""}<span class="flag err" hidden></span><p class="why">${sc.why}</p></div><div class="row${frames.length > 1 ? " multi" : ""}">${figs}</div></section>`;
+                });
+                main.insertAdjacentHTML("beforeend", h);
+            });
+            jump.insertAdjacentHTML(
+                "beforeend",
+                `<a href="#notes">Changes &amp; copy</a>`,
+            );
+
+            /* ---------- fit check: every text line inside the round screen, both languages ---------- */
+            function checkFit() {
+                let lines = 0;
+                const bad = new Set();
+                document
+                    .querySelectorAll(".overflow")
+                    .forEach((e) => e.classList.remove("overflow"));
+                document
+                    .querySelectorAll("figure[data-screen] .watch")
+                    .forEach((w) => {
+                        const wr = w.getBoundingClientRect(),
+                            k = wr.width / 227,
+                            cx = wr.left + wr.width / 2,
+                            cy = wr.top + wr.height / 2,
+                            inner = +(
+                                w.querySelector("[data-inner]")?.dataset
+                                    .inner || 0
+                            ),
+                            R = inner ? inner * k : wr.width / 2 - 4 * k;
+                        const tw = document.createTreeWalker(
+                            w,
+                            NodeFilter.SHOW_TEXT,
+                        );
+                        let n;
+                        while ((n = tw.nextNode())) {
+                            if (
+                                !n.textContent.trim() ||
+                                n.parentElement.closest("[data-nofit]")
+                            )
+                                continue;
+                            const rg = document.createRange();
+                            rg.selectNodeContents(n);
+                            for (const q of rg.getClientRects()) {
+                                if (q.width < 1) continue;
+                                if (
+                                    w.querySelector(".fade-b") &&
+                                    q.top > wr.bottom - 52 * k
+                                )
+                                    continue; // under the bottom fade: read by scrolling
+                                if (
+                                    w.querySelector(".fade-t") &&
+                                    (q.top + q.bottom) / 2 < wr.top + 44 * k
+                                )
+                                    continue; // under the top fade, behind the clock
+                                const mid = (q.top + q.bottom) / 2;
+                                if (Math.abs(mid - cy) > 0.8 * R) continue; // edge band: list rows scale and scroll here
+                                lines++;
+                                const dy = Math.max(
+                                        Math.abs(q.top - cy),
+                                        Math.abs(q.bottom - cy),
+                                    ),
+                                    half = Math.sqrt(
+                                        Math.max(0, R * R - dy * dy),
+                                    );
+                                if (
+                                    q.left < cx - half - 0.5 ||
+                                    q.right > cx + half + 0.5
+                                ) {
+                                    n.parentElement.classList.add("overflow");
+                                    bad.add(w.closest("figure"));
+                                }
+                            }
+                        }
+                        w.querySelectorAll(".cell,.cap").forEach((e) => {
+                            if (e.scrollWidth > e.clientWidth + 1) {
+                                e.classList.add("overflow");
+                                bad.add(w.closest("figure"));
+                            }
+                        });
+                    });
+                document
+                    .querySelectorAll(".flag.err")
+                    .forEach((f) => (f.hidden = true));
+                bad.forEach((f) => {
+                    const fl = f.closest(".screen").querySelector(".flag.err");
+                    fl.hidden = false;
+                    fl.textContent =
+                        "Overflows in " +
+                        [
+                            ...new Set(
+                                [
+                                    ...f
+                                        .closest(".screen")
+                                        .querySelectorAll("figure"),
+                                ]
+                                    .filter((x) => bad.has(x))
+                                    .map((x) => x.dataset.lang.toUpperCase()),
+                            ),
+                        ].join(" + ");
+                });
+                const el = document.getElementById("fit"),
+                    figs = document.querySelectorAll(
+                        "figure[data-screen]",
+                    ).length;
+                el.className = "fit " + (bad.size ? "bad" : "ok");
+                el.textContent = bad.size
+                    ? `${bad.size} of ${figs} frames overflow`
+                    : `${lines} text lines in ${figs} frames · all fit, EN + ES`;
+            }
+            document.fonts.ready.then(() => requestAnimationFrame(checkFit));
+            addEventListener("resize", () => requestAnimationFrame(checkFit));
+        </script>
+    </body>
+</html>

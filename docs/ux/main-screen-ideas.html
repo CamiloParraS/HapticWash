@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HapticWash · Start screen layout ideas</title>
+<style>
+:root{
+  --bg:#000; --primary:#cfbcff; --primary-dim:#a58ee6; --tertiary:#f2b8d2;
+  --on-primary:#2e1a66; --surface-high:#2c2a33; --surface:#1d1b22; --on-var:#c9c4d4; --text:#ece8f4;
+  --page:#121116; --ink:#f4f1fa; --muted:#a29cb3; --line:#2a2733;
+  --font:'Google Sans Flex','Nunito','Varela Round',ui-rounded,'SF Pro Rounded',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--page);color:var(--ink);font-family:var(--font);padding:40px 24px 80px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:30px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.lead{color:var(--muted);max-width:62ch;margin-top:8px;text-wrap:pretty}
+.states{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 8px}
+.states button{font:inherit;font-size:14px;color:var(--on-var);background:var(--surface);border:1px solid var(--line);padding:9px 16px;border-radius:99px;cursor:pointer;min-height:40px}
+.states button[aria-pressed=true]{background:var(--primary);color:var(--on-primary);border-color:var(--primary);font-weight:600}
+.states button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:28px 24px 24px;display:flex;flex-direction:column;align-items:center}
+.card.pick{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
+.tag{align-self:flex-start;font-size:12px;color:var(--on-var);background:var(--surface-high);padding:3px 10px;border-radius:99px}
+.pick .tag{background:var(--primary);color:var(--on-primary);font-weight:600}
+.card h2{align-self:flex-start;font-size:21px;font-weight:600;margin:10px 0 2px}
+.card .sub{align-self:flex-start;color:var(--muted);font-size:14px;margin-bottom:22px;text-wrap:pretty}
+.stage{width:340px;height:340px;display:grid;place-items:center}
+
+/* ---- watch: designed in dp at 227px, shown at 1.5x ---- */
+.watch{zoom:1.5;width:227px;height:227px;border-radius:50%;background:var(--bg);position:relative;overflow:hidden;color:var(--text);
+  box-shadow:0 0 0 3px #26242d,0 0 0 5px #0b0a0e}
+.glow{position:absolute;inset:0;border-radius:50%;pointer-events:none;transition:background .3s}
+.time{position:absolute;top:7px;left:0;right:0;text-align:center;font-size:12.5px;font-weight:600;color:var(--on-var);letter-spacing:.02em}
+.col{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center}
+.t-xl{font-size:15px;font-weight:600;line-height:1.15;text-align:center;text-wrap:balance}
+.t-s{font-size:10.5px;color:var(--on-var);line-height:1.2;text-align:center}
+.num{font-feature-settings:"tnum";font-weight:600}
+.pill{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:99px;color:var(--on-primary);font-size:15px;font-weight:600;
+  background:linear-gradient(100deg,var(--primary-dim),var(--primary) 50%,var(--tertiary));position:relative;overflow:hidden}
+.pill::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 120% at 30% 40%,rgba(255,255,255,.18),transparent)}
+.pill svg{width:18px;height:18px;fill:currentColor;flex:none}
+.ib{width:40px;height:40px;border-radius:50%;background:var(--surface-high);display:grid;place-items:center;flex:none}
+.ib svg{width:19px;height:19px;fill:var(--text)}
+.cap{font-size:9px;color:var(--on-var);text-align:center;margin-top:1px}
+.ring{display:block;flex:none}
+.stack{display:flex;flex-direction:column;align-items:center}
+
+/* ---- verdict ---- */
+.verdict{margin-top:44px;border-top:1px solid var(--line);padding-top:32px}
+.verdict h2{font-size:22px;font-weight:600;margin-bottom:16px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:13px}
+td:first-child{color:var(--on-var);width:22%}
+.y{color:#9be3b0}.m{color:#f0d58a}.n{color:#f19aa8}
+.rec{margin-top:24px;background:var(--surface);border:1px solid var(--primary);border-radius:20px;padding:22px 24px;max-width:78ch}
+.rec h3{font-size:17px;margin-bottom:6px;color:var(--primary)}
+.rec p{color:var(--on-var);text-wrap:pretty}
+.rec p+p{margin-top:10px}
+.note{color:var(--muted);font-size:13px;margin-top:18px;max-width:78ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Start screen: three directions</h1>
+  <p class="lead">The old line “4 of 5 steps covered” counts but doesn’t say anything you can act on. Every direction below tries to say <em>which</em> Step the last Wash missed, not just how many. Switch the state to see how each holds up.</p>
+
+  <div class="states" role="group" aria-label="Last wash state" id="states">
+    <button data-s="partial" aria-pressed="true">Last wash: 4 of 5</button>
+    <button data-s="several" aria-pressed="false">2 not detected</button>
+    <button data-s="all" aria-pressed="false">All five covered</button>
+    <button data-s="none" aria-pressed="false">First run</button>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <span class="tag">A · Evolve</span>
+      <h2>Same stack, readable</h2>
+      <p class="sub">Keeps today’s order: ring, result, Start, shortcuts. The result line names the gap.</p>
+      <div class="stage"><div class="watch" id="A"></div></div>
+    </section>
+    <section class="card">
+      <span class="tag">B · Airy</span>
+      <h2>One pill, one summary</h2>
+      <p class="sub">Last wash as a quiet strip on top. A big Start pill dead centre. Shortcuts shrink to the bottom.</p>
+      <div class="stage"><div class="watch" id="B"></div></div>
+    </section>
+    <section class="card pick">
+      <span class="tag">C · Recommended</span>
+      <h2>The bezel is the result</h2>
+      <p class="sub">The last Wash’s five arcs wrap the screen, the same ring you see during a Wash. Start sits inside.</p>
+      <div class="stage"><div class="watch" id="C"></div></div>
+    </section>
+  </div>
+
+  <section class="verdict">
+    <h2>Judging them</h2>
+    <table>
+      <thead><tr><th>Criterion</th><th>A · Evolve</th><th>B · Airy</th><th>C · Bezel</th></tr></thead>
+      <tbody>
+        <tr><td>Says something you can act on</td><td class="y">Yes: names the Step</td><td class="m">Yes, but small: top strip is secondary</td><td class="y">Yes: names the Step, and arc position shows where</td></tr>
+        <tr><td>Glance with wet hands, arm’s length</td><td class="m">Ring is 56 dp and sits above the fold of attention</td><td class="y">Start is huge and unmissable</td><td class="y">Start is large, result reads as shape first, text second</td></tr>
+        <tr><td>Start is the obvious primary</td><td class="m">Fights the ring for first look</td><td class="y">Wins outright</td><td class="y">Strong: centre, only filled control</td></tr>
+        <tr><td>Fits the round screen</td><td class="m">Dense; icons crowd the lower curve</td><td class="y">Most breathing room</td><td class="y">Uses the bezel, which today is empty</td></tr>
+        <tr><td>Consistent with the rest of the app</td><td class="y">Unchanged shape</td><td class="m">Drops the ring: the Summary and Wash screens lose their echo</td><td class="y">Same 300° ring as the Wash and Tile; one visual language</td></tr>
+        <tr><td>Small screens (&lt;220 dp)</td><td class="y">Existing compact path</td><td class="y">Easy: strip collapses</td><td class="m">Bezel stays; the text under the clock needs one line less</td></tr>
+        <tr><td>Build cost</td><td class="y">Low: copy and sizes</td><td class="m">Medium: new layout, new strip</td><td class="m">Medium: reuse <code>coverageArcs</code> at full size behind the column</td></tr>
+        <tr><td>Honest about being an estimate</td><td class="y">“not detected”, existing wording</td><td class="y">Same</td><td class="y">Same; arcs never read as a grade</td></tr>
+      </tbody>
+    </table>
+    <div class="rec">
+      <h3>My pick: C</h3>
+      <p>The ring already is the app’s signature: it fills during a Wash, it is the Summary hero, it is on the Tile. On Start it currently shrinks to a 60 dp badge and has to be explained with text. Promoted to the bezel it explains itself, costs no centre space, and leaves Start as the only filled control on screen.</p>
+      <p>If C feels like too big a change, A is the safe fix: swap “4 of 5 steps covered” for the missed Step’s name and drop the time to a quieter second line. B is the right call only if you decide the last-Wash result is not part of Start’s job.</p>
+    </div>
+    <p class="note">Mockups use the app’s default Material You palette and rounded type; real colours come from the watch’s theme. Copy reuses existing wording (“not detected”, “looked covered”); nothing here claims hands are clean. Round frame drawn at 227 dp, shown at 1.5×.</p>
+  </section>
+</div>
+
+<script>
+const STEPS=['Palms','Back of hands','Between fingers','Thumbs','Fingertips'];
+const S={
+  partial:{st:['ok','ok','ok','nd','ok'],ok:4,head:'Thumbs not detected',time:'8:07 AM'},
+  several:{st:['ok','ok','br','nd','nd'],ok:2,head:'2 Steps not detected',time:'8:07 AM'},
+  all:{st:['ok','ok','ok','ok','ok'],ok:5,head:'All five looked covered',time:'8:07 AM'},
+  none:{st:null,ok:0,head:'Rub through 5 hand steps. The ring shows what looks covered.',time:null}
+};
+const drop='<svg viewBox="0 0 24 24"><path d="M12 2.5c3.6 4.4 6 7.7 6 11a6 6 0 0 1-12 0c0-3.3 2.4-6.6 6-11z"/></svg>';
+const hist='<svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9L9 12H6a7 7 0 1 1 2.1 5l-1.4 1.4A9 9 0 1 0 13 3zm-1 5v5l4.3 2.5.8-1.3-3.6-2.1V8z"/></svg>';
+const gear='<svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1)"/></svg>';
+
+/* five arcs; start/sweep in degrees clockwise from 12 o'clock */
+function arcs(size,stroke,start,sweep,gap,st,accent){
+  const r=(size-stroke)/2,c=size/2,n=5,seg=(sweep-gap*(n-1))/n;
+  const pt=a=>{const t=(a-90)*Math.PI/180;return [c+r*Math.cos(t),c+r*Math.sin(t)]};
+  let out='';
+  for(let i=0;i<n;i++){
+    const a0=start+i*(seg+gap),a1=a0+seg,[x0,y0]=pt(a0),[x1,y1]=pt(a1);
+    const s=st?st[i]:'nd';
+    const col=s==='ok'?accent:s==='br'?accent:'var(--surface-high)';
+    const op=s==='br'?.45:1;
+    out+=`<path d="M${x0} ${y0}A${r} ${r} 0 ${seg>180?1:0} 1 ${x1} ${y1}" fill="none" stroke="${col}" stroke-opacity="${op}" stroke-width="${stroke}" stroke-linecap="round"/>`;
+  }
+  return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">${out}</svg>`;
+}
+const icons=(cap,sz)=>`<div style="display:flex;gap:12px"><div><div class="ib" style="${sz}">${hist}</div>${cap?'<div class="cap">History</div>':''}</div><div><div class="ib" style="${sz}">${gear}</div>${cap?'<div class="cap">Settings</div>':''}</div></div>`;
+const glow=(s,all)=>`<div class="glow" style="background:radial-gradient(70% 55% at 50% 100%,${all?'rgba(242,184,210,.16)':'rgba(207,188,255,.13)'},transparent 70%)"></div>`;
+
+function A(k){
+  const d=S[k],all=k==='all',acc=all?'var(--tertiary)':'var(--primary)',none=k==='none';
+  const ring=none?'':`<div style="position:relative;margin-top:19px">${arcs(66,6,0,360,14,d.st,acc)}<div style="position:absolute;inset:0;display:grid;place-items:center"><div class="num" style="font-size:25px;line-height:1">${d.ok}<span style="font-size:12px;color:var(--on-var);font-weight:500">/5</span></div></div></div>`;
+  const head=none?`<div class="t-xl" style="font-size:12.5px;font-weight:500;margin:20px 22px 0;color:var(--on-var)">${d.head}</div>`:`<div class="t-xl" style="margin-top:3px;padding:0 26px;color:${all?'var(--tertiary)':'var(--text)'}">${d.head}</div><div class="t-s" style="margin-top:2px">Last wash · ${d.time}</div>`;
+  return glow(k,all)+`<div class="time">8:09</div><div class="col">${ring}${head}
+  <div class="pill" style="width:172px;height:44px;margin-top:${none?14:8}px">${drop}Start wash</div>
+  <div style="margin-top:7px">${icons(none,'width:38px;height:38px')}</div></div>`;
+}
+function B(k){
+  const d=S[k],all=k==='all',acc=all?'var(--tertiary)':'var(--primary)',none=k==='none';
+  const dots=none?'':`<div style="display:flex;gap:5px;margin-top:5px">${[0,1,2,3,4].map(i=>{const s=d.st[i];return `<i style="width:16px;height:5px;border-radius:3px;background:${s==='nd'?'var(--surface-high)':acc};opacity:${s==='br'?.45:1}"></i>`}).join('')}</div>`;
+  const top=none?`<div class="t-s" style="padding:0 30px;margin-top:3px">${d.head}</div>`:`<div class="t-xl" style="font-size:12.5px;font-weight:500;color:${all?'var(--tertiary)':'var(--text)'};margin-top:2px">${d.head}</div>${dots}`;
+  return glow(k,all)+`<div class="time">8:09</div>
+  <div class="col" style="justify-content:flex-start"><div class="stack" style="margin-top:25px;height:36px">${top}</div></div>
+  <div class="pill" style="position:absolute;left:21px;right:21px;top:73px;height:80px;font-size:19px;gap:10px"><span style="display:contents">${drop.replace('<svg','<svg style="width:24px;height:24px"')}</span>Start wash</div>
+  <div style="position:absolute;bottom:13px;left:0;right:0;display:flex;justify-content:center">${icons(false,'width:34px;height:34px;background:transparent;box-shadow:0 0 0 1.5px var(--surface-high) inset')}</div>`;
+}
+function C(k){
+  const d=S[k],all=k==='all',acc=all?'var(--tertiary)':'var(--primary)',none=k==='none';
+  const ring=`<div style="position:absolute;inset:0">${arcs(227,7,300,300,6,d.st,acc).replace('class="ring"','class="ring" style="position:absolute;inset:0"')}</div>`;
+  const text=none?`<div class="t-s" style="padding:0 34px;margin-top:2px;color:var(--text)">${d.head}</div>`:`<div class="t-xl" style="font-size:14px;margin-top:2px;padding:0 24px;color:${all?'var(--tertiary)':'var(--text)'}">${d.head}</div><div class="t-s" style="margin-top:1px">Last wash · ${d.time}</div>`;
+  return glow(k,all)+ring+`<div class="time" style="top:11px">8:09</div><div class="col"><div class="stack" style="margin-top:${none?32:34}px;min-height:40px;justify-content:center">${text}</div>
+  <div class="pill" style="width:150px;height:46px;margin-top:${none?10:8}px">${drop}Start wash</div>
+  <div style="margin-top:6px">${icons(false,'width:36px;height:36px')}</div></div>`;
+}
+const F={A,B,C};
+function render(k){for(const id in F)document.getElementById(id).innerHTML=F[id](k)}
+document.getElementById('states').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#states button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  render(b.dataset.s);
+});
+render('partial');
+</script>
+</body>
+</html>

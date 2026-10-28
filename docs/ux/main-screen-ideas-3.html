@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HapticWash · Start screen, round 3</title>
+<style>
+:root{
+  --primary:#d9c9ff; --primary-dim:#bda2ff; --tertiary:#ffd6c0;
+  --on-primary:#2a1458; --track:#3a3646; --btn:#2f2b3a; --on-var:#c9c4d4; --text:#efeaf7;
+  --page:#141318; --card:#1d1c22; --line:#2b2933; --muted:#a29cb3;
+  --font:'Google Sans Flex','Nunito','Varela Round',ui-rounded,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--page);color:var(--text);font-family:var(--font);padding:40px 24px 80px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:30px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.lead{color:var(--muted);max-width:66ch;margin-top:8px;text-wrap:pretty}
+.bar{display:flex;gap:28px;flex-wrap:wrap;margin:26px 0 6px}
+.states{display:flex;gap:8px;flex-wrap:wrap}
+.states button{font:inherit;font-size:14px;color:var(--on-var);background:var(--card);border:1px solid var(--line);padding:9px 16px;border-radius:99px;cursor:pointer;min-height:40px}
+.states button[aria-pressed=true]{background:var(--primary);color:var(--on-primary);border-color:var(--primary);font-weight:600}
+.states button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.fitnote{font-size:13px;color:var(--muted);margin-top:6px}
+.fitnote b{color:#9be3b0;font-weight:600}.fitnote b.bad{color:#f19aa8}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;margin-top:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:24px 20px 22px;display:flex;flex-direction:column;align-items:center}
+.card.pick{border-color:var(--primary)}
+.tag{align-self:flex-start;font-size:12px;color:var(--on-var);background:var(--btn);padding:3px 10px;border-radius:99px}
+.pick .tag{background:var(--primary);color:var(--on-primary);font-weight:600}
+.card h2{align-self:flex-start;font-size:20px;font-weight:600;margin:10px 0 2px}
+.card .sub{align-self:flex-start;color:var(--muted);font-size:14px;margin-bottom:14px;text-wrap:pretty;min-height:42px}
+.stage{width:340px;height:340px;display:grid;place-items:center}
+
+.watch{width:227px;height:227px;border-radius:50%;position:relative;overflow:hidden;color:var(--text);transform:scale(1.5);flex:none;
+  background:radial-gradient(90% 70% at 30% 12%,#1e1a29,#000 70%);
+  box-shadow:0 0 0 3px #2a2830,0 0 0 6px #0b0a0e}
+.a{position:absolute}
+.time{left:50%;transform:translateX(-50%);top:6px;background:#000;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:600;color:#e9e4f2;letter-spacing:.03em;white-space:nowrap}
+.cc{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.t1{font-size:13px;font-weight:600;line-height:1.15;text-wrap:balance}
+.t2{font-size:10.5px;color:var(--on-var);line-height:1.2;margin-top:2px}
+.btn{border-radius:50%;background:var(--btn);display:grid;place-items:center}
+.btn svg{width:52%;height:52%;fill:var(--text)}
+.grad{background:linear-gradient(120deg,var(--primary-dim),var(--primary) 45%,var(--tertiary));color:var(--on-primary);font-weight:600}
+.orb{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.05;text-align:center}
+.orb svg,.lbl svg{fill:currentColor}
+.lbl{color:var(--on-primary);font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;line-height:1.05}
+.ring{position:absolute;overflow:visible}
+.bad-outline{outline:1.5px solid #ff5a6e;outline-offset:1px}
+
+.verdict{margin-top:44px;border-top:1px solid var(--line);padding-top:30px}
+.verdict h2{font-size:22px;font-weight:600;margin-bottom:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:13px}
+td:first-child{color:var(--on-var);width:22%}
+.y{color:#9be3b0}.m{color:#f0d58a}.n{color:#f19aa8}
+.rec{margin-top:22px;background:var(--card);border:1px solid var(--primary);border-radius:20px;padding:22px 24px;max-width:80ch}
+.rec h3{font-size:17px;margin-bottom:6px;color:var(--primary)}
+.rec p{color:var(--on-var);text-wrap:pretty}.rec p+p{margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Start screen, round 3</h1>
+  <p class="lead">D tightened for readability, then three ways to turn Start into a squashed water droplet that fills more of the screen. Shortcuts are back to 40 dp, text is capped to what fits, and a Spanish switch shows the longest real strings. Every element is checked against the round bezel.</p>
+
+  <div class="bar">
+    <div class="states" role="group" aria-label="Last wash state" id="states">
+      <button data-s="partial" aria-pressed="true">4 of 5</button>
+      <button data-s="several" aria-pressed="false">2 not detected</button>
+      <button data-s="all" aria-pressed="false">All five covered</button>
+      <button data-s="none" aria-pressed="false">First run</button>
+    </div>
+    <div class="states" role="group" aria-label="Language" id="langs">
+      <button data-l="en" aria-pressed="true">English</button>
+      <button data-l="es" aria-pressed="false">Español</button>
+    </div>
+  </div>
+  <p class="fitnote" id="fit"></p>
+
+  <div class="grid">
+    <section class="card"><span class="tag">D2 · Orb, refined</span><h2>Baseline from round 2</h2><p class="sub">Ring a touch smaller, caption sized for two lines, 40 dp shortcuts.</p><div class="stage"><div class="watch" id="D"></div></div></section>
+    <section class="card"><span class="tag">H · Droplet + outline</span><h2>The drop wears the five Steps</h2><p class="sub">A wide, squashed drop. Its outline is the five-segment ring, so the result hugs the button.</p><div class="stage"><div class="watch" id="H"></div></div></section>
+    <section class="card pick"><span class="tag">I · Droplet, quiet result</span><h2>Big drop, small pips</h2><p class="sub">No ring. Five pips under the drop carry the result; caption sits under it.</p><div class="stage"><div class="watch" id="I"></div></div></section>
+    <section class="card"><span class="tag">J · Droplet, text on top</span><h2>Say it, then do it</h2><p class="sub">Two-line caption up top, drop in the middle, shortcuts in a bottom row.</p><div class="stage"><div class="watch" id="J"></div></div></section>
+  </div>
+
+  <section class="verdict">
+    <h2>Judging round 3</h2>
+    <table>
+      <thead><tr><th>Criterion</th><th>D2</th><th>H</th><th>I</th><th>J</th></tr></thead>
+      <tbody>
+        <tr><td>Start’s share of the screen</td><td class="m">Orb ~74 dp</td><td class="y">Drop ~170 × 92 dp</td><td class="y">Drop ~170 × 100 dp</td><td class="y">Drop ~170 × 100 dp</td></tr>
+        <tr><td>Result without stealing focus</td><td class="m">Ring is loud</td><td class="m">Outline is loud, but it frames Start</td><td class="y">Pips are quiet</td><td class="y">Pips are quiet</td></tr>
+        <tr><td>Shortcut size</td><td class="y">40 dp, bottom</td><td class="y">40 dp, bottom</td><td class="m">40 dp, beside caption: less room for text</td><td class="y">40 dp, bottom</td></tr>
+        <tr><td>Spanish fits</td><td class="y">Yes</td><td class="y">Yes</td><td class="m">Same as H</td><td class="y">Yes</td></tr>
+        <tr><td>Build cost</td><td class="y">Low</td><td class="m">Custom path for fill + outline</td><td class="y">Custom path; pips are trivial</td><td class="y">Same as I</td></tr>
+      </tbody>
+    </table>
+    <div class="rec">
+      <h3>Where I land</h3>
+      <p>J is the safest droplet: it keeps D’s clear reading order (result, then action, then shortcuts), gives the drop the most room, and every text fits in Spanish. H is the one to pick if you still want the ring; its outline makes Start and result one object. I only works if you accept a tighter caption.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const L={
+  en:{start:'Start wash',last:'Last wash',time:'6:43 PM',clock:'6:58',step:'Thumbs not detected',several:'2 Steps not detected',all:'All five looked covered',none:'Rub through 5 hand steps'},
+  es:{start:'Empezar lavado',last:'Último lavado',time:'18:43',clock:'18:58',step:'Pulgares no detectados',several:'2 pasos no detectados',all:'Todo parece completado',none:'Frota los 5 pasos de manos'}
+};
+const S={
+  partial:{st:['ok','ok','ok','nd','ok'],key:'step'},
+  several:{st:['ok','ok','br','nd','nd'],key:'several'},
+  all:{st:['ok','ok','ok','ok','ok'],key:'all'},
+  none:{st:null,key:'none'}
+};
+let lang='en',state='partial',T=L.en;
+const W=227,C=W/2;
+const drop=s=>`<svg viewBox="0 0 24 24" style="width:${s}px;height:${s}px;flex:none"><path d="M12 2.5c3.6 4.4 6 7.7 6 11a6 6 0 0 1-12 0c0-3.3 2.4-6.6 6-11z"/></svg>`;
+const hist='<svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9L9 12H6a7 7 0 1 1 2.1 5l-1.4 1.4A9 9 0 1 0 13 3zm-1 5v5l4.3 2.5.8-1.3-3.6-2.1V8z"/></svg>';
+const gear='<svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>';
+
+const accent=()=>state==='all'?'var(--tertiary)':'var(--primary)';
+const el=(shape,x,y,w,h,cls,html,st='')=>`<div class="a ${cls}" data-shape="${shape}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;${st}">${html}</div>`;
+const timePill=()=>`<div class="a time" data-shape="pill">${T.clock}</div>`;
+const glow=()=>`<div class="a" style="inset:0;border-radius:50%;background:radial-gradient(70% 50% at 50% 100%,${state==='all'?'rgba(255,214,192,.14)':'rgba(217,201,255,.12)'},transparent 70%)"></div>`;
+const sat=(cx,cy,d,svg)=>el('round',cx-d/2,cy-d/2,d,d,'btn',svg);
+const shortcuts=(cy,gap,d=40)=>sat(C-gap,cy,d,hist)+sat(C+gap,cy,d,gear);
+const caption=(x,y,w,h,big=13)=>{const s=S[state],none=state==='none';
+  return none?el('rect',x,y,w,h,'cc',`<div class="t1" style="font-size:${big-.5}px;font-weight:500">${T.none}</div>`)
+   :el('rect',x,y,w,h,'cc',`<div class="t1" style="font-size:${big}px;color:${state==='all'?'var(--tertiary)':'var(--text)'}">${T[s.key]}</div><div class="t2">${T.last} · ${T.time}</div>`)};
+
+/* five arcs, degrees clockwise from 12 o'clock */
+function arcs(cx,cy,d,stroke,gap){
+  const st=S[state].st,r=(d-stroke)/2,n=5,seg=(360-gap*n)/n;
+  const pt=a=>{const t=(a-90)*Math.PI/180;return [r*Math.cos(t),r*Math.sin(t)]};
+  let o='';
+  for(let i=0;i<n;i++){const a0=i*(seg+gap)+gap/2,a1=a0+seg,[x0,y0]=pt(a0),[x1,y1]=pt(a1),s=st?st[i]:'nd';
+    o+=`<path d="M${x0} ${y0}A${r} ${r} 0 0 1 ${x1} ${y1}" fill="none" stroke="${s==='nd'?'var(--track)':accent()}" stroke-opacity="${s==='br'?.5:1}" stroke-width="${stroke}" stroke-linecap="round"/>`}
+  return `<svg class="ring" style="left:${cx-d/2}px;top:${cy-d/2}px" width="${d}" height="${d}" viewBox="${-d/2} ${-d/2} ${d} ${d}" aria-hidden="true">${o}</svg>`;
+}
+
+/* a squashed water drop: tip at the top, broad body. Path scaled to w x h at (x,y). */
+function blobPath(x,y,w,h){
+  const P=[[70,6],[74,6,77,12,84,22],[96,38,134,40,134,64],[134,84,106,92,70,92],[34,92,6,84,6,64],[6,40,44,38,56,22],[63,12,66,6,70,6]];
+  const f=(a)=>{const o=[];for(let i=0;i<a.length;i+=2)o.push(((x+(a[i]-6)/128*w)).toFixed(2)+' '+((y+(a[i+1]-6)/86*h)).toFixed(2));return o.join(' ')};
+  return `M${f(P[0])} C${f(P[1])} C${f(P[2])} C${f(P[3])} C${f(P[4])} C${f(P[5])} C${f(P[6])}Z`;
+}
+const drip=(x,y,w,h,label,extra='')=>`<svg class="a" style="left:0;top:0" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" data-shape="path">
+  <defs><linearGradient id="g${x}${y}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bda2ff"/><stop offset=".5" stop-color="#d9c9ff"/><stop offset="1" stop-color="#ffd6c0"/></linearGradient>
+  <radialGradient id="h${x}${y}" cx=".3" cy=".35" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+  <path data-fit d="${blobPath(x,y,w,h)}" fill="url(#g${x}${y})"/><path d="${blobPath(x,y,w,h)}" fill="url(#h${x}${y})"/></svg>`
+  +el('rect',x+w*.12,y+h*.42,w*.76,h*.44,'lbl',label,'z-index:1;white-space:nowrap');
+const dropLabel=(fs,ic)=>`${drop(ic)}<span style="font-size:${fs}px">${T.start}</span>`;
+const outline=(x,y,w,h,sw)=>{const st=S[state].st||['nd','nd','nd','nd','nd'],d=blobPath(x,y,w,h);
+  return `<svg class="a" style="left:0;top:0" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" data-shape="path">`+st.map((s,i)=>`<path ${i===0?'data-fit':''} d="${d}" pathLength="100" fill="none" stroke="${s==='nd'?'var(--track)':accent()}" stroke-opacity="${s==='br'?.5:1}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${16} ${84}" stroke-dashoffset="${-(i*20+2)}"/>`).join('')+`</svg>`};
+const pips=(cy,w=15,g=5,h=5)=>{const st=S[state].st,tw=5*w+4*g,x=C-tw/2;
+  return `<div class="a" data-shape="rect" style="left:${x}px;top:${cy}px;width:${tw}px;height:${h}px;display:flex;gap:${g}px">`+(st||['nd','nd','nd','nd','nd']).map(s=>`<i style="flex:1;border-radius:3px;background:${s==='nd'?'var(--track)':accent()};opacity:${s==='br'?.5:1}"></i>`).join('')+`</div>`};
+
+function D(){const none=state==='none',cy=80,dd=96;
+  return glow()+timePill()+arcs(C,cy,dd,7,14)
+   +el('round',C-(dd-22)/2,cy-(dd-22)/2,dd-22,dd-22,'grad orb',`${drop(20)}<span style="font-size:13px">${T.start.replace(' ','<br>')}</span>`)
+   +caption(18,cy+dd/2+4,191,36)+shortcuts(190,26)}
+
+function H(){return glow()+timePill()
+   +drip(C-77,38,154,86,dropLabel(15,18))+outline(C-85,32,170,98,5)
+   +caption(18,134,191,34)+shortcuts(190,26)}
+
+function I(){return glow()+timePill()
+   +drip(C-88,30,176,98,dropLabel(16,20))
+   +pips(133)+caption(18,141,191,32,12.5)+shortcuts(193,26)}
+
+function J(){return glow()+timePill()
+   +caption(34,30,159,36,12)+pips(69)
+   +drip(C-88,80,176,92,dropLabel(16,20))+shortcuts(195,26)}
+
+const F_={D,H,I,J};
+function fit(){
+  const bad=[];
+  for(const id in F_){const w=document.getElementById(id),wr=w.getBoundingClientRect(),s=wr.width/W,cx=wr.left+wr.width/2,cy=wr.top+wr.height/2,lim=(W/2-3)*s;
+    w.querySelectorAll('[data-shape]').forEach(n=>{n.classList.remove('bad-outline');const sh=n.dataset.shape,r=n.getBoundingClientRect();let pts=[];
+      if(sh==='round'){const rr=r.width/2;if(Math.hypot(r.left+rr-cx,r.top+rr-cy)+rr>lim){bad.push(id);n.classList.add('bad-outline')}return}
+      if(sh==='path'){n.querySelectorAll('[data-fit]').forEach(p=>{const m=p.getScreenCTM(),L=p.getTotalLength();for(let i=0;i<=60;i++){const q=p.getPointAtLength(L*i/60);pts.push([m.a*q.x+m.c*q.y+m.e,m.b*q.x+m.d*q.y+m.f])}})}
+      else if(sh==='pill'){const rad=r.height/2;pts=[[r.left+rad,r.top],[r.left+rad,r.bottom],[r.right-rad,r.top],[r.right-rad,r.bottom],[r.left,r.top+rad],[r.right,r.top+rad]]}
+      else{const rg=document.createRange();rg.selectNodeContents(n);const t=[...rg.getClientRects()].filter(q=>q.width>0);
+        const rr=t.length?t.reduce((a,q)=>({left:Math.min(a.left,q.left),right:Math.max(a.right,q.right),top:Math.min(a.top,q.top),bottom:Math.max(a.bottom,q.bottom)}),{left:1e9,right:-1e9,top:1e9,bottom:-1e9}):r;
+        pts=[[rr.left,rr.top],[rr.right,rr.top],[rr.left,rr.bottom],[rr.right,rr.bottom]];
+        /* text taller than its box spills into the next element */
+        if(rr.bottom>r.bottom+1||rr.top<r.top-1||rr.right>r.right+1||rr.left<r.left-1){bad.push(id+' (text overflow)');n.classList.add('bad-outline')}}
+      if(pts.some(([x,y])=>Math.hypot(x-cx,y-cy)>lim)){bad.push(id);n.classList.add('bad-outline')}
+    });
+  }
+  const u=[...new Set(bad)],f=document.getElementById('fit');
+  f.innerHTML=u.length?`Doesn’t fit: <b class="bad">${u.join(', ')}</b> (red outline)`:'Fit check: <b>every element inside the round screen, no text overflow</b>';
+}
+function render(){T=L[lang];for(const id in F_)document.getElementById(id).innerHTML=F_[id]();fit()}
+document.getElementById('states').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#states button').forEach(x=>x.setAttribute('aria-pressed',x===b));state=b.dataset.s;render()});
+document.getElementById('langs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#langs button').forEach(x=>x.setAttribute('aria-pressed',x===b));lang=b.dataset.l;render()});
+const q=new URLSearchParams(location.search);state=q.get('s')||'partial';lang=q.get('l')||'en';
+document.querySelectorAll('#states button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.s===state));
+document.querySelectorAll('#langs button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.l===lang));
+render();
+</script>
+</body>
+</html>
