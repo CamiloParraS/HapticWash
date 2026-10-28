@@ -27,7 +27,7 @@ colors:
   black: "#000000"
   text-primary: "#FFFFFF"
   text-secondary: "rgba(235,235,245,0.62)"
-  text-tertiary: "rgba(235,235,245,0.38)"
+  text-tertiary: "rgba(235,235,245,0.5)"
   time-text: "#F2F2F7"
   platter: "#202024"
   platter-raised: "#2C2C31"
@@ -240,7 +240,7 @@ Settings hub glyph discs borrow from the same family: Back Amber for "During a w
 - **True Black** (black): every screen background, required for OLED and ambient.
 - **White** (text-primary): primary text, glyphs in glass buttons, the switch thumb.
 - **Secondary Grey** (text-secondary, 62 % of #EBEBF5): captions, "to go", timestamps, explanations.
-- **Tertiary Grey** (text-tertiary, 38 %): the hold hint, track-only indicators, dashed no-Coverage rows.
+- **Tertiary Grey** (text-tertiary, 50 %, 4.6:1 on black): the hold hint, track-only indicators, dashed no-Coverage rows.
 - **TimeText White** (time-text): the clock at the top.
 - **Platter** (platter) and **Raised Platter** (platter-raised): list rows, and secondary capsules (Close, "Wash in progress").
 - **Hairline** (hairline): the outline of the quiet "covered Steps" row.
@@ -324,7 +324,7 @@ Confident and few: one bright capsule, everything else recedes.
 - **Leading:** a 32 dp glyph disc (Step colour, or a hub colour with a white glyph), or tiny rings (30 dp) in History.
 - **Focus Step:** 20 % Tip Violet (or the Focus Step's colour) platter, plus a Label Small line in the light partner.
 - **Quiet:** transparent with a Hairline outline: the folded "covered Steps" line on Summary, Credits.
-- **Dimmed:** 62 % opacity with a dashed 32 dp circle: History Washes with no Coverage.
+- **Dimmed:** 85 % opacity with a dashed 32 dp circle: History Washes with no Coverage.
 
 ### Switches
 - **Track:** 40 × 24 dp capsule; Switch Off grey, Pool Light when on. **Thumb:** 20 dp white disc, 2 dp inset.
@@ -334,7 +334,7 @@ Confident and few: one bright capsule, everything else recedes.
 11 dp drawn marks beside the status words, in the Step's colour: **Looks covered** is a full disc with a black check; **May have been brief** is an outline with the right half filled; **Not detected** is a dashed outline.
 
 ### Five Rings (signature)
-Concentric Activity rings, outer = Palms, inner = Fingertips. Each ring has a 20 % track in its colour and a round-capped fill: full for Looks covered, half for May have been brief, track only for Not detected, starting at 12 o'clock. Stroke and gap are proportional to the diameter (7.4 / 108 and 2 / 108), so every size keeps a hole in the middle: 108 dp on Summary, 62 dp on Start and Tile (44 dp on small screens), 30 dp in History. Rings are placed by Step label, not list order. Empty rings never appear on their own: a first-run Start shows the drop and one line instead, because empty rings read as a score of zero. All five closed adds a ring of ten droplets in the Step colours.
+Concentric Activity rings, outer = Palms, inner = Fingertips. Each ring has a 20 % track in its colour and a round-capped fill: full for Looks covered, half for May have been brief, track only for Not detected, starting at 12 o'clock. Stroke and gap are proportional to the diameter (7.4 / 108 and 2 / 108), so every size keeps a hole in the middle: 108 dp on Summary, 62 dp on Start and Tile (44 dp on small screens), 30 dp in History. Rings are placed by Step label, not list order. Empty rings never appear on their own: a first-run Start shows the drop and one line instead, because empty rings read as a score of zero. All five closed adds a ring of ten droplets in the Step colours. On Summary (108 dp only) each ring carries its Step's glyph on the start cap at 12 o'clock, dark on a lit arc and in the Step colour on a bare track; a glint rides each arc's head as it draws, and tapping the rings gives the same spring pop as the all-five finish.
 
 ### Live ring (signature)
 The 300° edge ring (see Layout). Counting down: Pool Light gradient over a 16 % tint track. Past 40 s: it turns mint and keeps lapping itself, the second lap shadowed with a round head. Timer-only: a 2.5 dp white hairline. Target check: a 3 dp tint hairline that drains the screen closed in 6 s. Ambient: a 1.5 dp grey outline, nothing that moves.

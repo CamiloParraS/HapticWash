@@ -81,6 +81,10 @@ import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
@@ -723,7 +727,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                                 }
                             }
                             // Steps first, then when: the time is context, not the result.
-                            if (label != null) Text(label, Modifier.padding(top = 5.dp), color = Five.TextSecondary, style = FiveType.labelSmall, textAlign = TextAlign.Center)
+                            if (label != null) Text(label, Modifier.padding(top = 5.dp), color = Five.TextSecondary, style = FiveType.label, textAlign = TextAlign.Center)
                         }
                         cancelledNotice || last == null -> {
                             // A drop in its disc over one line: the first run says what the rings are, a cancelled Wash why nothing was saved.
@@ -735,7 +739,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                         }
                         else -> {
                             Text(sentence, style = FiveType.body, textAlign = TextAlign.Center)
-                            if (label != null) Text(label, Modifier.padding(top = 3.dp), color = Five.TextSecondary, style = FiveType.labelSmall, textAlign = TextAlign.Center)
+                            if (label != null) Text(label, Modifier.padding(top = 3.dp), color = Five.TextSecondary, style = FiveType.label, textAlign = TextAlign.Center)
                         }
                     }
                     if (timerOnly && sentence != timerOnlyText) Text(timerOnlyText, color = Five.TextSecondary, style = FiveType.labelSmall)
@@ -765,6 +769,8 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                             val a = 2 * PI.toFloat() * drift
                             val light = Offset(size.width * (0.5f + 0.3f * sin(a)), size.height * (0.5f + 0.25f * sin(2 * a)))
                             drawRect(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.16f), Color.Transparent), light, size.width * 0.45f))
+                            // Breathing: the whole capsule brightens and settles, three slow breaths per drift loop (~4 s each) so it stays seamless.
+                            drawRect(Color.White.copy(alpha = 0.07f * (0.5f - 0.5f * cos(3 * a))))
                         },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (running) Five.PlatterRaised else Color.Transparent,
@@ -775,7 +781,7 @@ private fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: (
                     transformation = SurfaceTransformation(spec),
                     icon = {
                         if (running) Box(Modifier.size(9.dp).clip(CircleShape).background(Five.Tint))
-                        else Icon(painterResource(R.drawable.ic_wash), null, Modifier.size(20.dp))
+                        else Icon(painterResource(R.drawable.ic_wash), null, Modifier.padding(end = 7.dp).size(20.dp))
                     },
                     label = { Text(stringResource(if (running) R.string.session_running else R.string.start_wash), style = FiveType.bodyLarge, maxLines = 1) },
                 )
@@ -1439,7 +1445,7 @@ private fun HistoryScreen(onOpen: (Long) -> Unit) {
                 // dashed and dimmed.
                 FilledTonalButton(
                     onClick = { onOpen(w.id) },
-                    modifier = morph(spec).then(if (w.coverageShown) Modifier else Modifier.graphicsLayer { alpha = 0.62f }),
+                    modifier = morph(spec).then(if (w.coverageShown) Modifier else Modifier.graphicsLayer { alpha = 0.85f }),
                     transformation = SurfaceTransformation(spec),
                     colors = ButtonDefaults.filledTonalButtonColors(containerColor = Five.Platter, contentColor = Color.White, secondaryContentColor = Five.TextSecondary),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
@@ -1767,9 +1773,17 @@ private fun CoverageRing(coverage: List<StepCoverage>, entrance: () -> Float, mo
         launch { burst.snapTo(0f); burst.animateTo(1f, tween(BURST_MS, easing = EaseOutStrong)) }
         pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 2f)
     }
-    Box(modifier.height(RING_SIZE).clearAndSetSemantics { contentDescription = takeaway }, contentAlignment = Alignment.Center) {
+    // Each ring carries its Step's glyph at its start, so the colours can be read without the rows: Palms outside, Fingertips in.
+    val glyphs = STEP_ICONS.map { painterResource(it) }
+    val scope = rememberCoroutineScope()
+    Box(
+        modifier.height(RING_SIZE).clearAndSetSemantics { contentDescription = takeaway }
+            // A fidget: tap the rings and they give the same small spring pop as a full wash. Not a control, so no semantics.
+            .pointerInput(Unit) { detectTapGestures { scope.launch { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), initialVelocity = 2f) } } },
+        contentAlignment = Alignment.Center,
+    ) {
         Canvas(Modifier.size(RING_SIZE).graphicsLayer { scaleX = pop.value; scaleY = pop.value }) {
-            fiveRings(coverage, { staggered(entrance(), it) }) { i ->
+            fiveRings(coverage, { staggered(entrance(), it) }, glyphs) { i ->
                 // The light's place runs from before the first ring to past the last, so it enters and leaves dark.
                 val w = roll.value * (coverage.size + 2) - 1
                 (1 - kotlin.math.abs(w - i)).coerceIn(0f, 1f)
@@ -1800,7 +1814,7 @@ private fun FiveRings(coverage: List<StepCoverage>, size: Dp, fill: (Int) -> Flo
  * o'clock, lit along the diagonal from the colour to its light partner. [fill] is the drawn part of each ring's share,
  * for the entrances; [light] lays white over ring i for the roll call. The Tile draws the same rings ([WashTileService]).
  */
-private fun DrawScope.fiveRings(coverage: List<StepCoverage>, fill: (Int) -> Float = { 1f }, light: (Int) -> Float = { 0f }) {
+private fun DrawScope.fiveRings(coverage: List<StepCoverage>, fill: (Int) -> Float = { 1f }, glyphs: List<Painter>? = null, light: (Int) -> Float = { 0f }) {
     val stroke = size.minDimension * RING_STROKE_OF
     val gap = size.minDimension * RING_GAP_OF
     coverage.forEachIndexed { i, c ->
@@ -1814,6 +1828,20 @@ private fun DrawScope.fiveRings(coverage: List<StepCoverage>, fill: (Int) -> Flo
         if (sweep > 0f) drawArc(diagonal(Five.Steps[k], Five.StepsLight[k]), -90f, sweep, false, topLeft, arc, style = Stroke(stroke, cap = StrokeCap.Round))
         val l = light(i)
         if (l > 0f && share > 0f) drawArc(Color.White, -90f, 360f * share, false, topLeft, arc, alpha = 0.6f * l, style = Stroke(stroke, cap = StrokeCap.Round))
+        // A glint rides the head of the arc while it draws, and is gone when it lands.
+        val f = fill(i)
+        if (share > 0f && f > 0f && f < 1f) {
+            val a = Math.toRadians(-90.0 + sweep)
+            drawCircle(Color.White, stroke * 0.36f, center + Offset(cos(a).toFloat(), sin(a).toFloat()) * r, alpha = 0.85f * sin(PI.toFloat() * f))
+        }
+        // The Step's glyph sits on the arc's start cap (12 o'clock): dark on a lit arc, the Step's colour on a bare track.
+        glyphs?.let {
+            val t = (f * 3f).coerceIn(0f, 1f)
+            val g = stroke * 0.82f * (0.5f + 0.5f * t)
+            translate(center.x - g / 2, center.y - r - g / 2) {
+                with(it[k]) { draw(Size(g, g), alpha = t, colorFilter = ColorFilter.tint(if (share > 0f) Color.Black else Five.Steps[k])) }
+            }
+        }
     }
 }
 

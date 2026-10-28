@@ -52,8 +52,8 @@
     <string name="too_short_short">Muy breve</string>
     <string name="none_detected_short">Ningún paso detectado</string>
     <string name="start_intro">Frota 5 pasos de manos. Los anillos muestran lo que parece cubierto.</string>
-    <string name="status_ok">Parece completado</string>
-    <string name="status_brief">Parece incompleto</string>
+    <string name="status_ok">Parece cubierto</string>
+    <string name="status_brief">Pudo ser breve</string>
     <string name="status_not_detected">No detectado</string>
     <string name="target_todo">Aún sin detectar</string>
     <string name="close">Cerrar</string>
@@ -92,9 +92,9 @@
     <!-- Historial -->
     <string name="history">Historial</string>
     <string name="history_empty">Todavía no hay lavados. Aquí aparecen los últimos 20. Desliza a la derecha para volver a Inicio.</string>
-    <string name="steps_covered">pasos completados</string>
+    <string name="steps_covered">pasos cubiertos</string>
     <string name="coverage_count">%1$d de 5</string>
-    <string name="history_hint">%1$d de 5 pasos detectados</string>
+    <string name="history_hint">%1$d de 5 parecen cubiertos</string>
 
     <!-- Ajustes -->
     <string name="settings">Ajustes</string>

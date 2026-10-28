@@ -29,7 +29,7 @@ object Five {
     val HubBlueText = Color(0xFF409CFF)
     val HubGrey = Color(0xFF8E8E93)
     val TextSecondary = Color(0x9EEBEBF5)
-    val TextTertiary = Color(0x61EBEBF5)
+    val TextTertiary = Color(0x80EBEBF5)
     val TimeText = Color(0xFFF2F2F7)
     val Platter = Color(0xFF202024)
     val PlatterRaised = Color(0xFF2C2C31)
