@@ -9,7 +9,7 @@ Source root `wear/src/main/java/com/hapticwash/`:
 - `pipeline/` — filter, window, normalize; mirrors the AI repo's preprocessing
 - `inference/` — LiteRT wrapper, `model_meta` parsing
 - `session/` — Coverage, AutoEnd, WashService, WashStore, Settings, Haptics (spec §8.6)
-- `ui/` — Compose, MainActivity, tile, complication; screenshots in `docs/ux/`
+- `ui/` — Compose, one file per screen (`StartScreen`, `WashScreen`, `SummaryScreen`, ...) plus `App.kt` (nav graph), `FiveRings.kt` (all ring drawing), `UiKit.kt` (shared list rows, motion), `WashWording.kt` (what every surface says about a Wash); tile, complication; screenshots in `docs/ux/`
 
 Tests: `wear/src/test` (unit), `wear/src/androidTest` (parity, replay E2E), `wear/src/sharedTest`.
 
@@ -32,6 +32,9 @@ Run from Git Bash. Needs `JAVA_HOME` (JDK 17+), `ANDROID_HOME`, `adb`; instrumen
 scripts/release_smoke.sh                   # R8 release build loads the model
 ```
 Replay and demo scripts: `scripts/replay_demo.sh`, `replay_batch.sh`, `showcase.sh` (usage in README).
+
+## File size
+Keep a Kotlin file to about 500 lines. If it grows past that, split it (one screen or one concept per file) or list it in `JUSTIFIED` in `wear/src/test/java/com/hapticwash/FileSizeTest.kt` with a reason. The unit test enforces this and also fails on entries that are no longer needed.
 
 ## Gotchas
 - Search only the repo root. `.claude/worktrees/` holds stale copies of the whole repo, so every grep there returns duplicates.
