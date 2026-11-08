@@ -7,6 +7,8 @@
     <!-- Only qualifies the health service type (D32): install-time, no prompt; never sampled above 50 Hz. -->
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Only so Twist start resumes after a reboot; BootReceiver does nothing with it off. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -84,6 +86,14 @@
             android:name=".session.WashService"
             android:exported="false"
             android:foregroundServiceType="health" />
+
+        <receiver
+            android:name=".session.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

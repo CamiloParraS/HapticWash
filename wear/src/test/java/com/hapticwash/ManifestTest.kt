@@ -33,6 +33,13 @@ class ManifestTest {
     }
 
     @Test
+    fun twistStartResumesAfterBootInRelease() {
+        val m = merged("release")
+        assertTrue("android.permission.RECEIVE_BOOT_COMPLETED\"" in m)
+        assertTrue("session.BootReceiver" in m)
+    }
+
+    @Test
     fun replayReceiverIsDebugOnly() {
         assertTrue("ReplayReceiver" in merged("debug"))
         assertFalse("ReplayReceiver" in merged("release"))

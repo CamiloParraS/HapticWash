@@ -68,12 +68,14 @@ class WashService : Service() {
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        // A null intent is the system restarting us after the process died (START_STICKY below), never a Start.
+        if (intent == null) {
+            if (Settings(this).twistStart) startListening(null) else stopSelf()
+            return if (Settings(this).twistStart) START_STICKY else START_NOT_STICKY
+        }
+        when (intent.action) {
             ACTION_STOP -> job?.cancel() ?: run { if (listenJob?.isActive != true) stopSelf() }
-            ACTION_LISTEN -> {
-                startForeground(NOTIFICATION_ID, notification(if (washing) R.string.session_running else R.string.twist_listening), TYPE)
-                if (!washing) listen(intent.getStringExtra(EXTRA_REPLAY_PATH))
-            }
+            ACTION_LISTEN -> startListening(intent.getStringExtra(EXTRA_REPLAY_PATH))
             ACTION_UNLISTEN -> {
                 listenJob?.cancel()
                 if (!washing) idle()
@@ -81,14 +83,19 @@ class WashService : Service() {
             else -> {
                 startForeground(NOTIFICATION_ID, notification(R.string.session_running), TYPE)
                 if (!washing) wash(
-                    intent?.getStringExtra(EXTRA_REPLAY_PATH),
-                    intent?.getFloatExtra(EXTRA_SPEED, 1f) ?: 1f,
-                    intent?.getStringExtra(EXTRA_WRIST),
-                    intent?.getBooleanExtra(EXTRA_PERSIST, false) == true,
+                    intent.getStringExtra(EXTRA_REPLAY_PATH),
+                    intent.getFloatExtra(EXTRA_SPEED, 1f),
+                    intent.getStringExtra(EXTRA_WRIST),
+                    intent.getBooleanExtra(EXTRA_PERSIST, false),
                 )
             }
         }
-        return START_NOT_STICKY
+        return if (Settings(this).twistStart) START_STICKY else START_NOT_STICKY
+    }
+
+    private fun startListening(replay: String?) {
+        startForeground(NOTIFICATION_ID, notification(if (washing) R.string.session_running else R.string.twist_listening), TYPE)
+        if (!washing) listen(replay)
     }
 
     /** Starts a Wash; a tap on Start and a Twist both end up here. Listening pauses until it ends. */

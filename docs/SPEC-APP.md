@@ -31,7 +31,8 @@ training happens here** — the model arrives as a release artifact from `Haptic
 | DI         | Hilt (optional; manual DI acceptable if it keeps the graph small) |                             |
 | Tests      | JUnit5 + Turbine (unit), AndroidX Test + Espresso (instrumented)  |                             |
 **Permissions:** `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_HEALTH`, `HIGH_SAMPLING_RATE_SENSORS`,
-`POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`, `VIBRATE`, `WAKE_LOCK` (partial wake lock held only for the
+`POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED` (only so Twist start resumes after a reboot; nothing starts with
+it off), `USE_FULL_SCREEN_INTENT`, `VIBRATE`, `WAKE_LOCK` (partial wake lock held only for the
 duration of an active session, so sensor delivery continues with the screen off;
 confirm it is needed on the emulator at M3 — D12).
 Accelerometer and gyroscope at 50 Hz require **no** runtime permission.

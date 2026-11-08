@@ -66,8 +66,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) takeStart(intent)
-        // ponytail: opening the app restarts Twist start's listening after a process kill or a sensor failure;
-        // reboot and kill with the app closed are ticket 05.
+        // Opening the app restarts Twist start's listening after a sensor failure (BootReceiver and START_STICKY cover the rest).
         if (Settings(this).twistStart) WashService.listen(this)
         addOnNewIntentListener(::takeStart)
         lifecycleScope.launch { WashService.status.map { it.running }.distinctUntilChanged().collect(::watchAmbient) }
