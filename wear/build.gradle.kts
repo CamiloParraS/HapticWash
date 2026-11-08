@@ -73,6 +73,7 @@ dependencies {
     testImplementation(libs.org.json) // android.jar's org.json is a stub on the JVM
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.espresso.core) // 3.6+: older Espresso cannot inject input on API 34+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

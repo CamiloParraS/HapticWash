@@ -41,7 +41,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
@@ -68,22 +67,15 @@ import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import com.hapticwash.R
-import com.hapticwash.inference.StepModel
-import com.hapticwash.session.History
-import com.hapticwash.session.Settings
 import com.hapticwash.session.StepStatus
-import com.hapticwash.session.WashService
 import com.hapticwash.ui.theme.Five
 import com.hapticwash.ui.theme.FiveType
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /** Start's entrance plays once per process: coming back from History or Settings shows it settled. [filled] is the Wash its ring last filled for. */
 private object StartEntrance {
@@ -94,11 +86,13 @@ private object StartEntrance {
 @Composable
 internal fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: () -> Unit, autoStart: Boolean, onAutoStarted: () -> Unit, cancelledNotice: Boolean = false) {
     val context = LocalContext.current
-    val status by WashService.status.collectAsState()
-    val washes by remember { History.get(context).washes }.collectAsState()
+    val wash = LocalWashControls.current
+    val origin = LocalStartOrigin.current
+    val status by wash.status.collectAsState()
+    val washes by wash.history.collectAsState()
     var timerOnly by remember { mutableStateOf(false) }
     fun begin() {
-        if (!status.running) WashService.start(context)
+        wash.start()
         onWash()
     }
     // Asked on the first Start, not at launch; the Wash begins whatever the answer.
@@ -115,7 +109,7 @@ internal fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: 
     }
     LaunchedEffect(Unit) {
         // Loads the model off the main thread; also the release smoke check's log line.
-        timerOnly = withContext(Dispatchers.Default) { StepModel.bundled(context) == null }
+        timerOnly = wash.timerOnly()
     }
     val entrance = remember { Animatable(if (StartEntrance.played) 1f else 0f) }
     LaunchedEffect(Unit) {
@@ -202,7 +196,7 @@ internal fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: 
                 Button(
                     ::start,
                     morph(spec).rise({ entrance.value }, 1).then(pressScale).padding(horizontal = 14.dp).height(if (compact) 48.dp else 50.dp)
-                        .onGloballyPositioned { StartOrigin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f); StartOrigin.size = it.size }
+                        .onGloballyPositioned { origin.centre = it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f); origin.size = it.size }
                         .clip(CircleShape)
                         .drawBehind {
                             // A Wash already running: the capsule is a quiet way back to it, not a second start.

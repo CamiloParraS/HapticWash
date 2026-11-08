@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,7 +41,6 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.Text
 import com.hapticwash.R
-import com.hapticwash.session.WashService
 import com.hapticwash.ui.theme.Five
 import com.hapticwash.ui.theme.FiveType
 import kotlinx.coroutines.delay
@@ -53,7 +51,7 @@ import kotlinx.coroutines.delay
  */
 @Composable
 internal fun TargetCheckCard(onGuide: (Int) -> Unit) {
-    val undetected = WashService.status.collectAsState().value.undetected
+    val undetected = LocalWashControls.current.status.collectAsState().value.undetected
     var dismissed by remember { mutableStateOf(false) }
     // The Steps last named, so the card still has them while it leaves after the service has cleared them.
     var shown by remember { mutableStateOf(undetected) }

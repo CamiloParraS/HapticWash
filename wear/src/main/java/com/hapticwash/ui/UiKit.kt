@@ -12,7 +12,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,11 +22,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,8 +68,6 @@ import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.lazy.TransformationSpec
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
-import com.hapticwash.session.History
-import com.hapticwash.session.Settings
 import com.hapticwash.ui.theme.Five
 import com.hapticwash.ui.theme.FiveType
 import com.hapticwash.ui.theme.HapticWashTheme
@@ -82,20 +81,19 @@ internal const val ENTRANCE_MS = 360 // ROW_MS + 4 × STAGGER_MS, for five rows
 /** Half a list button's 52 dp, so [ListScreen] can centre the last row. */
 private val ROW_HALF_HEIGHT = 26.dp
 
-/** A hold that ended the Wash, until its Summary has taken over: the ring carries the stop colour across. */
-internal object StopHold {
-    var committed = false
-    var committedAt = 0L
-}
-
 /** Strong ease-out: moves at once, settles gently. */
 internal val EaseOutStrong = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
 
-/** Where Start's button sat in the window, so the Wash ring can bloom from it. Written by Start, read by Wash. */
-internal object StartOrigin {
+/**
+ * Where Start's button sat in the window, so the Wash ring can bloom from it. Written by Start, read by Wash: one per
+ * App, provided as [LocalStartOrigin] (a fresh, unknown one in previews).
+ */
+internal class StartOrigin {
     var centre = Offset.Unspecified
     var size = IntSize.Zero
 }
+
+internal val LocalStartOrigin = staticCompositionLocalOf { StartOrigin() }
 
 /**
  * DESIGN.md's Tint-Washes-Down: [color] falling from above the top edge, an ellipse wider than it is tall
@@ -227,8 +225,9 @@ internal fun staggered(entrance: Float, i: Int) =
     EaseOutStrong.transform(((entrance * ENTRANCE_MS - i * STAGGER_MS) / ROW_MS).coerceIn(0f, 1f))
 
 /**
- * Previews, in the app's theme and scaffold. Start is left out: it asks for a permission and loads the model.
- * History and the Wash show their empty and idle states, as nothing is saved or running in a preview.
+ * Previews, in the app's theme and scaffold, over [controls] (idle and empty unless given a running Wash or a
+ * History). Start is left out: it asks for a permission.
  */
 @Composable
-internal fun PreviewFrame(content: @Composable () -> Unit) = HapticWashTheme { AppScaffold { content() } }
+internal fun PreviewFrame(controls: WashControls = PreviewWashControls(), content: @Composable () -> Unit) =
+    HapticWashTheme { AppScaffold { CompositionLocalProvider(LocalWashControls provides controls) { content() } } }

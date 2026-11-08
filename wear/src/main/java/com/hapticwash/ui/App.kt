@@ -45,11 +45,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.hapticwash.R
-import com.hapticwash.session.History
-import com.hapticwash.session.Settings
-import com.hapticwash.session.WashService
 import com.hapticwash.ui.theme.Five
-import kotlinx.coroutines.flow.first
 
 /** True while ambient mode has the screen and a Wash is running, for the Wash screen beneath to stand still. */
 internal val LocalAmbient = compositionLocalOf { false }
@@ -63,7 +59,7 @@ internal val LocalAmbient = compositionLocalOf { false }
 fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, onOpened: () -> Unit = {}, ambient: () -> Ambient? = { null }) {
     val nav = rememberSwipeDismissableNavController()
     val context = LocalContext.current
-    val running by WashService.status.collectAsState()
+    val running by LocalWashControls.current.status.collectAsState()
     val ambientNow = ambient().takeIf { running.running }
     var answered by rememberSaveable { mutableIntStateOf(0) }
     // Shown on Start after auto-end cancels a Wash, until the user acts.
@@ -83,7 +79,7 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
     }
     // The Wash screen stays composed under ambient mode, so waking returns to it as it was; ambient only covers it.
     Box {
-        CompositionLocalProvider(LocalAmbient provides (ambientNow != null)) {
+        CompositionLocalProvider(LocalAmbient provides (ambientNow != null), LocalStartOrigin provides remember { StartOrigin() }) {
             SwipeDismissableNavHost(nav, startDestination = Routes.START) {
                 composable(Routes.START) {
                     StartScreen(

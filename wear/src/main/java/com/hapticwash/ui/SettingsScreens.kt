@@ -41,7 +41,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -74,8 +73,6 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import com.hapticwash.BuildConfig
 import com.hapticwash.R
-import com.hapticwash.session.Settings
-import com.hapticwash.session.WashService
 import com.hapticwash.session.Wrist
 import com.hapticwash.ui.theme.Five
 import com.hapticwash.ui.theme.FiveType
@@ -199,9 +196,8 @@ internal fun SettingsScreen(onWash: () -> Unit, onStart: () -> Unit, onCredits: 
 /** What the watch does during a Wash: plain toggle rows, no glyphs, so long Spanish labels get the width. */
 @Composable
 internal fun WashSettingsScreen() {
-    val context = LocalContext.current
-    val settings = remember { Settings(context) }
-    val status by WashService.status.collectAsState()
+    val settings = LocalWashControls.current.settings
+    val status by LocalWashControls.current.status.collectAsState()
     var haptics by remember { mutableStateOf(settings.haptics) }
     var ring by remember { mutableStateOf(settings.progressRing) }
     var targetCheck by remember { mutableStateOf(settings.targetCheck) }
@@ -234,16 +230,15 @@ internal fun WashSettingsScreen() {
 /** How a Wash begins: Twist start and Wrist side. Both are set once. */
 @Composable
 internal fun StartSettingsScreen() {
-    val context = LocalContext.current
-    val settings = remember { Settings(context) }
-    val status by WashService.status.collectAsState()
+    val controls = LocalWashControls.current
+    val settings = controls.settings
+    val status by controls.status.collectAsState()
     var wrist by remember { mutableStateOf(settings.wrist) }
     var twist by remember { mutableStateOf(settings.twistStart) }
     var warn by remember { mutableStateOf(false) }
     fun setTwist(on: Boolean) {
         twist = on
-        settings.twistStart = on
-        if (on) WashService.listen(context) else WashService.unlisten(context)
+        controls.twistStart(on)
     }
     val feedback = LocalHapticFeedback.current
     ListScreen(Five.TintDeep) { spec ->

@@ -6,6 +6,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -69,7 +71,8 @@ class MainActivity : ComponentActivity() {
         if (Settings(this).twistStart) WashService.listen(this)
         addOnNewIntentListener(::takeStart)
         lifecycleScope.launch { WashService.status.map { it.running }.distinctUntilChanged().collect(::watchAmbient) }
-        setContent { HapticWashTheme { AppScaffold { App({ startRequests }, { openRequest }, { openRequest = null }, { ambient }) } } }
+        val controls = ServiceWashControls(this)
+        setContent { HapticWashTheme { AppScaffold { CompositionLocalProvider(LocalWashControls provides controls) { App({ startRequests }, { openRequest }, { openRequest = null }, { ambient }) } } } }
     }
 
     private fun takeStart(intent: Intent) {

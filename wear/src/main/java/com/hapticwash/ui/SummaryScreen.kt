@@ -80,11 +80,8 @@ import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.VerticalPageIndicator
 import androidx.wear.compose.material3.VerticalPagerScaffold
 import com.hapticwash.R
-import com.hapticwash.session.History
-import com.hapticwash.session.Settings
 import com.hapticwash.session.StepCoverage
 import com.hapticwash.session.StepStatus
-import com.hapticwash.session.WashService
 import com.hapticwash.session.allCovered
 import com.hapticwash.session.focusCounts
 import com.hapticwash.session.focusStep
@@ -96,21 +93,20 @@ import kotlinx.coroutines.flow.first
 /** The Summary's arcs and rows begin once the ring landing from the Wash is this far in. */
 private const val ENTRANCE_AT = 0.6f
 
-/** A Wash's Summary: the one just ended ([fromWash]), or one from History. */
+/** A Wash's Summary: the one just ended ([fromWash], [stoppedByHold] when a hold ended it), or one from History. */
 @Composable
-internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) -> Unit) {
+internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, stoppedByHold: Boolean = false, onGuide: (Int) -> Unit) {
     val context = LocalContext.current
-    val wash = remember(id) {
-        WashService.lastWash.value?.takeIf { it.id == id } ?: History.get(context).read().find { it.id == id }
-    }
+    val controls = LocalWashControls.current
+    val wash = remember(id) { id?.let(controls::wash) }
     val steps = stringArrayResource(R.array.steps)
-    val focus = remember(id) { History.get(context).read().let { h -> focusStep(h)?.let { it to focusCounts(h, it) } } }
+    val focus = remember(id) { controls.history.value.let { h -> focusStep(h)?.let { it to focusCounts(h, it) } } }
     val focusLabel = focus?.first
     // Rows arrive in a short cascade as the end pulses play. Decorative: scrolling is never blocked.
     val entrance = remember { Animatable(0f) }
     // C6: straight from a Wash with the live ring on, that ring shrinks into the Coverage rings (0 = live, 1 = landed).
-    val stoppedByHold = remember { fromWash && StopHold.committed.also { StopHold.committed = false } }
-    val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true && Settings(context).progressRing) 0f else 1f) }
+    val byHold = remember { fromWash && stoppedByHold }
+    val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true && controls.settings.progressRing) 0f else 1f) }
     LaunchedEffect(Unit) { morph.animateTo(1f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)) }
     // The rings and rows start once the live ring is most of the way in, so they fill where they can be seen.
     LaunchedEffect(Unit) {
@@ -118,7 +114,7 @@ internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) 
         entrance.animateTo(1f, tween(ENTRANCE_MS, easing = LinearEasing))
     }
     // Ended by a hold, the stop square becomes the answer: it shrinks into the rings' centre and the words grow in under them.
-    fun numeral() = if (stoppedByHold) EaseOutStrong.transform(((morph.value - 0.4f) / 0.6f).coerceIn(0f, 1f)) else 1f
+    fun numeral() = if (byHold) EaseOutStrong.transform(((morph.value - 0.4f) / 0.6f).coerceIn(0f, 1f)) else 1f
     // The rings' centre in this screen's space, so a moving nav transition doesn't throw the morph off.
     var ringCentre by remember { mutableStateOf(Offset.Unspecified) }
     var screen by remember { mutableStateOf<LayoutCoordinates?>(null) }
@@ -198,8 +194,8 @@ internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, onGuide: (Int) 
             }
             if (!wash.worthSaving()) item { Text(stringResource(R.string.too_short_to_save), morphContent(spec).padding(top = 6.dp, start = 30.dp, end = 30.dp), color = Five.TextSecondary, style = FiveType.labelSmall, textAlign = TextAlign.Center) }
         }
-        if (morph.value < 1f) LiveRing(wash!!.durationS, { morph.value }, { ringCentre }, stoppedByHold)
-        if (stoppedByHold && morph.value < 1f) {
+        if (morph.value < 1f) LiveRing(wash!!.durationS, { morph.value }, { ringCentre }, byHold)
+        if (byHold && morph.value < 1f) {
             Canvas(Modifier.fillMaxSize()) {
                 val p = EaseOutStrong.transform(morph.value)
                 val from = Offset(size.width / 2, size.height / 2 - STOP_LIFT.toPx())
