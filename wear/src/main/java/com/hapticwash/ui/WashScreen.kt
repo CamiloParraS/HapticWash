@@ -89,6 +89,7 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import com.hapticwash.R
 import com.hapticwash.session.Haptics
 import com.hapticwash.session.Settings
+import com.hapticwash.session.WashOutcome
 import com.hapticwash.session.WashService
 import com.hapticwash.ui.theme.Five
 import com.hapticwash.ui.theme.FiveType
@@ -159,29 +160,25 @@ internal fun WashScreen(onGuide: (Int) -> Unit, onCancelled: () -> Unit = {}) {
 }
 
 internal const val TARGET_CARD_MS = 6_000L
-private const val CANCEL_GRACE_MS = 600L
 
 /** Elapsed time, optional progress ring, a changing movement cue, hold to stop. Cues are time-driven and never a Step Status. */
 @Composable
 private fun WashBody(onEnd: (Long) -> Unit, handedOver: Boolean, onCancelled: () -> Unit) {
     val context = LocalContext.current
     val status by WashService.status.collectAsState()
-    val last by WashService.lastWash.collectAsState()
-    val before = remember { last?.id }
-    LaunchedEffect(last) {
-        val ended = last?.takeIf { it.id != before } ?: return@LaunchedEffect
-        // The save is quick; a hold gets a beat for its commit to be seen first.
-        if (StopHold.committed) delay((COMMIT_BEAT_MS - (System.currentTimeMillis() - StopHold.committedAt)).coerceAtLeast(0))
-        onEnd(ended.id)
-    }
-    // A Wash that never began is cancelled and saved nowhere, so no Summary follows: the service just stops running. Leave then, or the stop hold waits for a save that never comes.
-    var sawRunning by remember { mutableStateOf(false) }
-    val handed by rememberUpdatedState(handedOver)
-    LaunchedEffect(status.running) {
-        if (status.running) { sawRunning = true; return@LaunchedEffect }
-        if (!sawRunning) return@LaunchedEffect
-        delay(CANCEL_GRACE_MS) // a normal end publishes its Wash first and the effect above hands over
-        if (!handed) onCancelled()
+    val latest by WashService.outcome.collectAsState()
+    val before = remember { latest?.n }
+    LaunchedEffect(latest) {
+        val ending = latest?.takeIf { it.n != before } ?: return@LaunchedEffect
+        when (val o = ending.outcome) {
+            is WashOutcome.Ended -> {
+                // The save is quick; a hold gets a beat for its commit to be seen first.
+                if (StopHold.committed) delay((COMMIT_BEAT_MS - (System.currentTimeMillis() - StopHold.committedAt)).coerceAtLeast(0))
+                onEnd(o.wash.id)
+            }
+            // Never began, saved nowhere: no Summary follows, so leave, or the stop hold waits for a save that never comes.
+            is WashOutcome.Cancelled -> onCancelled()
+        }
     }
     val ring = remember { Settings(context).progressRing }
     // The Summary draws the ring and the stop square from here on, shrinking them into its own; these must not double them.

@@ -47,6 +47,12 @@ data class WashStatus(
 )
 
 /**
+ * The latest [WashOutcome], numbered from 1 per process: a screen tells a new ending from one it already saw, and
+ * two identical Cancelled outcomes in a row still count as two (a StateFlow drops a value equal to the last).
+ */
+data class LatestOutcome(val n: Int, val outcome: WashOutcome)
+
+/**
  * One wash session as a foreground service (type health, D32): motion source -> preprocessor ->
  * step model, one prediction per window. Sensors run only while a session runs (§4.1 item 8);
  * a partial wake lock keeps them delivering with the screen off. With Twist start on, the same
@@ -226,6 +232,7 @@ class WashService : Service() {
                     Log.i(TAG, "Wash: $wash")
                 }
             }
+            _outcome.value = LatestOutcome((_outcome.value?.n ?: 0) + 1, outcome)
             val sorted = model?.latencyNs.orEmpty().sorted()
             fun pct(q: Double) = if (sorted.isEmpty()) 0.0 else sorted[(q * sorted.size).toInt().coerceAtMost(sorted.size - 1)] / 1e6
             Log.i(
@@ -283,7 +290,11 @@ class WashService : Service() {
         private val _status = MutableStateFlow(WashStatus())
         val status: StateFlow<WashStatus> = _status
 
-        /** The Wash that just ended, real or replay; the Summary shows it when the app is open. */
+        /** How the latest Wash ended; the Wash screen turns it into its Summary, or back to Start when Cancelled. */
+        private val _outcome = MutableStateFlow<LatestOutcome?>(null)
+        val outcome: StateFlow<LatestOutcome?> = _outcome
+
+        /** The Wash that last Ended, real or replay; its Summary reads it, since replay Washes are not in History. */
         private val _lastWash = MutableStateFlow<WashSession?>(null)
         val lastWash: StateFlow<WashSession?> = _lastWash
 
