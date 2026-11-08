@@ -8,7 +8,7 @@ Source root `wear/src/main/java/com/hapticwash/`:
 - `sensing/` — MotionSource, real + replay (spec §8.4, §8.5)
 - `pipeline/` — filter, window, normalize; mirrors the AI repo's preprocessing
 - `inference/` — LiteRT wrapper, `model_meta` parsing
-- `session/` — Coverage, AutoEnd, WashService, WashStore, Settings, Haptics (spec §8.6)
+- `session/` — Coverage, AutoEnd, WashStore, Settings, Haptics (spec §8.6). `WashRun` wires them into one Wash and returns its Wash outcome (pure, tested in `WashRunTest`); `WashService` is only its Android adapter (wake lock, notifications, stores, Tile)
 - `ui/` — Compose, one file per screen (`StartScreen`, `WashScreen`, `SummaryScreen`, ...) plus `App.kt` (nav graph), `FiveRings.kt` (all ring drawing), `UiKit.kt` (shared list rows, motion), `WashWording.kt` (what every surface says about a Wash); tile, complication; screenshots in `docs/ux/`
 
 Tests: `wear/src/test` (unit), `wear/src/androidTest` (parity, replay E2E), `wear/src/sharedTest`.

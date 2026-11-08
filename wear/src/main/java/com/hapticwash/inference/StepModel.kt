@@ -7,14 +7,21 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import org.tensorflow.lite.Interpreter
 
+/** A softmax over [ModelMeta.labels] for each preprocessed window: [StepModel] on the watch, a script in tests. */
+interface StepClassifier {
+    val meta: ModelMeta
+
+    fun predict(window: FloatArray): FloatArray
+}
+
 /** The LiteRT step classifier plus the meta it was exported with (SPEC 8.2, 8.3). CPU, 1 thread. */
-class StepModel private constructor(val meta: ModelMeta, private val interpreter: Interpreter) : Closeable {
+class StepModel private constructor(override val meta: ModelMeta, private val interpreter: Interpreter) : StepClassifier, Closeable {
     private val input = ByteBuffer.allocateDirect(4 * meta.windowSize * ModelMeta.CHANNELS.size)
         .order(ByteOrder.nativeOrder())
     private val output = Array(1) { FloatArray(meta.labels.size) }
 
     /** Softmax over [ModelMeta.labels] for one z-scored window from the preprocessor. */
-    fun predict(window: FloatArray): FloatArray {
+    override fun predict(window: FloatArray): FloatArray {
         input.rewind()
         input.asFloatBuffer().put(window)
         interpreter.run(input, output)

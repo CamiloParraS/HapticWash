@@ -7,6 +7,9 @@ preprocessing) live in the core spec in `HapticWash-AI`.
 has a duration; it has Coverage only when the model is loaded and the Wash is long enough.
 Replayed Washes are Washes too, marked with their Source.
 
+**Wash outcome** — how a Wash ended: *Ended* (stopped by the user, by Auto-end, or by the end of a replay; it has
+a duration and maybe Coverage) or *Cancelled* (Auto-end saw no washing in time; saved nowhere).
+
 **Source** — where a Wash's motion came from: `sensor` (the watch) or `replay` (a recorded
 file). Replay Washes exist only in debug builds, are kept apart from real ones, and never
 appear in History.

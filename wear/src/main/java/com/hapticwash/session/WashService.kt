@@ -13,8 +13,8 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
 import com.hapticwash.R
+import com.hapticwash.inference.StepClassifier
 import com.hapticwash.inference.StepModel
-import com.hapticwash.pipeline.Preprocessor
 import com.hapticwash.sensing.ListeningSource
 import com.hapticwash.sensing.MotionSource
 import com.hapticwash.sensing.RealSensorSource
@@ -174,92 +174,75 @@ class WashService : Service() {
         super.onDestroy()
     }
 
+    /**
+     * The Android side of a [WashRun]: status for the screens, the wake lock's Wash, vibrations, where the Wash is
+     * stored, and the Tile and complication. What happens during the Wash is the WashRun's.
+     */
     private suspend fun run(source: MotionSource, kind: String, wrist: Wrist, persist: Boolean = false) {
         val real = kind != "replay" || persist // a persisted replay (showcase) behaves like a real Wash
-        val model = StepModel.bundled(this)
-        val pre = model?.let {
-            require(source.nominalRateHz == it.meta.sampleRateHz) { "source rate != model rate" }
-            Preprocessor(it.meta, mirror = wrist == Wrist.RIGHT)
-        }
-        val smoother = model?.let { Smoother(it.meta) }
-        val coverage = CoverageStateMachine(model?.meta)
-        val autoEnd = AutoEnd(model?.meta)
-        var cancelled = false
+        val model = StepModel.bundled(this)?.let(::Timed)
         val startedAtEpochMs = System.currentTimeMillis()
+        val run = WashRun(
+            source, model, kind, wrist,
+            targetCheck = Settings(this).targetCheck,
+            hapticsOn = { Settings(this).haptics },
+            startedAtEpochMs = startedAtEpochMs,
+            nowMs = SystemClock::elapsedRealtime,
+            out = object : WashRun.Out {
+                override fun cues(buzzes: List<Buzz>) = Buzzer.play(this@WashService, buzzes)
+                override fun targetCheck(undetected: List<Int>) { _status.value = _status.value.copy(undetected = undetected) }
+                override fun log(message: String) { Log.i(TAG, message) }
+            },
+        )
         _status.value = WashStatus(running = true, startedAtEpochMs = startedAtEpochMs, timerOnly = model == null)
-        // Timer-only Washes have no Coverage, so no check: they keep the plain ticks.
-        val check = if (model != null && Settings(this).targetCheck) TargetCheck() else null
-        val washStartMs = SystemClock.elapsedRealtime()
-        Buzzer.play(this, Haptics.onStart(kind, Settings(this).haptics, checkOn = check != null))
         // The Tile's button says a Wash is in progress.
         if (real) TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
         Log.i(TAG, "Session started: source=$kind wrist=$wrist model=${model?.meta?.modelVersion ?: "none (timer-only)"}")
-        val latencyNs = ArrayList<Long>()
-        var first = -1L
-        var last = -1L
         try {
-            source.stream().collect { s ->
-                if (first < 0) first = s.timestampNs
-                last = s.timestampNs
-                val w = pre?.push(s) ?: return@collect
-                val m = model ?: return@collect
-                val t = System.nanoTime()
-                val p = m.predict(w)
-                latencyNs += System.nanoTime() - t
-                val sm = smoother!!.push(p)
-                coverage.window(sm)
-                check?.poll(SystemClock.elapsedRealtime() - washStartMs, coverage.snapshot())?.let { undetected ->
-                    if (undetected.isNotEmpty()) _status.value = _status.value.copy(undetected = undetected)
-                    Buzzer.play(this, Haptics.onTarget(kind, Settings(this).haptics, undetected))
-                }
-                val top = p.indices.maxBy { p[it] }
-                val label = m.meta.labels[top]
-                Log.i(TAG, "window %d t=%.1fs %s p=%.2f".format(latencyNs.size, (last - first) / 1e9, label, p[top]))
-                when (autoEnd.window(sm)) {
-                    AutoEndAction.NUDGE -> {
-                        val elapsedMs = (autoEnd.elapsedS * 1000).toLong()
-                        val nowMs = SystemClock.elapsedRealtime() - washStartMs
-                        // Logged for every Wash with the check on, so post-nudge windows stay separable.
-                        if (check != null) { check.nudge(nowMs, elapsedMs); Log.i(TAG, "Target check: keep-going nudge at $nowMs ms") }
-                        Buzzer.play(this, Haptics.onNudge(kind, Settings(this).haptics, elapsedMs, checkOn = check != null))
-                    }
-                    AutoEndAction.CANCEL -> { cancelled = true; throw AutoEnded() }
-                    AutoEndAction.END -> throw AutoEnded()
-                    AutoEndAction.NONE -> {}
-                }
-            }
-        } catch (_: AutoEnded) {
-            // Auto-end: fall through to the normal end below.
+            run.play()
         } finally {
-            val durationS = (last - first).coerceAtLeast(0) / 1e9f
-            if (cancelled) {
-                // Never began: not saved, end pattern only.
-                if (real) TileService.getUpdater(this).requestUpdate(WashTileService::class.java) // no longer "in progress"
-                Buzzer.play(this, Haptics.onCancel(kind, Settings(this).haptics))
-                Log.i(TAG, "Wash cancelled: no washing seen in %.0f s".format(durationS))
-            } else {
-                val wash = coverage.finish(durationS, startedAtEpochMs, kind)
-                // Real Washes go to History, replay Washes (debug builds only) to their own store.
-                // Never masks what ended the Wash; a lost replay Wash fails the report's count check instead.
-                runCatching {
-                    if (real) { if (wash.worthSaving()) History.get(this).add(wash) } else WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash)
-                }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
-                // The Tile and the complication show the last Wash.
-                if (real) {
-                    TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
-                    ComplicationDataSourceUpdateRequester.create(this, ComponentName(this, WashComplicationService::class.java)).requestUpdateAll()
+            val outcome = run.finish()
+            when (outcome) {
+                is WashOutcome.Cancelled -> {
+                    // Never began: not saved, end pattern only.
+                    if (real) TileService.getUpdater(this).requestUpdate(WashTileService::class.java) // no longer "in progress"
+                    Buzzer.play(this, outcome.cues)
+                    Log.i(TAG, "Wash cancelled: no washing seen in %.0f s".format(outcome.durationS))
                 }
-                _lastWash.value = wash
-                Buzzer.play(this, Haptics.onEnd(wash, Settings(this).haptics))
-                Log.i(TAG, "Wash: $wash")
+                is WashOutcome.Ended -> {
+                    val wash = outcome.wash
+                    // Real Washes go to History, replay Washes (debug builds only) to their own store.
+                    // Never masks what ended the Wash; a lost replay Wash fails the report's count check instead.
+                    runCatching {
+                        if (real) { if (wash.worthSaving()) History.get(this).add(wash) } else WashStore(File(filesDir, REPLAY_STORE), REPLAY_CAP).add(wash)
+                    }.onFailure { Log.e(TAG, "$kind Wash not stored", it) }
+                    // The Tile and the complication show the last Wash.
+                    if (real) {
+                        TileService.getUpdater(this).requestUpdate(WashTileService::class.java)
+                        ComplicationDataSourceUpdateRequester.create(this, ComponentName(this, WashComplicationService::class.java)).requestUpdateAll()
+                    }
+                    _lastWash.value = wash
+                    Buzzer.play(this, outcome.cues)
+                    Log.i(TAG, "Wash: $wash")
+                }
             }
-            val sorted = latencyNs.sorted()
+            val sorted = model?.latencyNs.orEmpty().sorted()
             fun pct(q: Double) = if (sorted.isEmpty()) 0.0 else sorted[(q * sorted.size).toInt().coerceAtMost(sorted.size - 1)] / 1e6
             Log.i(
                 TAG,
                 "Session ended: %.1f s, %d windows, inference median %.2f ms, p95 %.2f ms"
-                    .format(durationS, sorted.size, pct(0.5), pct(0.95)),
+                    .format(outcome.durationS, sorted.size, pct(0.5), pct(0.95)),
             )
+        }
+    }
+
+    /** [StepModel] timed per window, for the latency line each Wash logs. */
+    private class Timed(private val model: StepModel) : StepClassifier by model {
+        val latencyNs = ArrayList<Long>()
+
+        override fun predict(window: FloatArray): FloatArray {
+            val t = System.nanoTime()
+            return model.predict(window).also { latencyNs += System.nanoTime() - t }
         }
     }
 
@@ -274,9 +257,6 @@ class WashService : Service() {
             .setOngoing(true)
             .build()
     }
-
-    /** Thrown out of the collector to end the Wash on Auto-end. */
-    private class AutoEnded : Exception()
 
     companion object {
         const val TAG = "HapticWash"
