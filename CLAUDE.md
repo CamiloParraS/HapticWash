@@ -31,7 +31,7 @@ Run from Git Bash. Needs `JAVA_HOME` (JDK 17+), `ANDROID_HOME`, `adb`; instrumen
 ./gradlew :wear:connectedDebugAndroidTest  # instrumented: inference parity + latency
 scripts/release_smoke.sh                   # R8 release build loads the model
 ```
-Replay and demo scripts: `scripts/replay_demo.sh`, `replay_batch.sh`, `showcase.sh` (usage in README).
+Replay and demo scripts: `scripts/replay_demo.sh`, `replay_batch.sh`, `showcase.sh` (usage in README). Real watch (M6): `scripts/watch_record.sh` (probe, record `own_watch`, pull, perf, battery; usage in its header).
 
 ## File size
 Keep a Kotlin file to about 500 lines. If it grows past that, split it (one screen or one concept per file) or list it in `JUSTIFIED` in `wear/src/test/java/com/hapticwash/FileSizeTest.kt` with a reason. The unit test enforces this and also fails on entries that are no longer needed.

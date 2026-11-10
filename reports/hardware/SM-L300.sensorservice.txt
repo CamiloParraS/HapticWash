@@ -1,0 +1,949 @@
+Captured at: 14:11:48.665
+Sensor Device:
+Total 36 h/w sensors, 36 running 0 disabled clients:
+0x0000000a) active-count = 1; sampling_period(ms) = {100.0}, selected = 100.00 ms; batching_period(ms) = {0.0}, selected = 0.00 ms
+0x00000041) active-count = 1; sampling_period(ms) = {200.0}, selected = 200.00 ms; batching_period(ms) = {0.0}, selected = 0.00 ms
+0x00000043) active-count = 1; sampling_period(ms) = {60000.0}, selected = 60000.00 ms; batching_period(ms) = {60000.0}, selected = 0.00 ms
+0x00000044) active-count = 6; sampling_period(ms) = {200.0, 66.7, 200.0, 1.0, 1.0, 66.7}, selected = 1.00 ms; batching_period(ms) = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}, selected = 0.00 ms
+0x00000047) active-count = 1; sampling_period(ms) = {66.7}, selected = 66.67 ms; batching_period(ms) = {0.0}, selected = 0.00 ms
+0x00000048) active-count = 2; sampling_period(ms) = {1000.0, 1000.0}, selected = 1000.00 ms; batching_period(ms) = {0.0, 0.0}, selected = 0.00 ms
+0x00000049) active-count = 1; sampling_period(ms) = {1000.0}, selected = 1000.00 ms; batching_period(ms) = {0.0}, selected = 0.00 ms
+0x0000004b) active-count = 1; sampling_period(ms) = {66.7}, selected = 66.67 ms; batching_period(ms) = {0.0}, selected = 0.00 ms
+0x0000004c) active-count = 7; sampling_period(ms) = {200.0, 66.7, 1.0, 66.7, 1.0, 66.7, 1.0}, selected = 1.00 ms; batching_period(ms) = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}, selected = 0.00 ms
+Sensor List:
+0000000000) LSM6DSV Accelerometer     | STM             | ver: 1 | type: android.sensor.accelerometer(1) | perm: n/a | flags: 0x00000000
+	continuous | minRate=6.25Hz | maxRate=100.00Hz | FIFO (max,reserved) = (300, 300) events | non-wakeUp | 
+0x00000001) LSM6DSO Gyroscope         | STM             | ver: 1 | type: android.sensor.gyroscope(4) | perm: n/a | flags: 0x00000000
+	continuous | minRate=6.25Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x00000002) LSM6DSO Accelerometer 32G | STM             | ver: 1 | type: com.samsung.sensor.accelerometer_32g(69657) | perm: com.samsung.permission.SSENSOR | flags: 0x00000000
+	continuous | minRate=6.25Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x00000005) LPS28DFW Barometer        | STM             | ver: 1 | type: android.sensor.pressure(6) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=10.00Hz | FIFO (max,reserved) = (250, 250) events | non-wakeUp | 
+0x00000009) STK31E15 Light            | sitronix        | ver: 1 | type: android.sensor.light(5) | perm: n/a | flags: 0x00000002
+	on-change | minRate=1.00Hz | maxRate=10.00Hz | no batching | non-wakeUp | 
+0x0000000a) Samsung AutoBrightness    | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.autobrightness(65601) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | minRate=10.00Hz | maxRate=10.00Hz | no batching | non-wakeUp | 
+0x0000000c) Samsung Rotation Vector   | Samsung Electronics | ver: 1 | type: android.sensor.rotation_vector(11) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x0000000d) Game Rotation Vector      | Samsung Electronics | ver: 1 | type: android.sensor.game_rotation_vector(15) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x0000000e) LSM6DSO Gyroscope Uncalibrated | STM             | ver: 1 | type: android.sensor.gyroscope_uncalibrated(16) | perm: n/a | flags: 0x00000000
+	continuous | minRate=6.25Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x0000000f) Samsung Linear Acceleration Sensor | Samsung Inc.    | ver: 1 | type: android.sensor.linear_acceleration(10) | perm: n/a | flags: 0x00000000
+	continuous | minRate=6.25Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x00000010) Samsung Aod AutoBrightness | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.aod_autobrightness(69690) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | minRate=10.00Hz | maxRate=10.00Hz | no batching | non-wakeUp | 
+0x00000011) AFE4510 ECG               | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.ecg(69669) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | minRate=100.00Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x00000012) Samsung HR Raw Sensor     | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.hr_raw(69682) | perm: android.permission.health.READ_HEART_RATE | flags: 0x00000002
+	on-change | minRate=25.00Hz | maxRate=25.00Hz | FIFO (max,reserved) = (600, 0) events | non-wakeUp | 
+0x00000013) Samsung HR Raw Fac Sensor | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.hr_raw_fac(69683) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | minRate=100.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (600, 0) events | non-wakeUp | 
+0x00000015) Samsung HR Raw Fac2 Sensor | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.hr_raw_fac2(69684) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | minRate=100.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (600, 0) events | non-wakeUp | 
+0x00000016) AFE4510 BIA               | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.bia(69680) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | minRate=100.00Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x00000018) AK09918C Magnetometer UnCalibrated | Asahi Kasei Microdevices | ver: 1 | type: android.sensor.magnetic_field_uncalibrated(14) | perm: n/a | flags: 0x00000000
+	continuous | minRate=6.25Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x00000019) AK09918C Magnetometer     | Asahi Kasei Microdevices | ver: 1 | type: android.sensor.magnetic_field(2) | perm: n/a | flags: 0x00000000
+	continuous | minRate=6.25Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x0000001d) LightCCT                  | Samsung Electronics | ver: 1 | type: com.samsung.sensor.light_cct(65587) | perm: com.samsung.permission.SSENSOR | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=5.00Hz | no batching | non-wakeUp | 
+0x00000020) SContext                  | Samsung         | ver: 1 | type: com.samsung.sensor.sensorhubs(69632) | perm: com.samsung.permission.SSENSOR | flags: 0x00000016
+	special-trigger | minRate=50.00Hz | minDelay=0us | no batching | non-wakeUp | data-injection, 
+0x00000041) wrist_tilt_gesture        | Samsung         | ver: 1 | type: android.sensor.wrist_tilt_gesture(26) | perm: n/a | flags: 0x00000007
+	special-trigger | maxDelay=0us | minDelay=0us | no batching | wakeUp | 
+0x00000042) Samsung Step Detector     | Samsung Inc.    | ver: 1 | type: android.sensor.step_detector(18) | perm: android.permission.ACTIVITY_RECOGNITION | flags: 0x00000006
+	special-trigger | maxDelay=0us | minDelay=0us | no batching | non-wakeUp | 
+0x00000043) Samsung Step Counter      | Samsung Inc.    | ver: 1 | type: android.sensor.step_counter(19) | perm: android.permission.ACTIVITY_RECOGNITION | flags: 0x00000002
+	on-change | minRate=0.00Hz | maxRate=1.00Hz | FIFO (max,reserved) = (600, 0) events | non-wakeUp | 
+0x00000044) Samsung Offbody Detector  | Samsung Inc.    | ver: 1 | type: android.sensor.low_latency_offbody_detect(34) | perm: n/a | flags: 0x00000003
+	on-change | maxDelay=0us | minDelay=0us | no batching | wakeUp | 
+0x00000046) Samsung GPS Batch         | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.gps_batch(69633) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | minRate=0.01Hz | maxRate=1.00Hz | no batching | non-wakeUp | 
+0x00000047) Samsung Movement Sensor   | Samsung         | ver: 1 | type: com.samsung.sensor.movement(69650) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (100, 0) events | non-wakeUp | 
+0x00000048) Samsung wrist down Sensor | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.wrist_down(69655) | perm: com.samsung.permission.SSENSOR | flags: 0x00000006
+	special-trigger | minRate=1.00Hz | maxRate=1.00Hz | no batching | non-wakeUp | 
+0x00000049) Samsung auto rotation Sensor | Samsung Inc.    | ver: 1 | type: android.sensor.device_orientation(27) | perm: n/a | flags: 0x00000003
+	on-change | minRate=1.00Hz | maxRate=1.00Hz | no batching | wakeUp | 
+0x0000004a) Samsung Thermistor Sensor | Samsung         | ver: 1 | type: com.samsung.sensor.thermistor(69656) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (100, 0) events | non-wakeUp | 
+0x0000004b) Samsung Altitude Sensor   | Samsung         | ver: 1 | type: com.samsung.sensor.altitude(69658) | perm: n/a | flags: 0x00000006
+	special-trigger | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (100, 0) events | non-wakeUp | 
+0x0000004c) Samsung LowPower Offbody Detector | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.low_power_offbody_detector(69659) | perm: n/a | flags: 0x00000003
+	on-change | maxDelay=0us | minDelay=0us | no batching | wakeUp | 
+0x0000004d) Samsung HR Batch Sensor   | Samsung Inc.    | ver: 1 | type: android.sensor.heart_rate(21) | perm: android.permission.health.READ_HEART_RATE | flags: 0x00000003
+	on-change | minRate=1.00Hz | maxRate=1.00Hz | FIFO (max,reserved) = (600, 600) events | wakeUp | 
+0x0000004e) Samsung TimeSync Sensor   | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.timesync(69661) | perm: com.samsung.permission.SSENSOR | flags: 0x00000006
+	special-trigger | minRate=0.00Hz | maxRate=1.00Hz | no batching | non-wakeUp | 
+0x0000004f) Samsung Skin Temp Sensor  | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.skin_temp(69686) | perm: com.samsung.permission.SSENSOR | flags: 0x00000002
+	on-change | minRate=0.00Hz | maxRate=1.00Hz | FIFO (max,reserved) = (600, 0) events | non-wakeUp | 
+0x00000050) Samsung HR None Wakeup Sensor | Samsung Inc.    | ver: 1 | type: android.sensor.heart_rate(21) | perm: android.permission.health.READ_HEART_RATE | flags: 0x00000002
+	on-change | minRate=1.00Hz | maxRate=1.00Hz | no batching | non-wakeUp | 
+0x00000052) Samsung aod on trigger Sensor | Samsung Inc.    | ver: 1 | type: com.samsung.sensor.aod_on_trigger(69701) | perm: com.samsung.permission.SSENSOR | flags: 0x00000006
+	special-trigger | maxDelay=0us | minDelay=0us | no batching | non-wakeUp | 
+0x5f636779) Corrected Gyroscope Sensor | AOSP            | ver: 1 | type: android.sensor.gyroscope(4) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f676172) Game Rotation Vector Sensor | AOSP            | ver: 3 | type: android.sensor.game_rotation_vector(15) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f676273) Gyroscope Bias (debug)    | AOSP            | ver: 1 | type: android.sensor.accelerometer(1) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f67656f) GeoMag Rotation Vector Sensor | AOSP            | ver: 3 | type: android.sensor.geomagnetic_rotation_vector(20) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f677276) Gravity Sensor            | AOSP            | ver: 3 | type: android.sensor.gravity(9) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f6c696e) Linear Acceleration Sensor | AOSP            | ver: 3 | type: android.sensor.linear_acceleration(10) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f726f76) Rotation Vector Sensor    | AOSP            | ver: 3 | type: android.sensor.rotation_vector(11) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f797072) Orientation Sensor        | AOSP            | ver: 1 | type: android.sensor.orientation(3) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+Fusion States:
+9-axis fusion disabled (0 clients), gyro-rate= 199.69Hz, q=< 0, 0, 0, 0 > (0), b=< 0, 0, 0 >
+game fusion(no mag) disabled (0 clients), gyro-rate= 199.69Hz, q=< -0.144381, 0.0301269, -0.824688, 0.546018 > (1), b=< 0, 0, 0 >
+geomag fusion (no gyro) disabled (0 clients), gyro-rate= 199.69Hz, q=< 0, 0, 0, 0 > (0), b=< 0, 0, 0 >
+Recent Sensor events:
+Gravity Sensor: last 10 events
+	 1 (ts=101646.969159615, wall=14:07:27.025) -1.86, -2.23, 9.37, 
+	 2 (ts=101647.019042153, wall=14:07:27.077) -1.50, -2.28, 9.42, 
+	 3 (ts=101647.069385153, wall=14:07:27.125) -1.65, -2.41, 9.36, 
+	 4 (ts=101647.119274460, wall=14:07:27.175) -1.59, -3.21, 9.13, 
+	 5 (ts=101647.169558999, wall=14:07:27.225) -1.21, -3.15, 9.21, 
+	 6 (ts=101647.219477152, wall=14:07:27.275) -0.45, -3.33, 9.21, 
+	 7 (ts=101647.269767767, wall=14:07:27.326) -0.42, -3.12, 9.29, 
+	 8 (ts=101647.319647421, wall=14:07:27.375) -0.19, -3.06, 9.31, 
+	 9 (ts=101647.372414382, wall=14:07:27.428) 1.07, -2.57, 9.40, 
+	10 (ts=101647.419834959, wall=14:07:27.475) 1.78, -2.33, 9.36, 
+Samsung aod on trigger Sensor: last 10 events
+	 1 (ts=75775.265757473, wall=06:56:15.323) [value masked]
+	 2 (ts=75791.151553883, wall=06:56:31.209) [value masked]
+	 3 (ts=75842.674326500, wall=06:57:22.733) [value masked]
+	 4 (ts=75891.157111080, wall=06:58:11.215) [value masked]
+	 5 (ts=75899.592534804, wall=06:58:19.650) [value masked]
+	 6 (ts=75905.714975492, wall=06:58:25.772) [value masked]
+	 7 (ts=75922.582644017, wall=06:58:42.640) [value masked]
+	 8 (ts=75928.700334743, wall=06:58:48.758) [value masked]
+	 9 (ts=75977.693110207, wall=06:59:37.748) [value masked]
+	10 (ts=75982.433329665, wall=06:59:42.491) [value masked]
+Samsung Altitude Sensor: last 10 events
+	 1 (ts=0.072285482, wall=05:58:06.934) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 2 (ts=0.075899604, wall=06:58:19.760) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 3 (ts=0.077440696, wall=07:24:00.825) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 4 (ts=0.079514620, wall=07:58:34.742) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 5 (ts=0.083130240, wall=08:58:50.301) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 6 (ts=0.086741969, wall=09:59:02.177) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 7 (ts=0.090346521, wall=10:59:06.580) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 8 (ts=0.093952174, wall=11:59:12.389) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 9 (ts=0.097561627, wall=12:59:21.750) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	10 (ts=0.101176388, wall=13:59:36.444) 1.00, 200.00, 200.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+Samsung auto rotation Sensor: last 10 events
+	 1 (ts=101647.703410609, wall=14:07:27.763) 1.00, 
+	 2 (ts=101647.761294571, wall=14:07:27.819) -1.00, 
+	 3 (ts=101695.254997652, wall=14:08:15.334) 3.00, 
+	 4 (ts=101695.341810767, wall=14:08:15.399) -1.00, 
+	 5 (ts=101696.724259651, wall=14:08:16.785) 1.00, 
+	 6 (ts=101698.043990188, wall=14:08:18.102) -1.00, 
+	 7 (ts=101698.587032534, wall=14:08:18.657) 0.00, 
+	 8 (ts=101698.645497188, wall=14:08:18.704) -1.00, 
+	 9 (ts=101701.047599994, wall=14:08:21.110) 1.00, 
+	10 (ts=101701.526155686, wall=14:08:21.583) -1.00, 
+Samsung LowPower Offbody Detector: last 10 events
+	 1 (ts=101101.978563654, wall=13:58:22.035) 1.00, -1.00, 6.00, 158.00, 5.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 2 (ts=101162.012233419, wall=13:59:22.070) 0.00, 1.00, 166.00, 84.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 3 (ts=101246.264757897, wall=14:00:46.323) 1.00, -1.00, 86.00, 57.00, 5.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 4 (ts=101252.232922701, wall=14:00:52.295) 0.00, 1.00, 87.00, 239.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 5 (ts=101252.949692316, wall=14:00:53.014) 1.00, -1.00, 76.00, 255.00, 2.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 6 (ts=101331.099083836, wall=14:02:11.158) 0.00, 1.00, 67.00, 252.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 7 (ts=101397.269398558, wall=14:03:17.328) 1.00, -1.00, 86.00, 157.00, 5.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 8 (ts=101600.552078990, wall=14:06:40.609) 0.00, 1.00, 3.00, 31.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	 9 (ts=101643.034769536, wall=14:07:23.110) 1.00, -1.00, 120.00, 17.00, 4.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+	10 (ts=101646.243391610, wall=14:07:26.305) 0.00, 1.00, 234.00, 14.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+Samsung Step Counter: last 50 events
+	 1 (ts=92356.923685782, wall=11:32:36.979) [value masked]
+	 2 (ts=92408.789854937, wall=11:33:28.846) [value masked]
+	 3 (ts=92409.067182321, wall=11:33:29.122) [value masked]
+	 4 (ts=92411.071681435, wall=11:33:31.127) [value masked]
+	 5 (ts=92431.804890228, wall=11:33:51.860) [value masked]
+	 6 (ts=92432.425337997, wall=11:33:52.481) [value masked]
+	 7 (ts=92432.987383189, wall=11:33:53.043) [value masked]
+	 8 (ts=92433.607046919, wall=11:33:53.663) [value masked]
+	 9 (ts=92434.187449457, wall=11:33:54.243) [value masked]
+	10 (ts=92434.806725534, wall=11:33:54.862) [value masked]
+	11 (ts=92435.407854033, wall=11:33:55.463) [value masked]
+	12 (ts=92436.048926341, wall=11:33:56.104) [value masked]
+	13 (ts=92436.689608302, wall=11:33:56.745) [value masked]
+	14 (ts=92437.370836570, wall=11:33:57.426) [value masked]
+	15 (ts=92438.130571762, wall=11:33:58.186) [value masked]
+	16 (ts=92438.892990954, wall=11:33:58.948) [value masked]
+	17 (ts=92439.614100569, wall=11:33:59.669) [value masked]
+	18 (ts=92440.197250068, wall=11:34:00.253) [value masked]
+	19 (ts=92442.197656682, wall=11:34:02.253) [value masked]
+	20 (ts=93174.596978060, wall=11:46:14.655) [value masked]
+	21 (ts=93174.597260637, wall=11:46:14.655) [value masked]
+	22 (ts=93700.019227761, wall=11:55:00.077) [value masked]
+	23 (ts=94041.764151611, wall=12:00:41.819) [value masked]
+	24 (ts=94043.065065071, wall=12:00:43.121) [value masked]
+	25 (ts=94390.191196882, wall=12:06:30.247) [value masked]
+	26 (ts=94390.192760689, wall=12:06:30.248) [value masked]
+	27 (ts=94899.987797601, wall=12:15:00.048) [value masked]
+	28 (ts=95466.585198352, wall=12:24:26.640) [value masked]
+	29 (ts=95502.308674166, wall=12:25:02.364) [value masked]
+	30 (ts=95502.318474743, wall=12:25:02.374) [value masked]
+	31 (ts=95984.857603689, wall=12:33:04.913) [value masked]
+	32 (ts=95984.950195342, wall=12:33:05.005) [value masked]
+	33 (ts=95986.948006495, wall=12:33:07.003) [value masked]
+	34 (ts=96100.024195603, wall=12:35:00.082) [value masked]
+	35 (ts=96306.448361222, wall=12:38:26.504) [value masked]
+	36 (ts=96306.458785068, wall=12:38:26.514) [value masked]
+	37 (ts=96371.742606672, wall=12:39:31.799) [value masked]
+	38 (ts=96371.758329210, wall=12:39:31.814) [value masked]
+	39 (ts=96671.228983146, wall=12:44:31.284) [value masked]
+	40 (ts=96671.709633530, wall=12:44:31.765) [value masked]
+	41 (ts=96673.714646990, wall=12:44:33.770) [value masked]
+	42 (ts=96675.579929143, wall=12:44:35.635) [value masked]
+	43 (ts=97300.018055502, wall=12:55:00.076) [value masked]
+	44 (ts=97406.808129502, wall=12:56:46.863) [value masked]
+	45 (ts=97407.308856078, wall=12:56:47.364) [value masked]
+	46 (ts=97408.289609001, wall=12:56:48.345) [value masked]
+	47 (ts=97410.289433422, wall=12:56:50.345) [value masked]
+	48 (ts=98500.023713601, wall=13:15:00.081) [value masked]
+	49 (ts=99700.029781968, wall=13:35:00.086) [value masked]
+	50 (ts=100900.026444184, wall=13:55:00.084) [value masked]
+Samsung Offbody Detector: last 10 events
+	 1 (ts=101101.978776654, wall=13:58:22.035) 1.00, 
+	 2 (ts=101162.012563573, wall=13:59:22.070) 0.00, 
+	 3 (ts=101246.265185590, wall=14:00:46.323) 1.00, 
+	 4 (ts=101252.233538662, wall=14:00:52.295) 0.00, 
+	 5 (ts=101252.950709585, wall=14:00:53.014) 1.00, 
+	 6 (ts=101331.099748644, wall=14:02:11.158) 0.00, 
+	 7 (ts=101397.269928981, wall=14:03:17.328) 1.00, 
+	 8 (ts=101600.552411874, wall=14:06:40.609) 0.00, 
+	 9 (ts=101643.035086574, wall=14:07:23.110) 1.00, 
+	10 (ts=101646.244585995, wall=14:07:26.305) 0.00, 
+wrist_tilt_gesture: last 10 events
+	 1 (ts=96382.949902702, wall=12:39:43.026) 1.00, 
+	 2 (ts=96386.781907891, wall=12:39:46.839) 1.00, 
+	 3 (ts=101149.169555467, wall=13:59:09.228) 1.00, 
+	 4 (ts=101254.475230661, wall=14:00:54.544) 1.00, 
+	 5 (ts=101330.277122106, wall=14:02:10.335) 1.00, 
+	 6 (ts=101397.049519866, wall=14:03:17.113) 1.00, 
+	 7 (ts=101489.098162416, wall=14:04:49.158) 1.00, 
+	 8 (ts=101597.370413761, wall=14:06:37.429) 1.00, 
+	 9 (ts=101630.390987545, wall=14:07:10.474) 1.00, 
+	10 (ts=101643.148362305, wall=14:07:23.207) 1.00, 
+Samsung Linear Acceleration Sensor: last 10 events
+	 1 (ts=101646.188082118, wall=14:07:26.246) 0.75, -0.88, -1.12, 
+	 2 (ts=101646.198112348, wall=14:07:26.257) 1.24, -1.15, -0.02, 
+	 3 (ts=101646.208160887, wall=14:07:26.266) 0.08, -1.33, -0.38, 
+	 4 (ts=101646.218779156, wall=14:07:26.277) -0.25, -1.02, -0.04, 
+	 5 (ts=101646.228204848, wall=14:07:26.285) -0.37, -0.91, -1.05, 
+	 6 (ts=101646.239871464, wall=14:07:26.298) -0.19, 0.16, -0.83, 
+	 7 (ts=101646.248590464, wall=14:07:26.307) -0.35, 0.08, -1.04, 
+	 8 (ts=101646.258310925, wall=14:07:26.314) -0.65, -0.14, -1.18, 
+	 9 (ts=101646.268345964, wall=14:07:26.325) -0.21, -0.20, -0.95, 
+	10 (ts=101646.278355194, wall=14:07:26.339) 0.02, -0.33, -0.76, 
+LSM6DSO Gyroscope Uncalibrated: last 10 events
+	 1 (ts=101647.389994613, wall=14:07:27.446) -0.01, -1.85, -0.88, -0.00, 0.00, 0.02, 
+	 2 (ts=101647.394807305, wall=14:07:27.450) 0.53, -1.36, -1.10, -0.00, 0.00, 0.02, 
+	 3 (ts=101647.399812152, wall=14:07:27.455) 0.53, -1.36, -1.10, -0.00, 0.00, 0.02, 
+	 4 (ts=101647.404817575, wall=14:07:27.460) 0.53, -1.36, -1.10, -0.00, 0.00, 0.02, 
+	 5 (ts=101647.410020075, wall=14:07:27.466) 0.53, -1.36, -1.10, -0.00, 0.00, 0.02, 
+	 6 (ts=101647.414831882, wall=14:07:27.470) 1.85, -1.38, -0.98, -0.00, 0.00, 0.02, 
+	 7 (ts=101647.419837228, wall=14:07:27.476) 1.85, -1.38, -0.98, -0.00, 0.00, 0.02, 
+	 8 (ts=101647.424839690, wall=14:07:27.480) 1.85, -1.38, -0.98, -0.00, 0.00, 0.02, 
+	 9 (ts=101647.430039498, wall=14:07:27.486) 1.85, -1.38, -0.98, -0.00, 0.00, 0.02, 
+	10 (ts=101647.434850690, wall=14:07:27.492) 2.12, -2.87, -1.18, -0.00, 0.00, 0.02, 
+Samsung AutoBrightness: last 10 events
+	 1 (ts=101902.626999255, wall=14:11:42.684) [value masked]
+	 2 (ts=101903.268692829, wall=14:11:43.327) [value masked]
+	 3 (ts=101903.909318711, wall=14:11:43.970) [value masked]
+	 4 (ts=101904.550094863, wall=14:11:44.611) [value masked]
+	 5 (ts=101905.190690168, wall=14:11:45.251) [value masked]
+	 6 (ts=101905.831074550, wall=14:11:45.890) [value masked]
+	 7 (ts=101906.472624279, wall=14:11:46.528) [value masked]
+	 8 (ts=101907.113422776, wall=14:11:47.171) [value masked]
+	 9 (ts=101907.754407274, wall=14:11:47.810) [value masked]
+	10 (ts=101908.395402502, wall=14:11:48.454) [value masked]
+Samsung wrist down Sensor: last 10 events
+	 1 (ts=95988.467218802, wall=12:33:08.522) [value masked]
+	 2 (ts=96307.459558568, wall=12:38:27.515) [value masked]
+	 3 (ts=96379.913799627, wall=12:39:39.969) [value masked]
+	 4 (ts=96385.129447777, wall=12:39:45.185) [value masked]
+	 5 (ts=96676.039355450, wall=12:44:36.095) [value masked]
+	 6 (ts=97411.609366498, wall=12:56:51.665) [value masked]
+	 7 (ts=101329.687201837, wall=14:02:09.742) [value masked]
+	 8 (ts=101624.895727780, wall=14:07:04.951) [value masked]
+	 9 (ts=101633.032950120, wall=14:07:13.088) [value masked]
+	10 (ts=101696.622201805, wall=14:08:16.677) [value masked]
+Samsung Movement Sensor: last 10 events
+	 1 (ts=88839.185763202, wall=10:33:59.243) [value masked]
+	 2 (ts=88867.436009413, wall=10:34:27.492) [value masked]
+	 3 (ts=88879.003593212, wall=10:34:39.061) [value masked]
+	 4 (ts=88965.338921266, wall=10:36:05.395) [value masked]
+	 5 (ts=89353.975126052, wall=10:42:34.031) [value masked]
+	 6 (ts=89398.945761674, wall=10:43:19.005) [value masked]
+	 7 (ts=90099.702999108, wall=10:54:59.761) [value masked]
+	 8 (ts=90177.213767321, wall=10:56:17.272) [value masked]
+	 9 (ts=90354.287367909, wall=10:59:14.346) [value masked]
+	10 (ts=101695.250475690, wall=14:08:15.308) [value masked]
+LSM6DSO Gyroscope: last 10 events
+	 1 (ts=101646.178058733, wall=14:07:26.237) -0.24, -1.51, 0.91, 
+	 2 (ts=101646.188084233, wall=14:07:26.246) -0.35, -1.08, 1.02, 
+	 3 (ts=101646.198114464, wall=14:07:26.257) -0.17, -0.77, 1.11, 
+	 4 (ts=101646.208163002, wall=14:07:26.266) -0.06, -0.59, 1.11, 
+	 5 (ts=101646.218781271, wall=14:07:26.277) 0.16, -0.57, 1.03, 
+	 6 (ts=101646.228206964, wall=14:07:26.285) 0.44, -0.76, 1.23, 
+	 7 (ts=101646.239873771, wall=14:07:26.298) 0.47, -0.68, 1.20, 
+	 8 (ts=101646.248592579, wall=14:07:26.307) 0.37, -0.56, 1.06, 
+	 9 (ts=101646.258313079, wall=14:07:26.314) 0.38, -0.39, 0.97, 
+	10 (ts=101646.268348079, wall=14:07:26.325) 0.70, -0.09, 1.12, 
+LSM6DSV Accelerometer: last 50 events
+	 1 (ts=101415.378780421, wall=14:03:35.436) -2.11, 6.88, 6.19, 
+	 2 (ts=101415.398835152, wall=14:03:35.458) -2.36, 6.51, 6.20, 
+	 3 (ts=101415.418898844, wall=14:03:35.475) -2.25, 6.97, 6.49, 
+	 4 (ts=101415.439267459, wall=14:03:35.495) -2.76, 7.73, 5.99, 
+	 5 (ts=101415.459010536, wall=14:03:35.516) -2.33, 7.03, 6.46, 
+	 6 (ts=101415.479066575, wall=14:03:35.535) -2.31, 6.97, 6.49, 
+	 7 (ts=101415.499731075, wall=14:03:35.556) -2.68, 7.00, 5.55, 
+	 8 (ts=101415.521678805, wall=14:03:35.579) -3.04, 6.83, 5.25, 
+	 9 (ts=101415.539576382, wall=14:03:35.604) -2.74, 7.16, 5.07, 
+	10 (ts=101643.327492074, wall=14:07:23.384) -3.97, 7.25, 7.69, 
+	11 (ts=101643.348977898, wall=14:07:23.405) -5.46, 4.33, 6.88, 
+	12 (ts=101643.367064436, wall=14:07:23.423) -4.59, 3.74, 7.32, 
+	13 (ts=101643.387062128, wall=14:07:23.443) -5.36, 2.83, 6.74, 
+	14 (ts=101643.407058282, wall=14:07:23.466) -4.33, 4.52, 7.27, 
+	15 (ts=101643.427053282, wall=14:07:23.484) -6.79, 2.05, 12.83, 
+	16 (ts=101643.447390667, wall=14:07:23.503) -4.14, 3.98, 8.66, 
+	17 (ts=101643.467082282, wall=14:07:23.523) -2.73, 2.88, 8.20, 
+	18 (ts=101643.487694859, wall=14:07:23.545) -3.45, 2.84, 11.78, 
+	19 (ts=101643.509575705, wall=14:07:23.565) -1.74, 2.51, 8.95, 
+	20 (ts=101643.527129936, wall=14:07:23.583) -3.36, 3.59, 6.73, 
+	21 (ts=101643.547489974, wall=14:07:23.603) -3.05, 2.80, 7.13, 
+	22 (ts=101643.567147282, wall=14:07:23.623) -2.16, 2.21, 8.28, 
+	23 (ts=101643.587127743, wall=14:07:23.643) -4.43, 3.85, 8.48, 
+	24 (ts=101643.607110089, wall=14:07:23.663) -4.62, 4.80, 9.57, 
+	25 (ts=101643.627088704, wall=14:07:23.683) -3.16, 2.82, 8.38, 
+	26 (ts=101643.647990127, wall=14:07:23.705) -3.55, 2.01, 8.19, 
+	27 (ts=101643.668677666, wall=14:07:23.724) -4.17, 3.20, 8.84, 
+	28 (ts=101643.687043396, wall=14:07:23.743) -4.03, 3.30, 8.62, 
+	29 (ts=101643.707025204, wall=14:07:23.763) -3.80, 2.82, 8.07, 
+	30 (ts=101643.727015704, wall=14:07:23.783) -5.53, 2.64, 8.00, 
+	31 (ts=101643.747317665, wall=14:07:23.803) -5.92, 3.37, 8.05, 
+	32 (ts=101643.766998588, wall=14:07:23.823) -5.42, 4.02, 8.80, 
+	33 (ts=101643.786984819, wall=14:07:23.854) -5.49, 2.84, 8.65, 
+	34 (ts=101646.628416226, wall=14:07:26.685) 1.10, -3.06, 8.60, 
+	35 (ts=101646.668707116, wall=14:07:26.725) -0.03, -2.32, 7.08, 
+	36 (ts=101646.718575077, wall=14:07:26.774) -0.02, -1.02, 8.23, 
+	37 (ts=101646.768874769, wall=14:07:26.825) -0.98, -1.05, 9.43, 
+	38 (ts=101646.818731077, wall=14:07:26.874) -2.45, -1.29, 8.81, 
+	39 (ts=101646.869598077, wall=14:07:26.925) 1.24, -1.89, 11.28, 
+	40 (ts=101646.918900153, wall=14:07:26.974) -0.63, -2.09, 9.95, 
+	41 (ts=101646.969159615, wall=14:07:27.025) -0.75, -2.52, 5.04, 
+	42 (ts=101647.019042153, wall=14:07:27.077) -0.25, -1.26, 14.30, 
+	43 (ts=101647.069385153, wall=14:07:27.125) 1.29, -2.18, 20.34, 
+	44 (ts=101647.119274460, wall=14:07:27.175) -1.39, -4.36, 6.33, 
+	45 (ts=101647.169558999, wall=14:07:27.225) -2.40, -2.64, 10.40, 
+	46 (ts=101647.219477152, wall=14:07:27.275) -2.00, -2.61, 10.38, 
+	47 (ts=101647.269767767, wall=14:07:27.326) -1.75, -2.58, 10.33, 
+	48 (ts=101647.319647421, wall=14:07:27.375) -1.54, -2.55, 10.33, 
+	49 (ts=101647.372414382, wall=14:07:27.428) -1.13, -2.52, 10.29, 
+	50 (ts=101647.419834959, wall=14:07:27.475) -0.79, -2.50, 10.26, 
+Active sensors:
+Samsung AutoBrightness (handle=0x0000000a, connections=1)
+wrist_tilt_gesture (handle=0x00000041, connections=1)
+Samsung Step Counter (handle=0x00000043, connections=1)
+Samsung Offbody Detector (handle=0x00000044, connections=6)
+Samsung Movement Sensor (handle=0x00000047, connections=1)
+Samsung wrist down Sensor (handle=0x00000048, connections=2)
+Samsung auto rotation Sensor (handle=0x00000049, connections=1)
+Samsung Altitude Sensor (handle=0x0000004b, connections=1)
+Samsung LowPower Offbody Detector (handle=0x0000004c, connections=7)
+Socket Buffer size = 984 events
+WakeLock Status: not held 
+Mode : NORMAL
+Sensor Privacy: disabled
+20 open event connections
+Connection Number: 0 
+	Operating Mode: NORMAL(1000) 
+	 com.android.clockwork.sensor.OffBodyStateProvider | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Offbody Detector 0x00000044 | first flush pending: false | pending flush events 0 
+Connection Number: 1 
+	Operating Mode: NORMAL(1000) 
+	 com.samsung.clockwork.bluetooth.WearBluetoothSwitch$2 | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung LowPower Offbody Detector 0x0000004c | first flush pending: false | pending flush events 0 
+Connection Number: 2 
+	Operating Mode: NORMAL(1000) 
+	 com.samsung.android.hardware.secinputdev.external.SensorListenerWatchWrapper | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung LowPower Offbody Detector 0x0000004c | first flush pending: false | pending flush events 0 
+Connection Number: 3 
+	Operating Mode: NORMAL(1000) 
+	 com.samsung.android.hardware.sensormanager.coord.OffbodyStatus | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Offbody Detector 0x00000044 | first flush pending: false | pending flush events 0 
+Connection Number: 4 
+	Operating Mode: NORMAL(10103) 
+	 h0a | WakeLockRefCount 0 | uid 10103 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung LowPower Offbody Detector 0x0000004c | first flush pending: false | pending flush events 0 
+Connection Number: 5 
+	Operating Mode: NORMAL(1000) 
+	 com.android.server.am.freecess.FreecessTrigger$SensorEventObserver | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Offbody Detector 0x00000044 | first flush pending: false | pending flush events 0 
+Connection Number: 6 
+	Operating Mode: NORMAL(1000) 
+	 com.google.wear.services.infra.offbody.LowLatencyOffBodyDetector$1 | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Offbody Detector 0x00000044 | first flush pending: false | pending flush events 0 
+Connection Number: 7 
+	Operating Mode: NORMAL(10057) 
+	 com.google.android.clockwork.common.wearable.offbody.LowLatencyOffBodyDetector$1 | WakeLockRefCount 0 | uid 10057 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Offbody Detector 0x00000044 | first flush pending: false | pending flush events 0 
+Connection Number: 8 
+	Operating Mode: NORMAL(10052) 
+	 com.google.android.clockwork.systemui.ambient.TiltSensorListener | WakeLockRefCount 0 | uid 10052 | cache size 0 | max cache size 0 | has sensor access: true
+	 wrist_tilt_gesture 0x00000041 | first flush pending: false | pending flush events 0 
+	 Samsung wrist down Sensor 0x00000048 | first flush pending: false | pending flush events 0 
+Connection Number: 9 
+	Operating Mode: NORMAL(1000) 
+	 com.samsung.android.clockwork.settings.service.StConnectionStatusService | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung LowPower Offbody Detector 0x0000004c | first flush pending: false | pending flush events 0 
+Connection Number: 10 
+	Operating Mode: NORMAL(1000) 
+	 com.samsung.android.hardware.sensormanager.coord.Altitude | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Altitude Sensor 0x0000004b | first flush pending: false | pending flush events 0 
+Connection Number: 11 
+	Operating Mode: NORMAL(10021) 
+	 com.samsung.android.wcs.extension.application.init.SensorEventReceiver | WakeLockRefCount 0 | uid 10021 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung LowPower Offbody Detector 0x0000004c | first flush pending: false | pending flush events 0 
+Connection Number: 12 
+	Operating Mode: NORMAL(10057) 
+	 com.google.android.clockwork.sysui.mainui.module.sec.quicklaunch.sensorlistener.QuickLauncherSensorEventListenerImpl | WakeLockRefCount 0 | uid 10057 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung wrist down Sensor 0x00000048 | first flush pending: false | pending flush events 0 
+Connection Number: 13 
+	Operating Mode: NORMAL(1000) 
+	 com.android.server.ssrm.common.callback.wear.WearingEG | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Offbody Detector 0x00000044 | first flush pending: false | pending flush events 0 
+Connection Number: 14 
+	Operating Mode: NORMAL(1000) 
+	 com.android.server.display.AutomaticBrightnessController$2 | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung AutoBrightness 0x0000000a | first flush pending: false | pending flush events 0 
+Connection Number: 15 
+	Operating Mode: NORMAL(10057) 
+	 com.google.android.clockwork.sysui.common.sec.sensor.WearOnOffModule$1 | WakeLockRefCount 0 | uid 10057 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung LowPower Offbody Detector 0x0000004c | first flush pending: false | pending flush events 0 
+Connection Number: 16 
+	Operating Mode: NORMAL(1000) 
+	 com.samsung.android.hardware.sensormanager.coord.Movement | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Movement Sensor 0x00000047 | first flush pending: false | pending flush events 0 
+Connection Number: 17 
+	Operating Mode: NORMAL(1000) 
+	 com.android.server.wm.WindowOrientationListener$OrientationSensorJudge | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung auto rotation Sensor 0x00000049 | first flush pending: false | pending flush events 0 
+Connection Number: 18 
+	Operating Mode: NORMAL(10103) 
+	 h0a | WakeLockRefCount 0 | uid 10103 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung LowPower Offbody Detector 0x0000004c | first flush pending: false | pending flush events 0 
+Connection Number: 19 
+	Operating Mode: NORMAL(10151) 
+	 com.google.android.gms.fitness.sensors.local.LocalSensorAdapter$ConvertingListenerKitKat | WakeLockRefCount 0 | uid 10151 | cache size 0 | max cache size 0 | has sensor access: true
+	 Samsung Step Counter 0x00000043 | first flush pending: false | pending flush events 0 
+0 open direct connections
+Previous Registrations:
+14:08:15 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:08:15 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:08:15 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:32 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:27 - 0x5f677276 pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Gravity Sensor             , com.android.server.power.WirelessChargerDetector$1)
+14:07:26 + 0x00000049 pid=  812 uid= 1000 samplingPeriod= 1000000us batchingPeriod=       0us result=OK (sensor, package): (Samsung auto rotation Sensor, com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:07:26 + 0x5f677276 pid=  812 uid= 1000 samplingPeriod=   50000us batchingPeriod=       0us result=OK (sensor, package): (Gravity Sensor             , com.android.server.power.WirelessChargerDetector$1)
+14:07:26 + 0x00000047 pid=  812 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung Movement Sensor    , com.samsung.android.hardware.sensormanager.coord.Movement)
+14:07:26 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:26 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:07:23 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:07:23 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:07:23 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:07:23 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:07:23 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:23 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:23 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:13 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:10 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:10 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:10 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:07:05 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:06:44 - 0x0000000f pid=20473 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 - 0x00000001 pid=20473 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 + 0x00000001 pid=20473 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 + 0x0000000f pid=20473 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 - 0x0000000f pid=20473 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 - 0x00000001 pid=20473 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 + 0x00000001 pid=20473 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 + 0x0000000f pid=20473 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 - 0x0000000f pid=20473 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:44 - 0x00000001 pid=20473 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:40 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:40 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:40 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:06:40 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:35 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:35 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:35 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:35 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:35 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:03:35 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:03:32 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:03:32 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:03:17 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:17 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:17 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:17 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:17 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:03:17 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:13 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:13 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:11 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:11 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:11 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:11 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:11 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:11 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:10 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:10 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:10 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:02:10 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:10 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:10 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:02:10 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:10 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:10 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:10 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:10 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:02:09 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:09 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:09 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:09 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:09 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:02:09 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:09 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:09 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:02:09 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:02:09 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:09 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+14:02:09 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:02:09 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:01:47 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:01:47 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:01:47 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:00:53 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:00:53 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:00:52 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:00:52 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:00:46 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:00:46 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+14:00:34 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:00:34 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:00:34 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+14:00:31 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+13:59:22 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:22 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:16 + 0x00000044 pid=19157 uid=10097 samplingPeriod=       0us batchingPeriod=       0us result=OK (sensor, package): (Samsung Offbody Detector   , com.samsung.android.wear.smartswitch.connectivity.wear.monitor.WearWearingStateMonitor)
+13:59:02 - 0x0000004e pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung TimeSync Sensor    , com.samsung.android.hardware.sensormanager.coord.GpsTimeSync)
+13:59:00 + 0x00000001 pid=18814 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 + 0x0000000f pid=18814 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 - 0x0000000f pid=18814 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 - 0x00000001 pid=18814 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 + 0x00000001 pid=18814 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 + 0x0000000f pid=18814 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 - 0x0000000f pid=18814 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 - 0x00000001 pid=18814 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 + 0x00000001 pid=18814 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 + 0x0000000f pid=18814 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 - 0x0000000f pid=18814 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 - 0x00000001 pid=18814 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 + 0x00000001 pid=18814 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 + 0x0000000f pid=18814 uid=10085 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 - 0x0000000f pid=18814 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:59:00 - 0x00000001 pid=18814 uid=10085 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:25 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:25 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:25 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:25 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:23 + 0x00000041 pid= 1248 uid=10052 samplingPeriod=  200000us batchingPeriod=       0us result=OK (sensor, package): (wrist_tilt_gesture         , com.google.android.clockwork.systemui.ambient.TiltSensorListener)
+13:58:23 + 0x0000004c pid= 6594 uid=10103 samplingPeriod=       0us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, h0a)
+13:58:22 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:22 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:22 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:22 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:22 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:22 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+13:58:16 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+13:58:16 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+13:58:16 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+13:26:34 + 0x0000004e pid=  812 uid= 1000 samplingPeriod= 1000000us batchingPeriod=       0us result=OK (sensor, package): (Samsung TimeSync Sensor    , com.samsung.android.hardware.sensormanager.coord.GpsTimeSync)
+12:56:51 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:56:51 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:56:51 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:56:51 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:56:51 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:56:46 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:56:46 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:56:46 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:56:46 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:56:46 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:56:46 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:56:46 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:56:46 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:56:46 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:56:46 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:56:46 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:44:36 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:36 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:36 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:36 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:36 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:36 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:36 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:44:36 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:44:36 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:44:31 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:31 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:31 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:31 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:31 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:44:31 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:44:31 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:31 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:44:31 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:44:31 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:44:31 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:40:01 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:40:01 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:40:01 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:40:01 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:40:01 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:40:01 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:40:01 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:40:01 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:40:01 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:51 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:51 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:51 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:51 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:51 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:51 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:51 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:51 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:51 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:51 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:51 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:51 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:49 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:49 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:49 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:49 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:49 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:49 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:49 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:49 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:49 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:49 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:49 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:49 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:48 - 0x0000004c pid= 6594 uid=10103 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, h0a)
+12:39:48 - 0x00000041 pid= 1248 uid=10052 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (wrist_tilt_gesture         , com.google.android.clockwork.systemui.ambient.TiltSensorListener)
+12:39:46 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:46 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:46 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:46 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:46 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:46 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:46 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:46 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:46 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:46 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:46 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:45 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:45 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:45 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:45 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:45 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:45 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:45 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:45 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:45 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:43 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:43 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:43 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:43 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:43 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:43 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:43 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:43 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:43 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:43 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:43 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:40 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:40 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:40 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:40 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:40 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:40 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:40 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:40 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:40 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:33 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:33 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:33 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:33 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:33 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:31 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:31 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:31 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:31 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:31 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:31 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:39:31 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:31 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:39:31 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:31 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:39:31 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:38:27 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:38:27 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:38:27 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:38:27 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:38:27 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:38:26 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:38:26 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:38:26 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:38:26 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:38:26 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:38:26 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:38:26 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:38:26 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:38:26 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:38:26 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:38:26 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:33:08 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:08 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:08 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:08 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:08 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:08 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:08 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:33:08 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:33:08 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:33:04 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:04 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:04 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:04 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:04 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:33:04 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:33:04 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:04 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:33:04 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:33:04 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:33:04 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:24 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:24 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:24 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:24 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:24 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:21 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:21 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:21 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:21 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:21 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:21 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:21 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:21 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:21 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:21 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:21 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:06 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:06 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:06 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:06 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:06 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:05 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:05 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:05 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:05 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:05 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:05 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:05 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:05 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:05 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:05 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:05 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:03 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:03 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:03 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:03 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:03 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:03 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:03 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:03 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:03 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:02 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:02 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:02 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:02 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:02 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:02 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:25:02 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:02 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:25:02 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:02 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:25:02 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:24:33 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:33 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:33 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:33 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:33 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:33 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:33 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:24:33 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:24:33 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:24:26 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:26 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:26 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:26 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:26 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:24:26 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:24:26 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:24:26 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:24:26 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:26 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:24:26 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:10:54 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:54 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:54 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:54 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:54 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:54 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:54 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:10:54 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:10:54 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:10:51 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:51 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:51 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:51 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:51 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:10:51 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:10:51 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:10:51 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:10:51 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:51 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:10:51 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:06:37 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:06:37 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:06:37 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:06:37 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:06:37 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:06:30 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:06:30 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:06:30 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:06:30 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:06:30 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:06:30 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:06:30 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:06:30 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:06:30 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:06:30 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:06:30 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:02:02 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:02:02 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:02:02 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:02:02 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:02:02 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:01:59 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:01:59 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:01:59 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:01:59 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:01:59 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:01:59 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:01:59 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:01:59 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:01:59 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:01:59 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:01:59 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:00:48 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:48 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:48 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:48 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:48 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:48 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:48 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:00:48 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:00:48 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:00:41 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:41 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:41 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:41 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:41 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:00:41 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+12:00:41 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:41 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+12:00:41 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:00:41 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+12:00:41 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+11:59:19 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:59:19 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:59:19 - 0x0000004c pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+11:59:19 - 0x00000000 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+11:59:19 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+11:59:18 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:59:18 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:59:18 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:59:18 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:59:18 + 0x0000004c pid= 1139 uid=10057 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Samsung LowPower Offbody Detector, com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+11:59:18 + 0x00000000 pid= 1139 uid=10057 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSV Accelerometer      , com.google.android.clockwork.sysui.mainui.module.sec.sectiltdetector.SecTiltDetectorImpl)
+11:59:18 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:59:18 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:59:18 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+11:59:18 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+11:59:18 + 0x0000000a pid=  812 uid= 1000 samplingPeriod=  100000us batchingPeriod=       0us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+11:46:15 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:46:15 - 0x00000001 pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:46:15 + 0x00000001 pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (LSM6DSO Gyroscope          , com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:46:15 + 0x0000000f pid= 1139 uid=10057 samplingPeriod=   10000us batchingPeriod=       0us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)
+11:46:15 - 0x0000000a pid=  812 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung AutoBrightness     , com.android.server.display.AutomaticBrightnessController$2)
+11:46:15 - 0x0000000f pid= 1139 uid=10057 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Samsung Linear Acceleration Sensor, com.samsung.android.hardware.gesturemanager.WChiSensor)

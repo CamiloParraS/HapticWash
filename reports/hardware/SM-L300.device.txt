@@ -1,0 +1,6 @@
+ro.product.manufacturer=samsung
+ro.product.model=SM-L300
+ro.build.version.release=16
+ro.build.version.sdk=36
+ro.build.fingerprint=samsung/fresh7bsue/fresh7bs:16/BP2A.250325.020/L300XXS2BZF4:user/release-keys
+battery:  level: 22 scale: 100 Capacity level: -1 

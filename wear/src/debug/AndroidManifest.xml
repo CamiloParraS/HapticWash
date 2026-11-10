@@ -10,5 +10,10 @@
                 <action android:name="com.hapticwash.TWIST_REPLAY" />
             </intent-filter>
         </receiver>
+        <!-- M6 raw recorder (own_watch), started by scripts/watch_record.sh. Exported so adb's shell can start it. -->
+        <service
+            android:name=".sensing.RecordService"
+            android:exported="true"
+            android:foregroundServiceType="health" />
     </application>
 </manifest>

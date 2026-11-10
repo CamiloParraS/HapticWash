@@ -46,4 +46,11 @@ class ManifestTest {
         assertTrue("com.hapticwash.TWIST_REPLAY" in merged("debug"))
         assertFalse("com.hapticwash.TWIST_REPLAY" in merged("release"))
     }
+
+    /** The M6 raw recorder is exported (adb starts it) and writes raw IMU, so it must never ship. */
+    @Test
+    fun recordServiceIsDebugOnly() {
+        assertTrue("sensing.RecordService" in merged("debug"))
+        assertFalse("sensing.RecordService" in merged("release"))
+    }
 }
