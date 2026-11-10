@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.callbackFlow
 
 /**
  * Twist start's background listener (D32): the gyroscope alone, at a low rate, batched, so
- * [TwistDetector] sees roll (gy) with no accelerometer. Samples carry zero acceleration.
+ * [TwistDetector] sees roll (gx) with no accelerometer. Samples carry zero acceleration.
  * Prefers the wake-up gyroscope: a non-wake-up one overwrites its FIFO while the processor
  * sleeps, losing a Twist made with the screen off. Holds no wake lock.
  */
