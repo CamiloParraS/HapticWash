@@ -15,6 +15,7 @@ import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
 import android.os.SystemClock
 import android.util.Log
+import com.hapticwash.BuildConfig
 import com.hapticwash.R
 import com.hapticwash.inference.StepClassifier
 import com.hapticwash.inference.StepModel
@@ -113,17 +114,38 @@ class WashService : Service() {
             try {
                 // Read once at Wash start.
                 val wrist = Wrist.resolve(wristExtra, Settings(this@WashService).wrist)
-                if (replay != null) run(ReplaySource(File(replay), speed), "replay", wrist, persist) else run(RealSensorSource(this@WashService), "sensor", wrist)
+                if (replay != null) run(ReplaySource(File(replay), speed), "replay", wrist, persist) else {
+                    debugRecord(wrist)
+                    run(RealSensorSource(this@WashService), "sensor", wrist)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Session failed", e)
             } finally {
+                if (replay == null) debugRecord(null)
                 wakeLock.takeIf { it.isHeld }?.release()
                 _status.value = WashStatus()
                 scope.launch(Dispatchers.Main) { idle() } // job and listenJob change on the main thread only
             }
         }
+    }
+
+    /**
+     * Debug builds only: every sensor Wash also saves its raw IMU through the debug `RecordService`, as
+     * `files/recordings/wash_<start>.csv`, so it can be replayed after a model or setting change. [wrist] starts
+     * it, null stops it. Started by name: the recorder is not in the release manifest, and R8 drops this there.
+     */
+    private fun debugRecord(wrist: Wrist?) {
+        if (!BuildConfig.DEBUG) return
+        val i = Intent().setClassName(this, "com.hapticwash.sensing.RecordService").putExtra("auto", true)
+        if (wrist != null) {
+            val stamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+            i.setAction("com.hapticwash.RECORD_START").putExtra("session", "wash_$stamp").putExtra("wrist", wrist.name.lowercase())
+        } else {
+            i.setAction("com.hapticwash.RECORD_STOP")
+        }
+        runCatching { startForegroundService(i) }.onFailure { Log.w(TAG, "Wash recording not ${if (wrist != null) "started" else "stopped"}", it) }
     }
 
     /**

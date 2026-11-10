@@ -46,7 +46,8 @@ import org.json.JSONObject
  * relabelling from video later) and `<session>.stats.json` (what the hardware actually delivered:
  * per-sensor rate, inter-sample gaps, pairing drops, sensor specs). A row's label is the last mark
  * at or before its timestamp. Start buzzes once (a sync cue for a video); each mark ticks.
- * Runs alongside a normal Wash: both register the sensors independently.
+ * Runs alongside a normal Wash: both register the sensors independently. Every sensor Wash in a debug build
+ * also starts and stops one itself (`auto`, `wash_<start>`); see `WashService.debugRecord`.
  */
 class RecordService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -59,7 +60,8 @@ class RecordService : Service() {
         when (intent?.action) {
             ACTION_START -> if (rec == null) start(intent) else Log.w(TAG, "Record: already recording ${rec?.session}")
             ACTION_MARK -> rec?.mark(intent.getStringExtra("label")) ?: Log.w(TAG, "Record: MARK while not recording")
-            ACTION_STOP -> stop()
+            // A Wash ending stops only the recording it started, never one started by hand from the script.
+            ACTION_STOP -> if (!intent.getBooleanExtra("auto", false) || rec?.auto != false) stop()
             else -> if (rec == null) stopSelf()
         }
         return START_NOT_STICKY
@@ -76,7 +78,7 @@ class RecordService : Service() {
         require(subject.startsWith("own_watch_")) { "subject must be own_watch_<id> (SPEC 8.1)" }
         val wrist = intent.getStringExtra("wrist")?.takeIf { it in setOf("left", "right", "unknown") } ?: "unknown"
         val dir = File(filesDir, "recordings").apply { mkdirs() }
-        rec = Recording(session, subject, wrist, dir).also {
+        rec = Recording(session, subject, wrist, dir, auto = intent.getBooleanExtra("auto", false)).also {
             it.begin()
             it.mark(intent.getStringExtra("label") ?: "-1")
         }
@@ -90,7 +92,7 @@ class RecordService : Service() {
         stopSelf()
     }
 
-    private inner class Recording(val session: String, val subject: String, val wrist: String, dir: File) {
+    private inner class Recording(val session: String, val subject: String, val wrist: String, dir: File, val auto: Boolean) {
         private val sm = getSystemService(SensorManager::class.java)
         private val acc = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         private val gyr = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
