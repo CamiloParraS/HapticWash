@@ -219,7 +219,7 @@ internal fun FiveRings(coverage: List<StepCoverage>, size: Dp, fill: (Int) -> Fl
 
 /**
  * The Five Rings filling this canvas, each Step on its own radius by its label (outer = Palms), stroke and gap in
- * proportion to the size ([RING_STROKE_OF], [RING_GAP_OF]). A 20 % track of the Step's colour, then the fill from 12
+ * proportion to the size ([RING_STROKE_OF], [RING_GAP_OF]). A track of the Step's text colour (20 %, 36 % on the pale face so it still shows), then the fill from 12
  * o'clock, lit along the diagonal from the colour to its light partner. [fill] is the drawn part of each ring's share,
  * for the entrances; [light] lays white over ring i for the roll call. The Tile draws the same rings ([WashTileService]).
  */
@@ -231,10 +231,17 @@ private fun DrawScope.fiveRings(coverage: List<StepCoverage>, fill: (Int) -> Flo
         val r = size.minDimension / 2 - stroke / 2 - k * (stroke + gap)
         val topLeft = center - Offset(r, r)
         val arc = Size(2 * r, 2 * r)
-        drawCircle(Five.Steps[k], r, alpha = 0.2f, style = Stroke(stroke))
+        drawCircle(Five.StepsText[k], r, alpha = Five.TrackAlpha, style = Stroke(stroke))
         val share = share(c.status)
         val sweep = 360f * share * fill(i)
         if (sweep > 0f) drawArc(diagonal(Five.Steps[k], Five.StepsLight[k]), -90f, sweep, false, topLeft, arc, style = Stroke(stroke, cap = StrokeCap.Round))
+        // Daylight: an ink hairline along both edges of the lit arc, so the ring holds against the pale face.
+        if (sweep > 0f && Five.RingEdge.alpha > 0f) {
+            val edge = stroke * 0.08f
+            for (er in floatArrayOf(r - stroke / 2 + edge / 2, r + stroke / 2 - edge / 2)) {
+                drawArc(Five.RingEdge, -90f, sweep, false, center - Offset(er, er), Size(2 * er, 2 * er), style = Stroke(edge))
+            }
+        }
         val l = light(i)
         if (l > 0f && share > 0f) drawArc(Color.White, -90f, 360f * share, false, topLeft, arc, alpha = 0.6f * l, style = Stroke(stroke, cap = StrokeCap.Round))
         // A glint rides the head of the arc while it draws, and is gone when it lands.
@@ -248,7 +255,7 @@ private fun DrawScope.fiveRings(coverage: List<StepCoverage>, fill: (Int) -> Flo
             val t = (f * 3f).coerceIn(0f, 1f)
             val g = stroke * 0.82f * (0.5f + 0.5f * t)
             translate(center.x - g / 2, center.y - r - g / 2) {
-                with(it[k]) { draw(Size(g, g), alpha = t, colorFilter = ColorFilter.tint(if (share > 0f) Five.onStep(k + 1) else Five.Steps[k])) }
+                with(it[k]) { draw(Size(g, g), alpha = t, colorFilter = ColorFilter.tint(if (share > 0f) Five.onStep(k + 1) else Five.StepsText[k])) }
             }
         }
     }

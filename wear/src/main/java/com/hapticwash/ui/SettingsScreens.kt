@@ -216,7 +216,7 @@ internal fun WashSettingsScreen() {
     val feedback = LocalHapticFeedback.current
     fun tick(on: Boolean) = feedback.performHapticFeedback(if (on) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
     ListScreen(Five.Steps[1], 0.26f) { spec ->
-        item { Header(spec, stringResource(R.string.settings_wash), Five.Steps[1]) }
+        item { Header(spec, stringResource(R.string.settings_wash), Five.StepsText[1]) }
         item {
             val (source, modifier) = settingRow(spec, 1)
             SwitchButton(haptics, { haptics = it; settings.haptics = it; tick(it) }, modifier.heightIn(min = TOGGLE_ROW_MIN).then(swell(haptics)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = toggleColors(),
@@ -292,8 +292,8 @@ internal fun StartSettingsScreen() {
  */
 @Composable
 private fun TwistSheet(visible: Boolean, onCancel: () -> Unit, onConfirm: () -> Unit) = Dialog(visible = visible, onDismissRequest = onCancel) {
-    val amber = Five.Steps[2]
-    Box(Modifier.fillMaxSize().background(Five.Bg).tintWash(amber, 0.28f)) {
+    val amber = Five.StepsText[2]
+    Box(Modifier.fillMaxSize().background(Five.Bg).tintWash(Five.Steps[2], 0.28f)) {
         Column(Modifier.fillMaxWidth().padding(top = 30.dp, start = 26.dp, end = 26.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
             // A battery, a third full: the cost before the words.
             Canvas(Modifier.size(34.dp, 20.dp).clearAndSetSemantics {}) {

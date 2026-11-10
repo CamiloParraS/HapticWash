@@ -225,15 +225,15 @@ private fun StepRow(c: StepCoverage, name: String, focus: Pair<Int, Int>?, fill:
             .heightIn(min = 56.dp).padding(horizontal = 14.dp, vertical = 8.dp).semantics(mergeDescendants = true) {},
         horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
     ) {
-        GlyphDisc(if (ok) color else color.copy(alpha = 0.2f)) { Icon(painterResource(STEP_ICONS[c.label - 1]), null, Modifier.size(19.dp), tint = if (ok) Five.onStep(c.label) else color) }
+        GlyphDisc(if (ok) color else color.copy(alpha = 0.2f)) { Icon(painterResource(STEP_ICONS[c.label - 1]), null, Modifier.size(19.dp), tint = if (ok) Five.onStep(c.label) else Five.stepText(c.label)) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(name, style = FiveType.body)
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
                 // Fills as the row rises, the way its ring fills above.
-                StatusMark(c.status, color, fill)
+                StatusMark(c.status, Five.stepText(c.label), fill)
                 Text(stringResource(statusText(c.status)), color = Five.TextSecondary, style = FiveType.label)
             }
-            if (focus != null) Text(stringResource(R.string.focus_row, focus.first, focus.second), color = Five.stepLight(c.label), style = FiveType.labelSmall.copy(fontWeight = FontWeight.SemiBold))
+            if (focus != null) Text(stringResource(R.string.focus_row, focus.first, focus.second), color = Five.focusLine(c.label), style = FiveType.labelSmall.copy(fontWeight = FontWeight.SemiBold))
         }
     }
 }
@@ -251,7 +251,7 @@ internal fun GuideScreen(label: Int?) {
     VerticalPagerScaffold(
         pager,
         Modifier.background(Five.Bg),
-        pageIndicator = { VerticalPageIndicator(pager, selectedColor = Five.step(pager.currentPage + 1), unselectedColor = Five.TextTertiary) },
+        pageIndicator = { VerticalPageIndicator(pager, selectedColor = Five.stepText(pager.currentPage + 1), unselectedColor = Five.TextTertiary) },
     ) {
         VerticalPager(pager, Modifier.fillMaxSize()) { page -> GuidePage(page + 1) { page - (pager.currentPage + pager.currentPageOffsetFraction) } }
     }
@@ -298,7 +298,7 @@ private fun GuidePage(label: Int, offset: () -> Float = { 0f }) {
         ) {
             Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(art).clip(CircleShape).background(Color(0xFFEEEEEE)))
         }
-        Text(stringArrayResource(R.array.steps)[label - 1], words.padding(top = 2.dp), style = FiveType.title.copy(fontSize = 16.5.sp), color = color, textAlign = TextAlign.Center)
+        Text(stringArrayResource(R.array.steps)[label - 1], words.padding(top = 2.dp), style = FiveType.title.copy(fontSize = 16.5.sp), color = Five.stepText(label), textAlign = TextAlign.Center)
         Text(stringArrayResource(R.array.step_how)[label - 1], words, style = FiveType.bodySmall.copy(fontSize = 13.5.sp), textAlign = TextAlign.Center)
         Text(stringArrayResource(R.array.step_whys)[label - 1], words, color = Five.TextSecondary, style = FiveType.label.copy(fontSize = 11.5.sp), textAlign = TextAlign.Center)
     }

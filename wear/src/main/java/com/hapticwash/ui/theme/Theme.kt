@@ -20,7 +20,8 @@ import androidx.wear.compose.material3.Typography
 
 /**
  * One look of Five Rings: every colour a screen draws with. [Dark] is the original, on true black; [Light] is
- * "Daylight" (DESIGN.md), the same tint and Step spectrum deepened so it holds ≥3:1 against a pale face.
+ * "Daylight" (DESIGN.md): the tint deepened so it holds ≥3:1 against a pale face. Rings, discs and washes take the Step
+ * spectrum half-deepened, each ring edged in ink ([ringEdge]); Step-coloured words and small marks take [stepsText].
  */
 class FivePalette(
     val bg: Color, val ink: Color, val textSecondary: Color, val textTertiary: Color, val timeText: Color,
@@ -38,6 +39,12 @@ class FivePalette(
     val stepsLight: List<Color>,
     /** The glyph or mark that sits on a lit Step colour. */
     val onStep: List<Color>,
+    /** Each Step's colour for words, thin marks and bare ring tracks: [steps] on black, deepened to ≥3:1 on the pale face. */
+    val stepsText: List<Color> = steps,
+    /** Opacity of a ring's bare track, in [stepsText]: stronger on the pale face so an empty ring still reads. */
+    val trackAlpha: Float = 0.2f,
+    /** A hairline along both edges of each lit ring, so pale colours hold against a pale face; transparent on black. */
+    val ringEdge: Color = Color.Transparent,
 ) {
     companion object {
         val Dark = FivePalette(
@@ -59,9 +66,13 @@ class FivePalette(
             hubIndigo = Color(0xFF5E5CE6), hubBlueText = Color(0xFF0A66BF), hubGrey = Color(0xFF8E8E93), hubSlate = Color(0xFF3A4A5C),
             platter = Color(0xFFE3E9EE), platterRaised = Color(0xFFD3DBE2), hairline = Color(0xFFC9D2D9), switchOff = Color(0xFF98A5AF), glass = Color(0x140A1822),
             washGain = 0.5f, neutral = Color(0xFF8E8E93),
-            steps = listOf(Color(0xFFD81B48), Color(0xFFC45F00), Color(0xFFA87C00), Color(0xFF168A38), Color(0xFF9333D0)),
-            stepsLight = listOf(Color(0xFFFF6B8A), Color(0xFFF58A2E), Color(0xFFD9A800), Color(0xFF4CC46A), Color(0xFFC26EF0)),
-            onStep = listOf(Color.White, Color.White, Color(0xFF0A1822), Color.White, Color.White),
+            // Rings: halfway between the dark Appearance's spectrum and stepsText, lit towards the bright dark-mode colour.
+            steps = listOf(Color(0xFFEC2954), Color(0xFFE27F05), Color(0xFFD4A905), Color(0xFF23AE48), Color(0xFFA947E1)),
+            stepsLight = listOf(Color(0xFFFF375F), Color(0xFFFF9F0A), Color(0xFFFFD60A), Color(0xFF30D158), Color(0xFFBF5AF2)),
+            onStep = List(5) { Color.Black },
+            stepsText = listOf(Color(0xFFD81B48), Color(0xFFC45F00), Color(0xFFA87C00), Color(0xFF168A38), Color(0xFF9333D0)),
+            trackAlpha = 0.36f,
+            ringEdge = Color(0x380A1822),
         )
     }
 }
@@ -105,6 +116,9 @@ object Five {
     val Neutral get() = p.neutral
     val Steps get() = p.steps
     val StepsLight get() = p.stepsLight
+    val StepsText get() = p.stepsText
+    val TrackAlpha get() = p.trackAlpha
+    val RingEdge get() = p.ringEdge
 
     // Always dark: ambient mode is black whichever Appearance is set.
     val AmbientLine = Color(0xFF8A8A90)
@@ -113,6 +127,10 @@ object Five {
     fun step(label: Int) = Steps[label - 1]
     fun stepLight(label: Int) = StepsLight[label - 1]
     fun onStep(label: Int) = p.onStep[label - 1]
+    /** A Step's colour for words and thin marks (titles, status marks, pager dot, a bare track's glyph). */
+    fun stepText(label: Int) = StepsText[label - 1]
+    /** The Focus Step's history line: the light partner on black, the deepened colour on the pale face. */
+    fun focusLine(label: Int) = if (light) stepText(label) else stepLight(label)
 }
 
 /** [FivePalette] in Material's roles, so stock Wear components (TimeText, scroll indicator, dialogs) match. */
