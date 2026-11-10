@@ -13,6 +13,8 @@ interface UserSettings {
     val twistStart: Boolean
     /** Target check (Coaching): on by default; the build flag ships it off with no UI when the M6 gate is missed. */
     var targetCheck: Boolean
+    /** Appearance: the Daylight palette on a pale face, instead of true black. Off by default; ambient mode is black either way. */
+    var lightMode: Boolean
 }
 
 /** [UserSettings] in SharedPreferences (M4 slice c). */
@@ -36,7 +38,12 @@ class Settings(context: Context) : UserSettings {
         get() = BuildConfig.TARGET_CHECK && p.getBoolean(TARGET_CHECK, true)
         set(v) = p.edit { putBoolean(TARGET_CHECK, v) }
 
+    override var lightMode: Boolean
+        get() = p.getBoolean(LIGHT_MODE, false)
+        set(v) = p.edit { putBoolean(LIGHT_MODE, v) }
+
     private companion object {
+        const val LIGHT_MODE = "light_mode"
         const val TARGET_CHECK = "target_check"
         const val WRIST = "wrist"
         const val HAPTICS = "haptics"

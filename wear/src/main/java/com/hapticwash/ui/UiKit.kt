@@ -100,7 +100,7 @@ internal val LocalStartOrigin = staticCompositionLocalOf { StartOrigin() }
  * (130 % × 70 % of the screen), fading to black by 78 % of the way. Each screen washes in its own colour.
  */
 internal fun Modifier.tintWash(color: Color, alpha: () -> Float) = drawBehind {
-    val a = alpha()
+    val a = alpha() * Five.WashGain
     if (a <= 0f) return@drawBehind
     val c = Offset(size.width / 2, -0.08f * size.height)
     // A circle 70 % of the height across, stretched sideways into the ellipse.
@@ -121,7 +121,7 @@ internal fun ListScreen(wash: Color? = Five.Tint, washAlpha: Float = 0.3f, conte
     val spec = rememberTransformationSpec()
     // Like the watch's own Settings: the last row can scroll up to the middle of the screen, with black below it.
     val centre = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() / 2 } - ROW_HALF_HEIGHT
-    Box(Modifier.fillMaxSize().background(Color.Black).then(if (wash != null) Modifier.tintWash(wash, washAlpha) else Modifier)) {
+    Box(Modifier.fillMaxSize().background(Five.Bg).then(if (wash != null) Modifier.tintWash(wash, washAlpha) else Modifier)) {
         ScreenScaffold(state, scrollIndicator = { ScrollIndicatorUnlessCapturing(state) }) { padding ->
             TransformingLazyColumn(
                 state = state,
@@ -153,7 +153,7 @@ private fun rememberEntrance(): () -> Float {
 
 /** A setting's glyph: it pops with a bouncy spring each time [flip] changes, and mirrors with it. */
 @Composable
-internal fun SettingIcon(res: Int, flip: Boolean = false, tint: Color = Color.White, size: Dp = 22.dp) {
+internal fun SettingIcon(res: Int, flip: Boolean = false, tint: Color = Five.Ink, size: Dp = 22.dp) {
     val pop = remember { Animatable(1f) }
     var first by remember { mutableStateOf(true) }
     LaunchedEffect(flip) {
@@ -203,7 +203,7 @@ internal fun TransformingLazyColumnItemScope.morphContent(spec: TransformationSp
 internal fun GlassButton(icon: Int, label: String, onClick: () -> Unit, size: Dp = 48.dp) =
     FilledTonalIconButton(
         onClick, Modifier.size(size), shapes = IconButtonDefaults.animatedShapes(),
-        colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = Five.Glass, contentColor = Color.White),
+        colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = Five.Glass, contentColor = Five.Ink),
     ) { Icon(painterResource(icon), label, Modifier.size(24.dp)) }
 
 /** A line under a list, quieter than the rows: when a change takes effect. */

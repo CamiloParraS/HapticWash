@@ -122,7 +122,7 @@ internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, stoppedByHold: 
     val all = estimated && allCovered(wash!!.coverage)
     Box(Modifier.onGloballyPositioned { screen = it }) {
         // Mint once all five look covered; a faint white wash when there are no rings to show.
-        ListScreen(if (all) Five.Done else if (estimated) Five.Tint else Color.White, if (estimated) 0.26f else 0.1f) { spec ->
+        ListScreen(if (all) Five.Done else if (estimated) Five.Tint else Five.Neutral, if (estimated) 0.26f else 0.1f) { spec ->
             if (wash == null) return@ListScreen
             if (!estimated) {
                 // End states, no rings: the duration is the answer, then what happened, why in one line, and a way out.
@@ -138,7 +138,7 @@ internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, stoppedByHold: 
                         onClick = { (context as? ComponentActivity)?.onBackPressedDispatcher?.onBackPressed() },
                         modifier = morph(spec).padding(horizontal = 36.dp).height(48.dp),
                         transformation = SurfaceTransformation(spec),
-                        colors = ButtonDefaults.filledTonalButtonColors(containerColor = Five.PlatterRaised, contentColor = Color.White),
+                        colors = ButtonDefaults.filledTonalButtonColors(containerColor = Five.PlatterRaised, contentColor = Five.Ink),
                         label = { Text(stringResource(R.string.close), Modifier.fillMaxWidth(), style = FiveType.body, textAlign = TextAlign.Center) },
                     )
                 }
@@ -157,7 +157,7 @@ internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, stoppedByHold: 
                         Text(
                             if (all) stringResource(R.string.praise) else stringResource(R.string.history_hint, ok),
                             Modifier.padding(top = 7.dp, start = 20.dp, end = 20.dp),
-                            color = if (all) Five.Done else Color.White,
+                            color = if (all) Five.Done else Five.Ink,
                             style = if (all) FiveType.headlineSmall.copy(fontSize = 20.sp) else FiveType.headlineSmall,
                             textAlign = TextAlign.Center,
                         )
@@ -187,7 +187,7 @@ internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, stoppedByHold: 
                             .heightIn(min = 48.dp).padding(horizontal = 14.dp, vertical = 8.dp).semantics(mergeDescendants = true) {},
                         horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        GlyphDisc(Color.White.copy(alpha = 0.1f)) { CheckMark(Color.White) { staggered(entrance.value, at) } }
+                        GlyphDisc(Five.Ink.copy(alpha = 0.1f)) { CheckMark(Five.Ink) { staggered(entrance.value, at) } }
                         Text(covered.joinToString(", ") { steps[it.label - 1] }, Modifier.weight(1f), color = Five.TextSecondary, style = FiveType.label)
                     }
                 }
@@ -225,7 +225,7 @@ private fun StepRow(c: StepCoverage, name: String, focus: Pair<Int, Int>?, fill:
             .heightIn(min = 56.dp).padding(horizontal = 14.dp, vertical = 8.dp).semantics(mergeDescendants = true) {},
         horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
     ) {
-        GlyphDisc(if (ok) color else color.copy(alpha = 0.2f)) { Icon(painterResource(STEP_ICONS[c.label - 1]), null, Modifier.size(19.dp), tint = if (ok) Color.Black else color) }
+        GlyphDisc(if (ok) color else color.copy(alpha = 0.2f)) { Icon(painterResource(STEP_ICONS[c.label - 1]), null, Modifier.size(19.dp), tint = if (ok) Five.onStep(c.label) else color) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(name, style = FiveType.body)
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -250,14 +250,14 @@ internal fun GuideScreen(label: Int?) {
     val pager = rememberPagerState(initialPage = label - 1) { 5 }
     VerticalPagerScaffold(
         pager,
-        Modifier.background(Color.Black),
+        Modifier.background(Five.Bg),
         pageIndicator = { VerticalPageIndicator(pager, selectedColor = Five.step(pager.currentPage + 1), unselectedColor = Five.TextTertiary) },
     ) {
-        VerticalPager(pager, Modifier.fillMaxSize()) { page -> GuidePage(page + 1) { pager.currentPage - page + pager.currentPageOffsetFraction } }
+        VerticalPager(pager, Modifier.fillMaxSize()) { page -> GuidePage(page + 1) { page - (pager.currentPage + pager.currentPageOffsetFraction) } }
     }
 }
 
-/** One Step's guide page. [offset] is how far the page is from the middle of the pager, in pages, signed. */
+/** One Step's guide page. [offset] is how far the page is from the middle of the pager, in pages: positive while it is below, still to come. */
 @Composable
 private fun GuidePage(label: Int, offset: () -> Float = { 0f }) {
     val color = Five.step(label)
@@ -265,6 +265,13 @@ private fun GuidePage(label: Int, offset: () -> Float = { 0f }) {
     val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 220.dp
     val art = if (compact) 46.dp else 52.dp
     val page = stringResource(R.string.page_of, label, 5)
+    // The words trail the page a little and dissolve as it leaves, and arrive the same way: the swipe reads as one page
+    // handing over to the next, not a card sliding under still text. Read in the draw phase, so paging never recomposes.
+    val words = Modifier.graphicsLayer {
+        val o = offset().coerceIn(-1f, 1f)
+        alpha = EaseOutStrong.transform((1f - 1.5f * kotlin.math.abs(o)).coerceIn(0f, 1f))
+        translationY = -o * 22.dp.toPx()
+    }
     // Scrolls if it must: on a small screen, or at a large font size, the title, technique and why line may not all fit.
     Column(
         // The last 24 dp fade out, so text that runs past the round edge dissolves rather than being cut by a hard edge.
@@ -285,14 +292,14 @@ private fun GuidePage(label: Int, offset: () -> Float = { 0f }) {
                 val o = offset().coerceIn(-1f, 1f)
                 val k = lerp(1f, 0.7f, kotlin.math.abs(o))
                 scaleX = k; scaleY = k
-                rotationZ = -16f * o
+                rotationZ = 16f * o
             }.clip(CircleShape).background(color),
             contentAlignment = Alignment.Center,
         ) {
             Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(art).clip(CircleShape).background(Color(0xFFEEEEEE)))
         }
-        Text(stringArrayResource(R.array.steps)[label - 1], Modifier.padding(top = 2.dp), style = FiveType.title.copy(fontSize = 16.5.sp), color = color, textAlign = TextAlign.Center)
-        Text(stringArrayResource(R.array.step_how)[label - 1], style = FiveType.bodySmall.copy(fontSize = 13.5.sp), textAlign = TextAlign.Center)
-        Text(stringArrayResource(R.array.step_whys)[label - 1], color = Five.TextSecondary, style = FiveType.label.copy(fontSize = 11.5.sp), textAlign = TextAlign.Center)
+        Text(stringArrayResource(R.array.steps)[label - 1], words.padding(top = 2.dp), style = FiveType.title.copy(fontSize = 16.5.sp), color = color, textAlign = TextAlign.Center)
+        Text(stringArrayResource(R.array.step_how)[label - 1], words, style = FiveType.bodySmall.copy(fontSize = 13.5.sp), textAlign = TextAlign.Center)
+        Text(stringArrayResource(R.array.step_whys)[label - 1], words, color = Five.TextSecondary, style = FiveType.label.copy(fontSize = 11.5.sp), textAlign = TextAlign.Center)
     }
 }

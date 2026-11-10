@@ -248,7 +248,7 @@ private fun DrawScope.fiveRings(coverage: List<StepCoverage>, fill: (Int) -> Flo
             val t = (f * 3f).coerceIn(0f, 1f)
             val g = stroke * 0.82f * (0.5f + 0.5f * t)
             translate(center.x - g / 2, center.y - r - g / 2) {
-                with(it[k]) { draw(Size(g, g), alpha = t, colorFilter = ColorFilter.tint(if (share > 0f) Color.Black else Five.Steps[k])) }
+                with(it[k]) { draw(Size(g, g), alpha = t, colorFilter = ColorFilter.tint(if (share > 0f) Five.onStep(k + 1) else Five.Steps[k])) }
             }
         }
     }
@@ -315,7 +315,7 @@ internal fun StatusMark(s: StepStatus, color: Color, fill: () -> Float = { 1f })
                 val u = size.width / 11f
                 check.reset()
                 check.moveTo(2.9f * u, 5.6f * u); check.lineTo(4.7f * u, 7.4f * u); check.lineTo(8.1f * u, 3.8f * u)
-                drawPath(check, Color.Black, alpha = f, style = Stroke(1.6.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+                drawPath(check, Five.Bg, alpha = f, style = Stroke(1.6.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
             }
             StepStatus.BRIEF -> {
                 drawCircle(color, r, style = Stroke(line))

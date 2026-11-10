@@ -42,8 +42,11 @@ import androidx.wear.tiles.timeline
 import androidx.wear.tiles.timelineEntry
 import com.hapticwash.R
 import com.hapticwash.session.History
-import com.hapticwash.ui.theme.Five
+import com.hapticwash.ui.theme.FivePalette
 import kotlin.time.Duration.Companion.hours
+
+/** The Tile is a system surface that stays dark, whichever Appearance the app is set to. */
+private val DARK = FivePalette.Dark
 
 /** The Tile's rings, as on Start. */
 private const val TILE_RINGS_DP = 62f
@@ -63,11 +66,11 @@ class WashTileService : Material3TileService() {
                     // top third of the Tile, so before the first Wash of the day the slot is dropped and the main slot grows.
                     titleSlot = History.get(this@WashTileService).read().count { DateUtils.isToday(it.startedAtEpochMs) }
                         // ponytail: History keeps 20 Washes, so the count tops out at 20 a day.
-                        .takeIf { it > 0 }?.let { today -> val title: MaterialScope.() -> LayoutElement = { text(resources.getQuantityString(R.plurals.washes_today, today, today).layoutString, color = color(Five.Tint)) }; title },
+                        .takeIf { it > 0 }?.let { today -> val title: MaterialScope.() -> LayoutElement = { text(resources.getQuantityString(R.plurals.washes_today, today, today).layoutString, color = color(DARK.tint)) }; title },
                     // Start's hero: the rings beside the fraction, when it was underneath. No rings, the takeaway in words.
                     mainSlot = {
                         val last = History.get(this@WashTileService).read().firstOrNull()
-                        if (last == null) text(getString(R.string.history_empty).layoutString, typography = Typography.BODY_SMALL, color = color(Five.TextSecondary), maxLines = 3)
+                        if (last == null) text(getString(R.string.history_empty).layoutString, typography = Typography.BODY_SMALL, color = color(DARK.textSecondary), maxLines = 3)
                         else Column.Builder()
                             // Tapping the rings or the words opens that Wash's Summary, as History does.
                             .setWidth(expand())
@@ -82,13 +85,13 @@ class WashTileService : Material3TileService() {
                                     .addContent(
                                         Column.Builder().setHorizontalAlignment(HORIZONTAL_ALIGN_START)
                                             .addContent(text("${last.coverage.count { it.status == StepStatus.OK }}/5".layoutString, typography = Typography.NUMERAL_SMALL, color = color(androidx.compose.ui.graphics.Color.White)))
-                                            .addContent(text(getString(R.string.steps_covered).layoutString, typography = Typography.LABEL_SMALL, color = color(Five.TextSecondary), alignment = TEXT_ALIGN_START))
+                                            .addContent(text(getString(R.string.steps_covered).layoutString, typography = Typography.LABEL_SMALL, color = color(DARK.textSecondary), alignment = TEXT_ALIGN_START))
                                             .build(),
                                     ).build()
                                 else text(hint(resources, last).layoutString, typography = Typography.TITLE_MEDIUM, color = color(androidx.compose.ui.graphics.Color.White), maxLines = 2),
                             )
                             .addContent(Spacer.Builder().setHeight(dp(4f)).build())
-                            .addContent(text(lastWashLabel(this@WashTileService, last).layoutString, typography = Typography.LABEL_SMALL, color = color(Five.TextSecondary)))
+                            .addContent(text(lastWashLabel(this@WashTileService, last).layoutString, typography = Typography.LABEL_SMALL, color = color(DARK.textSecondary)))
                             .build()
                     },
                     bottomSlot = {
@@ -101,8 +104,8 @@ class WashTileService : Material3TileService() {
                                 ),
                             ),
                             // The tint, as Start's capsule; a Wash running, a quiet way back to it.
-                            colors = if (running) ButtonColors(containerColor = color(Five.PlatterRaised), labelColor = color(Five.Tint))
-                            else ButtonColors(containerColor = color(Five.Tint), labelColor = color(Five.OnTint)),
+                            colors = if (running) ButtonColors(containerColor = color(DARK.platterRaised), labelColor = color(DARK.tint))
+                            else ButtonColors(containerColor = color(DARK.tint), labelColor = color(DARK.onTint)),
                             labelContent = { text(getString(if (running) R.string.tile_running else R.string.start_wash).layoutString) },
                         )
                     },
@@ -128,9 +131,9 @@ class WashTileService : Material3TileService() {
         for (c in coverage) {
             val k = c.label - 1
             val d = TILE_RINGS_DP - 2 * k * (stroke + gap)
-            val ring = Box.Builder().setWidth(dp(d)).setHeight(dp(d)).addContent(arc(line(360f, Five.Steps[k].copy(alpha = 0.2f))))
+            val ring = Box.Builder().setWidth(dp(d)).setHeight(dp(d)).addContent(arc(line(360f, DARK.steps[k].copy(alpha = 0.2f))))
             val filled = 360f * share(c.status)
-            if (filled > 0f) ring.addContent(arc(line(filled, Five.Steps[k])))
+            if (filled > 0f) ring.addContent(arc(line(filled, DARK.steps[k])))
             all.addContent(ring.build())
         }
         return all.build()

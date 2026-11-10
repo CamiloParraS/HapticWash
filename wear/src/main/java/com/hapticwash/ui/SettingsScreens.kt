@@ -124,20 +124,20 @@ private fun TransformingLazyColumnItemScope.settingRow(spec: TransformationSpec,
 
 /** Every settings row is a platter: white words, grey details, values in the tint. */
 @Composable
-private fun platterColors() = ButtonDefaults.filledTonalButtonColors(containerColor = Five.Platter, contentColor = Color.White, secondaryContentColor = Five.TextSecondary, iconColor = Color.White)
+private fun platterColors() = ButtonDefaults.filledTonalButtonColors(containerColor = Five.Platter, contentColor = Five.Ink, secondaryContentColor = Five.TextSecondary, iconColor = Five.Ink)
 
 /** Toggles take the app tint, never iOS green, on a platter row whichever way they are set. */
 @Composable
 private fun toggleColors() = SwitchButtonDefaults.switchButtonColors(
     checkedContainerColor = Five.Platter,
-    checkedContentColor = Color.White,
+    checkedContentColor = Five.Ink,
     checkedSecondaryContentColor = Five.TextSecondary,
     checkedThumbColor = Color.White,
     checkedThumbIconColor = Five.Tint,
     checkedTrackColor = Five.Tint,
     checkedTrackBorderColor = Five.Tint,
     uncheckedContainerColor = Five.Platter,
-    uncheckedContentColor = Color.White,
+    uncheckedContentColor = Five.Ink,
     uncheckedSecondaryContentColor = Five.TextSecondary,
     uncheckedThumbColor = Color.White,
     uncheckedTrackColor = Five.SwitchOff,
@@ -168,8 +168,12 @@ internal fun SettingsScreen(onWash: () -> Unit, onStart: () -> Unit, onCredits: 
     var spanish by remember { mutableStateOf(context.resources.configuration.locales[0].language == "es") }
     // The globe spins as the value flips. The locale applies once the spin lands, since it recreates the screen.
     val spin by animateFloatAsState(if (spanish) 360f else 0f, spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessLow))
+    val controls = LocalWashControls.current
+    var light by remember { mutableStateOf(Five.light) }
+    // The contrast disc turns half a turn each time Appearance flips.
+    val flipTurn by animateFloatAsState(if (light) 180f else 0f, spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessLow))
     ListScreen(Five.HubGrey) { spec ->
-        item { Header(spec, stringResource(R.string.settings), Color.White) }
+        item { Header(spec, stringResource(R.string.settings), Five.Ink) }
         item { HubRow(spec, 1, R.drawable.ic_vibration, Five.Steps[1], stringResource(R.string.settings_wash), onWash) }
         item { HubRow(spec, 2, R.drawable.ic_wash, Five.TintDeep, stringResource(R.string.settings_start), onStart) }
         // Per-app language needs LocaleManager (API 33); older watches keep following the system language.
@@ -185,7 +189,15 @@ internal fun SettingsScreen(onWash: () -> Unit, onStart: () -> Unit, onCredits: 
             }, spin, if (spanish) "ES" else "EN")
         }
         item {
-            val (source, modifier) = settingRow(spec, 4)
+            HubRow(spec, 4, R.drawable.ic_appearance, Five.HubSlate, stringResource(R.string.appearance), {
+                light = !light
+                Five.light = light
+                controls.settings.lightMode = light
+                feedback.performHapticFeedback(HapticFeedbackType.ToggleOn)
+            }, flipTurn, stringResource(if (light) R.string.appearance_light else R.string.appearance_dark))
+        }
+        item {
+            val (source, modifier) = settingRow(spec, 5)
             FilledTonalButton(onClick = onCredits, modifier = modifier, interactionSource = source, transformation = SurfaceTransformation(spec),
                 colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color.Transparent, contentColor = Five.TextSecondary),
                 label = { Text(stringResource(R.string.credits), Modifier.fillMaxWidth(), style = FiveType.bodySmall, textAlign = TextAlign.Center) })
@@ -281,7 +293,7 @@ internal fun StartSettingsScreen() {
 @Composable
 private fun TwistSheet(visible: Boolean, onCancel: () -> Unit, onConfirm: () -> Unit) = Dialog(visible = visible, onDismissRequest = onCancel) {
     val amber = Five.Steps[2]
-    Box(Modifier.fillMaxSize().background(Color.Black).tintWash(amber, 0.28f)) {
+    Box(Modifier.fillMaxSize().background(Five.Bg).tintWash(amber, 0.28f)) {
         Column(Modifier.fillMaxWidth().padding(top = 30.dp, start = 26.dp, end = 26.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
             // A battery, a third full: the cost before the words.
             Canvas(Modifier.size(34.dp, 20.dp).clearAndSetSemantics {}) {
@@ -295,8 +307,8 @@ private fun TwistSheet(visible: Boolean, onCancel: () -> Unit, onConfirm: () -> 
         }
         Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 11.dp), horizontalArrangement = Arrangement.spacedBy(15.dp)) {
             FilledTonalIconButton(onCancel, Modifier.size(50.dp), shapes = IconButtonDefaults.animatedShapes(),
-                colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = Five.Glass, contentColor = Color.White)) {
-                SheetMark(stringResource(android.R.string.cancel), Color.White) { s ->
+                colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = Five.Glass, contentColor = Five.Ink)) {
+                SheetMark(stringResource(android.R.string.cancel), Five.Ink) { s ->
                     moveTo(3 * s, 3 * s); lineTo(15 * s, 15 * s); moveTo(15 * s, 3 * s); lineTo(3 * s, 15 * s)
                 }
             }

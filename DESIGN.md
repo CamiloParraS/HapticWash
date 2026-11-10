@@ -205,7 +205,7 @@ Each screen carries one idea at glance distance. The live Wash is a number, a ri
 The system is warm without being playful. Rounded type (`ROND` 100) and saturated jewel colours on true black give it the glow of a fitness ring; the copy stays estimate-only and the visuals never stage a verdict. Wear OS system pieces stay Wear OS: TimeText at the top, swipe-to-dismiss, the Tile's EdgeButton, ambient rules.
 
 **Key Characteristics:**
-- True black (#000000) everywhere; depth comes from light (tint washes) and tone (platters), never shadows.
+- True black (#000000) everywhere in the default dark Appearance (Daylight is the light one, see Colors); depth comes from light (tint washes) and tone (platters), never shadows.
 - Five Step colours, fixed order outer to inner: Palms, Back of hands, Between fingers, Thumbs, Fingertips.
 - Rounded variable numerals with tabular figures for every number that changes.
 - Status as drawn shape (full disc with check, half disc, dashed outline) plus words.
@@ -246,6 +246,15 @@ Settings hub glyph discs borrow from the same family: Back Amber for "During a w
 - **Hairline** (hairline): the outline of the quiet "covered Steps" row.
 - **Switch Off** (switch-track-off): the switch track when off, and the EN|ES segmented track.
 - **Ambient Grey** (ambient-line, ambient-text): always-on mode only; outlines at 1.5 dp, no fills.
+
+### Daylight (light Appearance)
+Settings → Appearance flips the face from True Black to **Daylight**, for bright bathrooms and kitchens. Same grammar, deepened so it holds on a pale face (palette in `FivePalette.Light`, `ui/theme/Theme.kt`):
+- **Face** #F2F6F9 (a cool off-white, never #FFF) with **Ink** #0A1822 for text; Secondary / Tertiary Grey are Ink at 72 % / 62 %.
+- **Pool** tint becomes #0072B2 (numerals, titles, switch-on), the capsule water runs #1A8AD2 → #0072B2 → #0A6AB4 with **white** label (the "no white on the gradient" rule is the dark theme's).
+- **Step colours** deepen to Palms #D81B48, Back #C45F00, Lemon #A87C00, Thumb #168A38, Tip #9333D0, each ≥3:1 on the face; the glyph on a lit Step is white (ink on Lemon).
+- **Mint** #07795B, **Hold Red** #D7261E; platters #E3E9EE / #D3DBE2, hairline #C9D2D9.
+- Tint washes fall at half strength (`washGain` 0.5) so the top glows pale instead of turning denim.
+- Ambient mode stays black and the Tile stays dark in both Appearances.
 
 ### Named Rules
 **The Never-Colour-Alone Rule.** Step status is carried by ring fill (full, half, track only), the drawn mark, and the status words. Remove all colour and every status must still read.

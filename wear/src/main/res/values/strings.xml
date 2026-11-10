@@ -100,6 +100,9 @@
     <string name="settings_wash">During a wash</string>
     <string name="settings_start">Starting a wash</string>
     <string name="language">Language</string>
+    <string name="appearance">Appearance</string>
+    <string name="appearance_dark">Dark</string>
+    <string name="appearance_light">Light</string>
     <string name="credits">Credits</string>
     <string name="open_guide">Open %1$s guide</string>
     <string name="credits_illustrations">Illustrations</string>

@@ -18,6 +18,7 @@ import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material3.AppScaffold
 import com.hapticwash.session.Settings
 import com.hapticwash.session.WashService
+import com.hapticwash.ui.theme.Five
 import com.hapticwash.ui.theme.HapticWashTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -71,6 +72,7 @@ class MainActivity : ComponentActivity() {
         addOnNewIntentListener(::takeStart)
         lifecycleScope.launch { WashService.status.map { it.running }.distinctUntilChanged().collect(::watchAmbient) }
         val controls = ServiceWashControls(this)
+        Five.light = controls.settings.lightMode
         setContent { HapticWashTheme { AppScaffold { CompositionLocalProvider(LocalWashControls provides controls) { App({ startRequests }, { openRequest }, { openRequest = null }, { ambient }) } } } }
     }
 

@@ -131,11 +131,11 @@ internal fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: 
     val spec = rememberTransformationSpec()
     // ponytail: scrolls only on small screens, where the buttons sit below the fold; 220 dp is a guess, tune on a device.
     val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 220.dp
-    Box(Modifier.fillMaxSize().background(Color.Black).tintWash(Five.Tint)) {
+    Box(Modifier.fillMaxSize().background(Five.Bg).tintWash(Five.Tint)) {
     ScreenScaffold(state, scrollIndicator = { ScrollIndicatorUnlessCapturing(state) }) { padding ->
         // Small screens: the stack sits ~10 dp lower, under the clock. The scaffold's bottom inset is generous, so trimming it keeps the stack from overflowing into a scroll.
         val inset = if (compact) PaddingValues(start = padding.calculateStartPadding(LayoutDirection.Ltr), top = padding.calculateTopPadding() + 6.dp, end = padding.calculateEndPadding(LayoutDirection.Ltr), bottom = (padding.calculateBottomPadding() - 14.dp).coerceAtLeast(0.dp)) else padding
-        TransformingLazyColumn(state = state, contentPadding = inset, userScrollEnabled = compact, verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)) {
+        TransformingLazyColumn(state = state, contentPadding = inset, userScrollEnabled = false, verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)) {
             // The last takeaway as one hero: the rings beside the fraction, and when it was underneath. A cancelled Wash, the
             // first run, and results with no rings (too short, Timer-only, none detected) say it in words instead.
             item {
@@ -172,7 +172,7 @@ internal fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: 
                         cancelledNotice || last == null -> {
                             // A drop in its disc over one line: the first run says what the rings are, a cancelled Wash why nothing was saved.
                             val small = cancelledNotice || compact
-                            GlyphDisc(if (cancelledNotice) Color.White.copy(alpha = 0.1f) else Five.Tint.copy(alpha = 0.18f), if (small) 34.dp else 42.dp) {
+                            GlyphDisc(if (cancelledNotice) Five.Ink.copy(alpha = 0.1f) else Five.Tint.copy(alpha = 0.18f), if (small) 34.dp else 42.dp) {
                                 Icon(painterResource(R.drawable.ic_wash), null, Modifier.size(if (small) 18.dp else 22.dp), tint = if (cancelledNotice) Five.TextSecondary else Five.Tint)
                             }
                             Text(sentence, Modifier.padding(top = 7.dp), style = FiveType.bodySmall.copy(fontSize = 12.5.sp), textAlign = TextAlign.Center)
@@ -240,4 +240,4 @@ internal fun StartScreen(onWash: () -> Unit, onHistory: () -> Unit, onSettings: 
 }
 
 /** The primary capsule's water: light into the tint into sky, 135° (DESIGN.md's Pool Light gradient). */
-internal val START_GRADIENT = listOf(Five.TintLight, Five.Tint, Five.TintSky)
+internal val START_GRADIENT get() = listOf(Five.TintLight, Five.Tint, Five.TintSky)

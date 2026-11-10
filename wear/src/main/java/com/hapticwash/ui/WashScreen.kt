@@ -165,7 +165,7 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
         Box(
             Modifier.fillMaxSize().onGloballyPositioned { screen = it }
                 .holdToStop(stopHold, context.getString(R.string.stop_wash)) { controls.stop() }
-                .background(Color.Black).tintWash(ringColor) {
+                .background(Five.Bg).tintWash(ringColor) {
                     // Timer-only has no wash: the screen stays plain black, like its hairline.
                     if (status.timerOnly) return@tintWash 0f
                     // Gives way to the stop colour as the hold fills.
@@ -189,8 +189,8 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
                 // motion to reduce), it shows the watch is running and how far along, without the full ring the user kept off.
                 Spacer(Modifier.fillMaxSize().graphicsLayer { alpha = enter.value }.drawBehind {
                     val line = 2.5.dp.toPx()
-                    edgeArc(SolidColor(Color.White.copy(alpha = 0.18f)), 1f, line, LIVE_STROKE.toPx())
-                    edgeArc(SolidColor(Color.White), LiveWash.ringFill(elapsedS), line, LIVE_STROKE.toPx())
+                    edgeArc(SolidColor(Five.Ink.copy(alpha = 0.18f)), 1f, line, LIVE_STROKE.toPx())
+                    edgeArc(SolidColor(Five.Ink), LiveWash.ringFill(elapsedS), line, LIVE_STROKE.toPx())
                 })
             }
             Spacer(Modifier.fillMaxSize().drawBehind { if (!carried) stopMark(stopHold) })
@@ -210,7 +210,7 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
                 Text(
                     duration(shownS),
                     Modifier.graphicsLayer { scaleX = moments.pop.value; scaleY = moments.pop.value },
-                    color = if (status.timerOnly) Color.White else ringColor,
+                    color = if (status.timerOnly) Five.Ink else ringColor,
                     style = FiveType.display,
                 )
                 Text(
@@ -230,7 +230,7 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
                         },
                         label = "cue",
                     ) {
-                        Text(it, color = Color.White, style = FiveType.body, textAlign = TextAlign.Center, maxLines = 2)
+                        Text(it, color = Five.Ink, style = FiveType.body, textAlign = TextAlign.Center, maxLines = 2)
                     }
                 }
             }
@@ -248,7 +248,7 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
                 Modifier.align(Alignment.TopCenter)
                     .padding(top = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } / 2 - STOP_LIFT + STOP_DISC / 2 + 12.dp, start = 34.dp, end = 34.dp)
                     .graphicsLayer { alpha = if (stopHold.stopping) 1f else stopHold.swap },
-                color = Color.White,
+                color = Five.Ink,
                 style = FiveType.body,
                 textAlign = TextAlign.Center,
             )

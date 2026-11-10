@@ -74,7 +74,7 @@ private fun TargetCheckBody(undetected: List<Int>, onGuide: (Int) -> Unit, onDis
     val left = remember { Animatable(1f) }
     LaunchedEffect(Unit) { left.animateTo(0f, tween(TARGET_CARD_MS.toInt(), easing = LinearEasing)) }
     Column(
-        Modifier.fillMaxSize().background(Color.Black).tintWash(Five.Tint, 0.2f).drawBehind {
+        Modifier.fillMaxSize().background(Five.Bg).tintWash(Five.Tint, 0.2f).drawBehind {
             edgeArc(SolidColor(Five.Tint.copy(alpha = 0.7f)), left.value, 3.dp.toPx(), LIVE_STROKE.toPx())
         }.clickable(onClickLabel = stringResource(R.string.close), role = Role.Button) { onDismiss() }.padding(horizontal = 24.dp, vertical = 36.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
@@ -89,7 +89,7 @@ private fun TargetCheckBody(undetected: List<Int>, onGuide: (Int) -> Unit, onDis
                     Modifier.heightIn(min = 48.dp).clickable(onClickLabel = stringResource(R.string.open_guide, steps[it - 1]), role = Role.Button) { onDismiss(); onGuide(it) },
                     horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    GlyphDisc(Five.step(it), 34.dp) { Icon(painterResource(STEP_ICONS[it - 1]), null, Modifier.size(20.dp), tint = Color.Black) }
+                    GlyphDisc(Five.step(it), 34.dp) { Icon(painterResource(STEP_ICONS[it - 1]), null, Modifier.size(20.dp), tint = Five.onStep(it)) }
                     Text(steps[it - 1], style = FiveType.bodyLarge)
                 }
             }

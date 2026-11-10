@@ -17,6 +17,7 @@ internal class MemorySettings(
     override var progressRing: Boolean = false,
     override var twistStart: Boolean = false,
     override var targetCheck: Boolean = true,
+    override var lightMode: Boolean = false,
 ) : UserSettings
 
 /**

@@ -74,7 +74,7 @@ internal fun HistoryScreen(onOpen: (Long) -> Unit) {
                     onClick = { onOpen(w.id) },
                     modifier = morph(spec).then(if (w.coverageShown) Modifier else Modifier.graphicsLayer { alpha = 0.85f }),
                     transformation = SurfaceTransformation(spec),
-                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = Five.Platter, contentColor = Color.White, secondaryContentColor = Five.TextSecondary),
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = Five.Platter, contentColor = Five.Ink, secondaryContentColor = Five.TextSecondary),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                     // Empty rings would read as a score of zero: no Step looked covered gets the dashed circle too.
                     icon = { if (w.coverageShown && w.coverage.any { it.status == StepStatus.OK }) FiveRings(w.coverage, HISTORY_RING_SIZE) else DashedDisc() },
@@ -89,7 +89,7 @@ internal fun HistoryScreen(onOpen: (Long) -> Unit) {
 @Composable
 internal fun CreditsScreen() {
     ListScreen(wash = null) { spec ->
-        item { Header(spec, stringResource(R.string.credits), Color.White) }
+        item { Header(spec, stringResource(R.string.credits), Five.Ink) }
         // The five illustrations as a strip, each ringed in its Step's colour.
         item {
             Row(morphContent(spec).padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)) {

@@ -3,7 +3,7 @@
     <string name="app_name">HapticWash</string>
 
     <!-- Lavado -->
-    <string name="start_wash">Empezar lavado</string>
+    <string name="start_wash">Empezar</string>
     <string name="stop_wash">Detener</string>
     <string name="stopping">Deteniendo…</string>
     <string name="hold_to_stop">Mantén para parar</string>
@@ -29,14 +29,14 @@
         <item>Buen trabajo</item>
     </string-array>
     <!-- Shown while holding to stop before the target: a nudge, not a block. -->
-    <string name="stop_early">Aún no terminas. ¿Sigues?</string>
+    <string name="stop_early">Aún falta. ¿Sigues?</string>
     <string name="time_left">restantes</string>
     <string name="ambient_washing">Lavando manos…</string>
     <string name="target_reached">¡%1$d segundos completados!</string>
-    <string name="timer_only">Solo temporizador: no se pueden detectar los pasos</string>
+    <string name="timer_only">Solo temporizador: sin detección de pasos</string>
     <string name="timer_only_short">Solo temporizador</string>
     <string name="channel_session">Lavado de manos</string>
-    <string name="session_running">Lavado en curso</string>
+    <string name="session_running">En curso</string>
     <string name="tile_running">Ver lavado</string>
 
     <plurals name="washes_today">
@@ -51,25 +51,25 @@
     <string name="too_short_to_save">Lavado demasiado breve para guardar</string>
     <string name="too_short_short">Muy breve</string>
     <string name="none_detected_short">Ningún paso detectado</string>
-    <string name="start_intro">Frota 5 pasos de manos. Los anillos muestran lo que parece cubierto.</string>
+    <string name="start_intro">Frota 5 pasos. Los anillos muestran lo que parece cubierto.</string>
     <string name="status_ok">Parece cubierto</string>
-    <string name="status_brief">Pudo ser breve</string>
+    <string name="status_brief">Quizá breve</string>
     <string name="status_not_detected">No detectado</string>
     <string name="target_todo">Aún sin detectar</string>
     <string name="close">Cerrar</string>
-    <string name="focus_row">Para la próxima · %1$d de los últimos %2$d</string>
+    <string name="focus_row">Refuerza · %1$d de los últimos %2$d</string>
     <string name="page_of">Página %1$d de %2$d</string>
     <string name="covered_steps">✓ %1$s</string>
     <string name="timer_only_why">Se midió la duración. Ahora no se pueden estimar los pasos en este reloj.</string>
-    <string name="too_short_why">Lávate un poco más la próxima vez para ver la cobertura.</string>
+    <string name="too_short_why">Lávate un poco más la próxima vez.</string>
 
     <!-- Pasos del lavado -->
     <string-array name="steps">
         <item>Palmas</item>
-        <item>Dorso de las manos</item>
+        <item>Dorso de manos</item>
         <item>Entre los dedos</item>
         <item>Pulgares</item>
-        <item>Puntas de los dedos</item>
+        <item>Puntas de dedos</item>
     </string-array>
 
     <!-- Step guide why lines: why the Step matters (neutral tú). No named illnesses, no prevention claims. -->
@@ -83,15 +83,15 @@
 
     <string-array name="step_how">
         <item>Frota palma contra palma</item>
-        <item>Frota el dorso de cada mano con la otra palma</item>
-        <item>Entrelaza los dedos y frota de arriba abajo</item>
-        <item>Sujeta cada pulgar y frótalo en círculos</item>
-        <item>Frota las puntas de los dedos en la palma contraria</item>
+        <item>Frota cada dorso con la palma contraria</item>
+        <item>Entrelaza los dedos y frota</item>
+        <item>Frota cada pulgar en círculos</item>
+        <item>Frota las puntas en la palma contraria</item>
     </string-array>
 
     <!-- Historial -->
     <string name="history">Historial</string>
-    <string name="history_empty">Todavía no hay lavados. Aquí aparecen los últimos 20. Desliza a la derecha para volver a Inicio.</string>
+    <string name="history_empty">Aún no hay lavados. Aquí verás los últimos 20. Desliza a la derecha para volver.</string>
     <string name="steps_covered">pasos cubiertos</string>
     <string name="coverage_count">%1$d de 5</string>
     <string name="history_hint">%1$d de 5 parecen cubiertos</string>
@@ -101,6 +101,9 @@
     <string name="settings_wash">Durante el lavado</string>
     <string name="settings_start">Iniciar un lavado</string>
     <string name="language">Idioma</string>
+    <string name="appearance">Apariencia</string>
+    <string name="appearance_dark">Oscuro</string>
+    <string name="appearance_light">Claro</string>
     <string name="credits">Créditos</string>
     <string name="open_guide">Abrir guía: %1$s</string>
     <string name="credits_illustrations">Ilustraciones</string>
@@ -116,7 +119,7 @@
     <string name="target_check">Aviso a los 40 s</string>
     <string name="twist_start">Empezar con un giro</string>
     <string name="progress_ring_desc">Se llena al lavar</string>
-    <string name="twist_start_desc">Escucha en segundo plano</string>
+    <string name="twist_start_desc">Escucha de fondo</string>
     <string name="twist_warning_title">Gasta más batería</string>
     <string name="twist_warning">El reloj espera un giro todo el día, así que la batería dura menos.</string>
     <string name="twist_listening">Esperando un giro</string>
