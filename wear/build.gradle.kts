@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.compose.material3)
     implementation(libs.wear)
+    implementation(libs.wear.ongoing) // the Wash as an Ongoing Activity: the app stays in front through screen-off
     implementation(libs.wear.compose.navigation)
     implementation(libs.wear.compose.ui.tooling) // @WearPreviewDevices, @WearPreviewFontScales
     debugImplementation(libs.androidx.compose.ui.tooling) // renders them in Android Studio

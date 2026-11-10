@@ -37,6 +37,7 @@ class ManifestTest {
         val m = merged("release")
         assertTrue("android.permission.RECEIVE_BOOT_COMPLETED\"" in m)
         assertTrue("session.BootReceiver" in m)
+        assertTrue("android.intent.action.MY_PACKAGE_REPLACED" in m)
     }
 
     @Test

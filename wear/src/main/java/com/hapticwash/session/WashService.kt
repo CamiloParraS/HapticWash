@@ -10,6 +10,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.PowerManager
+import androidx.core.app.NotificationCompat
+import androidx.wear.ongoing.OngoingActivity
+import androidx.wear.ongoing.Status
 import android.os.SystemClock
 import android.util.Log
 import com.hapticwash.R
@@ -260,16 +263,31 @@ class WashService : Service() {
         }
     }
 
+    /**
+     * The service's notification. A running Wash's is also an Ongoing Activity, whose touch intent is the app: on
+     * Wear OS 5+ the system then keeps the app in front through screen-off instead of returning to the watch face,
+     * and the watch face shows a way back. Listening for a Twist is not, so the app does not linger between Washes.
+     */
     private fun notification(text: Int): Notification {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, getString(R.string.channel_session), NotificationManager.IMPORTANCE_LOW),
         )
-        return Notification.Builder(this, CHANNEL)
+        val builder = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_wash)
             .setContentTitle(getString(text))
             .setOngoing(true)
-            .build()
+        if (text == R.string.session_running) {
+            val open = PendingIntent.getActivity(this, OPEN_ID, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+            builder.setContentIntent(open).setCategory(NotificationCompat.CATEGORY_WORKOUT)
+            OngoingActivity.Builder(this, NOTIFICATION_ID, builder)
+                .setStaticIcon(R.drawable.ic_wash)
+                .setTouchIntent(open)
+                .setStatus(Status.Builder().addTemplate(getString(text)).build())
+                .build()
+                .apply(this)
+        }
+        return builder.build()
     }
 
     companion object {
