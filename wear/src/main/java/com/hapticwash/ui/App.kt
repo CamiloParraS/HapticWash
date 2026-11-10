@@ -66,9 +66,21 @@ fun App(startRequests: () -> Int = { 0 }, openRequest: () -> Long? = { null }, o
     var cancelledNotice by rememberSaveable { mutableStateOf(false) }
     // A Tile or complication tap: back to Start, which then starts (or rejoins) the Wash.
     LaunchedEffect(startRequests()) { if (startRequests() > answered) nav.popBackStack(Routes.START, inclusive = false) }
-    // A Wash that began without a tap on Start (a Twist): show it. A tap has already navigated, so Start is no longer current.
-    LaunchedEffect(running.running) {
-        if (running.running && nav.currentBackStackEntry?.destination?.route == Routes.START) nav.navigate(Routes.WASH)
+    // A Wash that began without a tap on Start (a Twist): show it, from whatever screen the app was left on, over Start.
+    // Each Wash screen claims the Wash it shows. A tap has already opened one, which claims this Wash (a Step guide
+    // opened from it stays open); one still showing an earlier Wash's Summary is stale and gives way to a fresh one.
+    LaunchedEffect(running.startedAtEpochMs) {
+        if (!running.running) return@LaunchedEffect
+        val started = running.startedAtEpochMs
+        val wash = runCatching { nav.getBackStackEntry(Routes.WASH) }.getOrNull()
+        val claimed = wash?.savedStateHandle?.get<Long>(WASH_CLAIM)
+        if (wash != null && (claimed == null || claimed == started)) {
+            wash.savedStateHandle[WASH_CLAIM] = started
+            return@LaunchedEffect
+        }
+        nav.popBackStack(Routes.START, inclusive = false)
+        nav.navigate(Routes.WASH)
+        nav.currentBackStackEntry?.savedStateHandle?.set(WASH_CLAIM, started)
     }
     // A tap on the Tile's ring or words: that Wash's Summary, over Start, as if opened from History.
     LaunchedEffect(openRequest()) {
@@ -137,6 +149,9 @@ private fun AmbientWash(shift: Dp) {
 }
 
 /** The app's drop glyph (`ic_wash`), as path data on a 24-unit grid, for the outlines ambient mode draws. */
+/** Saved-state key on a Wash screen: the start time of the Wash it shows. */
+private const val WASH_CLAIM = "wash_claim"
+
 private const val DROP_PATH = "M12,2C6.67,6.55 4,10.48 4,13.8C4,18.78 7.8,22 12,22s8,-3.22 8,-8.2C20,10.48 17.33,6.55 12,2z"
 
 @WearPreviewDevices
