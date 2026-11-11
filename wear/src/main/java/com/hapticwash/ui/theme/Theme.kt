@@ -16,7 +16,10 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.foundation.CurvedTextStyle
+import androidx.wear.compose.material3.TimeText
 import androidx.wear.compose.material3.Typography
+import androidx.wear.compose.material3.timeTextCurvedText
 
 /**
  * One look of Five Rings: every colour a screen draws with. [Dark] is the original, on true black; [Light] is
@@ -60,17 +63,17 @@ class FivePalette(
         )
 
         val Light = FivePalette(
-            bg = Color(0xFFF2F6F9), ink = Color(0xFF0A1822), textSecondary = Color(0xB80A1822), textTertiary = Color(0x9E0A1822), timeText = Color(0xFF0A1822),
+            bg = Color(0xFFDFE8E4), ink = Color(0xFF0A1822), textSecondary = Color(0xB80A1822), textTertiary = Color(0x9E0A1822), timeText = Color(0xFF0A1822),
             tint = Color(0xFF0072B2), tintLight = Color(0xFF1A8AD2), tintMist = Color(0xFF3FB6EC), tintSky = Color(0xFF0A6AB4), tintDeep = Color(0xFF0A84FF), onTint = Color.White,
             done = Color(0xFF07795B), doneRing = Color(0xFF12A57B), doneLight = Color(0xFF5ED3AE), stop = Color(0xFFD7261E),
             hubIndigo = Color(0xFF5E5CE6), hubBlueText = Color(0xFF0A66BF), hubGrey = Color(0xFF8E8E93), hubSlate = Color(0xFF3A4A5C),
-            platter = Color(0xFFE3E9EE), platterRaised = Color(0xFFD3DBE2), hairline = Color(0xFFC9D2D9), switchOff = Color(0xFF98A5AF), glass = Color(0x140A1822),
+            platter = Color(0xFFD1DBD7), platterRaised = Color(0xFFC2CDC8), hairline = Color(0xFFB6C2BD), switchOff = Color(0xFF98A5AF), glass = Color(0x140A1822),
             washGain = 0.5f, neutral = Color(0xFF8E8E93),
             // Rings: halfway between the dark Appearance's spectrum and stepsText, lit towards the bright dark-mode colour.
             steps = listOf(Color(0xFFEC2954), Color(0xFFE27F05), Color(0xFFD4A905), Color(0xFF23AE48), Color(0xFFA947E1)),
             stepsLight = listOf(Color(0xFFFF375F), Color(0xFFFF9F0A), Color(0xFFFFD60A), Color(0xFF30D158), Color(0xFFBF5AF2)),
             onStep = List(5) { Color.Black },
-            stepsText = listOf(Color(0xFFD81B48), Color(0xFFC45F00), Color(0xFFA87C00), Color(0xFF168A38), Color(0xFF9333D0)),
+            stepsText = listOf(Color(0xFFD81B48), Color(0xFFC45F00), Color(0xFF9F7400), Color(0xFF168A38), Color(0xFF9333D0)),
             trackAlpha = 0.36f,
             ringEdge = Color(0x380A1822),
         )
@@ -157,6 +160,12 @@ private fun schemeOf(p: FivePalette) = ColorScheme(
     errorContainer = p.stop,
     onError = p.bg,
 )
+
+/** The system clock at the top: [Five.TimeText] in bold on a near-opaque face-coloured pill, so it holds against whatever scrolls under it. */
+@Composable
+fun FiveTimeText() = TimeText(backgroundColor = Five.Bg.copy(alpha = 0.88f)) { time ->
+    timeTextCurvedText(time, CurvedTextStyle(color = Five.TimeText, fontWeight = FontWeight.Bold))
+}
 
 private val DarkScheme = schemeOf(FivePalette.Dark)
 private val LightScheme = schemeOf(FivePalette.Light)

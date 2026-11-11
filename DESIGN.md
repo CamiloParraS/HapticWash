@@ -249,11 +249,11 @@ Settings hub glyph discs borrow from the same family: Back Amber for "During a w
 
 ### Daylight (light Appearance)
 Settings → Appearance flips the face from True Black to **Daylight**, for bright bathrooms and kitchens. Same grammar, deepened so it holds on a pale face (palette in `FivePalette.Light`, `ui/theme/Theme.kt`):
-- **Face** #F2F6F9 (a cool off-white, never #FFF) with **Ink** #0A1822 for text; Secondary / Tertiary Grey are Ink at 72 % / 62 %.
+- **Face** #DFE8E4 (a soft sage-grey, never #FFF) with **Ink** #0A1822 for text; Secondary / Tertiary Grey are Ink at 72 % / 62 %.
 - **Pool** tint becomes #0072B2 (numerals, titles, switch-on), the capsule water runs #1A8AD2 → #0072B2 → #0A6AB4 with **white** label (the "no white on the gradient" rule is the dark theme's).
 - **Step colours** on every large Step shape (ring fills, lit glyph discs, the guide picture's ring and wash, History and credits discs, the Focus platter) are halfway between the dark spectrum and the text colours below: Palms #EC2954, Back #E27F05, Lemon #D4A905, Thumb #23AE48, Tip #A947E1. Rings light towards the bright dark-mode colour (not a pastel), and each lit ring carries an **ink edge**: a hairline (8 % of the stroke, Ink at 22 %) along both sides, because no warm yellow reaches 3:1 on a pale face and the edge is what separates the ring from it. Bare tracks are the Step text colour at 36 % (20 % on black). The glyph on a lit Step is black, as on True Black.
 - **Step text colours** (`stepsText`) deepen to Palms #D81B48, Back #C45F00, Lemon #A87C00, Thumb #168A38, Tip #9333D0, each ≥3:1 on the face, for anything thin or worded: guide page titles, status marks, the pager dot, the Focus Step's history line, the During a wash header, the Twist battery, a bare track's glyph, and the 20 % ring tracks (a bright-yellow track would vanish on the pale face).
-- **Mint** #07795B, **Hold Red** #D7261E; platters #E3E9EE / #D3DBE2, hairline #C9D2D9.
+- **Mint** #07795B, **Hold Red** #D7261E; platters #D1DBD7 / #C2CDC8, hairline #B6C2BD.
 - Tint washes fall at half strength (`washGain` 0.5) so the top glows pale instead of turning denim.
 - Ambient mode stays black and the Tile stays dark in both Appearances.
 

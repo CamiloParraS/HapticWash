@@ -19,6 +19,7 @@ import androidx.wear.compose.material3.AppScaffold
 import com.hapticwash.session.Settings
 import com.hapticwash.session.WashService
 import com.hapticwash.ui.theme.Five
+import com.hapticwash.ui.theme.FiveTimeText
 import com.hapticwash.ui.theme.HapticWashTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -73,7 +74,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { WashService.status.map { it.running }.distinctUntilChanged().collect(::watchAmbient) }
         val controls = ServiceWashControls(this)
         Five.light = controls.settings.lightMode
-        setContent { HapticWashTheme { AppScaffold { CompositionLocalProvider(LocalWashControls provides controls) { App({ startRequests }, { openRequest }, { openRequest = null }, { ambient }) } } } }
+        setContent { HapticWashTheme { AppScaffold(timeText = { FiveTimeText() }) { CompositionLocalProvider(LocalWashControls provides controls) { App({ startRequests }, { openRequest }, { openRequest = null }, { ambient }) } } } }
     }
 
     private fun takeStart(intent: Intent) {

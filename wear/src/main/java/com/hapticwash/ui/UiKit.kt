@@ -69,6 +69,7 @@ import androidx.wear.compose.material3.lazy.TransformationSpec
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import com.hapticwash.ui.theme.Five
+import com.hapticwash.ui.theme.FiveTimeText
 import com.hapticwash.ui.theme.FiveType
 import com.hapticwash.ui.theme.HapticWashTheme
 import kotlinx.coroutines.flow.first
@@ -230,4 +231,4 @@ internal fun staggered(entrance: Float, i: Int) =
  */
 @Composable
 internal fun PreviewFrame(controls: WashControls = PreviewWashControls(), content: @Composable () -> Unit) =
-    HapticWashTheme { AppScaffold { CompositionLocalProvider(LocalWashControls provides controls) { content() } } }
+    HapticWashTheme { AppScaffold(timeText = { FiveTimeText() }) { CompositionLocalProvider(LocalWashControls provides controls) { content() } } }
