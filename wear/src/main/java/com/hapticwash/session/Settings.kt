@@ -8,7 +8,6 @@ import com.hapticwash.BuildConfig
 interface UserSettings {
     var wrist: Wrist
     var haptics: Boolean
-    var progressRing: Boolean
     /** Twist start (M5): off by default; while on, WashService listens between Washes. Read-only here: WashControls turns it on and off, with the listening. */
     val twistStart: Boolean
     /** Target check (Coaching): on by default; the build flag ships it off with no UI when the M6 gate is missed. */
@@ -27,9 +26,6 @@ class Settings(context: Context) : UserSettings {
     override var haptics: Boolean
         get() = p.getBoolean(HAPTICS, true)
         set(v) = p.edit { putBoolean(HAPTICS, v) }
-    override var progressRing: Boolean
-        get() = p.getBoolean(PROGRESS_RING, false)
-        set(v) = p.edit { putBoolean(PROGRESS_RING, v) }
     override var twistStart: Boolean
         get() = p.getBoolean(TWIST_START, false)
         set(v) = p.edit { putBoolean(TWIST_START, v) }
@@ -47,7 +43,6 @@ class Settings(context: Context) : UserSettings {
         const val TARGET_CHECK = "target_check"
         const val WRIST = "wrist"
         const val HAPTICS = "haptics"
-        const val PROGRESS_RING = "progress_ring"
         const val TWIST_START = "twist_start"
     }
 }

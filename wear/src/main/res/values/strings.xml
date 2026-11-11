@@ -100,7 +100,7 @@
     <string name="settings_wash">During a wash</string>
     <string name="settings_start">Starting a wash</string>
     <string name="language">Language</string>
-    <string name="appearance">Appearance</string>
+    <string name="appearance">Theme</string>
     <string name="appearance_dark">Dark</string>
     <string name="appearance_light">Light</string>
     <string name="credits">Credits</string>
@@ -114,10 +114,8 @@
     <string name="wrist_right">Right</string>
     <string name="applies_next_wash">Applies from the next wash</string>
     <string name="haptics">Haptics</string>
-    <string name="progress_ring">Progress ring</string>
     <string name="target_check">Target check</string>
     <string name="twist_start">Start with a twist</string>
-    <string name="progress_ring_desc">Fills as you wash</string>
     <string name="twist_start_desc">Listens in the background</string>
     <string name="twist_warning_title">Uses more battery</string>
     <string name="twist_warning">The watch listens for a twist all day, so the battery runs down sooner.</string>

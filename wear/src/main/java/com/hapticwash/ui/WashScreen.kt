@@ -132,11 +132,10 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
     StopHoldCues(stopHold)
     val statusState = controls.status.collectAsState()
     val status by statusState
-    val ring = remember { controls.settings.progressRing }
     // The Summary draws the ring and the stop square from here on, shrinking them into its own; these must not double them.
-    val carried = handedOver && ring
+    val carried = handedOver
     val ambient = LocalAmbient.current
-    val elapsedS by rememberElapsedS(statusState, everyFrame = ring, ambient = ambient)
+    val elapsedS by rememberElapsedS(statusState, everyFrame = true, ambient = ambient)
     // The ring changes colour once it fills, so reaching the target is visible at a glance.
     val full by remember { derivedStateOf { LiveWash.full(elapsedS) } }
     // The whole seconds on screen: the text recomposes once a second, not every frame.
@@ -180,19 +179,9 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
         ) {
             val origin = LocalStartOrigin.current
             val from = { screen?.takeIf { it.isAttached && origin.centre.isSpecified }?.windowToLocal(origin.centre) }
-            if (ring) {
-                Spacer(Modifier.fillMaxSize().graphicsLayer { alpha = if (carried) 0f else enter.value }.drawBehind {
-                    liveRing(elapsedS, enter.value, from() ?: size.center, ringTrack, ringFrom, ringTo, moments.shine.value)
-                })
-            } else {
-                // Timer-only quiet cue: a white hairline on the same path, filling with the target. Static between ticks (no
-                // motion to reduce), it shows the watch is running and how far along, without the full ring the user kept off.
-                Spacer(Modifier.fillMaxSize().graphicsLayer { alpha = enter.value }.drawBehind {
-                    val line = 2.5.dp.toPx()
-                    edgeArc(SolidColor(Five.Ink.copy(alpha = 0.18f)), 1f, line, LIVE_STROKE.toPx())
-                    edgeArc(SolidColor(Five.Ink), LiveWash.ringFill(elapsedS), line, LIVE_STROKE.toPx())
-                })
-            }
+            Spacer(Modifier.fillMaxSize().graphicsLayer { alpha = if (carried) 0f else enter.value }.drawBehind {
+                liveRing(elapsedS, enter.value, from() ?: size.center, ringTrack, ringFrom, ringTo, moments.shine.value)
+            })
             Spacer(Modifier.fillMaxSize().drawBehind { if (!carried) stopMark(stopHold) })
             Column(
                 Modifier.graphicsLayer {
@@ -234,10 +223,10 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
                     }
                 }
             }
-            // "Hold to stop", said once near the bottom arc in the first seconds, then gone.
+            // "Hold to stop", said once just inside the bottom arc (clear of the ring's stroke, below the cue) in the first seconds, then gone.
             Text(
                 stringResource(R.string.hold_to_stop),
-                Modifier.align(Alignment.BottomCenter).padding(bottom = 44.dp).graphicsLayer { alpha = stopHold.hint.value * (1 - stopHold.swap) },
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp).graphicsLayer { alpha = stopHold.hint.value * (1 - stopHold.swap) },
                 color = Five.TextTertiary,
                 style = FiveType.labelSmall,
             )
@@ -253,7 +242,7 @@ private fun WashBody(stopHold: StopHoldState, onEnd: (Long) -> Unit, handedOver:
                 textAlign = TextAlign.Center,
             )
             // Only while the ring blooms, which is when Start's place is known.
-            if (ring && enter.value < 0.999f) from()?.let { StartGhost(it, origin.size) { enter.value } }
+            if (enter.value < 0.999f) from()?.let { StartGhost(it, origin.size) { enter.value } }
         }
     }
 }
@@ -316,7 +305,7 @@ private fun StartGhost(at: Offset, size: IntSize, enter: () -> Float) {
 @WearPreviewDevices
 @WearPreviewFontScales
 @Composable
-private fun WashPreview() = PreviewFrame(PreviewWashControls(PreviewWashControls.running(23f), settings = MemorySettings(progressRing = true))) { WashScreen(onGuide = {}) }
+private fun WashPreview() = PreviewFrame(PreviewWashControls(PreviewWashControls.running(23f))) { WashScreen(onGuide = {}) }
 
 @WearPreviewDevices
 @Composable

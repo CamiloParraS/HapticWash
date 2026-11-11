@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 internal class MemorySettings(
     override var wrist: Wrist = Wrist.LEFT,
     override var haptics: Boolean = true,
-    override var progressRing: Boolean = false,
     override var twistStart: Boolean = false,
     override var targetCheck: Boolean = true,
     override var lightMode: Boolean = false,

@@ -209,9 +209,7 @@ internal fun SettingsScreen(onWash: () -> Unit, onStart: () -> Unit, onCredits: 
 @Composable
 internal fun WashSettingsScreen() {
     val settings = LocalWashControls.current.settings
-    val status by LocalWashControls.current.status.collectAsState()
     var haptics by remember { mutableStateOf(settings.haptics) }
-    var ring by remember { mutableStateOf(settings.progressRing) }
     var targetCheck by remember { mutableStateOf(settings.targetCheck) }
     val feedback = LocalHapticFeedback.current
     fun tick(on: Boolean) = feedback.performHapticFeedback(if (on) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
@@ -222,20 +220,12 @@ internal fun WashSettingsScreen() {
             SwitchButton(haptics, { haptics = it; settings.haptics = it; tick(it) }, modifier.heightIn(min = TOGGLE_ROW_MIN).then(swell(haptics)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = toggleColors(),
                 label = { Text(stringResource(R.string.haptics), style = FiveType.body) })
         }
-        item {
-            val (source, modifier) = settingRow(spec, 2)
-            SwitchButton(ring, { ring = it; settings.progressRing = it; tick(it) }, modifier.heightIn(min = TOGGLE_ROW_MIN).then(swell(ring)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = toggleColors(),
-                label = { Text(stringResource(R.string.progress_ring), style = FiveType.body) },
-                secondaryLabel = { Text(stringResource(R.string.progress_ring_desc), style = FiveType.labelSmall) })
-        }
         // Absent entirely when the build flag ships the check disabled.
         if (BuildConfig.TARGET_CHECK) item {
-            val (source, modifier) = settingRow(spec, 3)
+            val (source, modifier) = settingRow(spec, 2)
             SwitchButton(targetCheck, { targetCheck = it; settings.targetCheck = it; tick(it) }, modifier.heightIn(min = TOGGLE_ROW_MIN).then(swell(targetCheck)), interactionSource = source, transformation = SurfaceTransformation(spec), colors = toggleColors(),
                 label = { Text(stringResource(R.string.target_check), style = FiveType.body) })
         }
-        // Only said when it matters: the ring is read at Wash start.
-        if (status.running) item { Footnote(stringResource(R.string.applies_next_wash), morphContent(spec)) }
     }
 }
 
