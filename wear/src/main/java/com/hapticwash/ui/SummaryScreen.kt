@@ -104,9 +104,9 @@ internal fun SummaryScreen(id: Long?, fromWash: Boolean = false, stoppedByHold: 
     val focusLabel = focus?.first
     // Rows arrive in a short cascade as the end pulses play. Decorative: scrolling is never blocked.
     val entrance = remember { Animatable(0f) }
-    // C6: straight from a Wash with the live ring on, that ring shrinks into the Coverage rings (0 = live, 1 = landed).
+    // C6: straight from a Wash, the live ring shrinks into the Coverage rings (0 = live, 1 = landed).
     val byHold = remember { fromWash && stoppedByHold }
-    val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true && controls.settings.progressRing) 0f else 1f) }
+    val morph = remember { Animatable(if (fromWash && wash?.coverageShown == true) 0f else 1f) }
     LaunchedEffect(Unit) { morph.animateTo(1f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)) }
     // The rings and rows start once the live ring is most of the way in, so they fill where they can be seen.
     LaunchedEffect(Unit) {
@@ -248,12 +248,29 @@ private fun StepRow(c: StepCoverage, name: String, focus: Pair<Int, Int>?, fill:
 internal fun GuideScreen(label: Int?) {
     if (label == null || label !in 1..5) return
     val pager = rememberPagerState(initialPage = label - 1) { 5 }
+    // Where the pager is, in pages (2.4 = 40 % of the way from the third guide to the fourth). Read in the draw phase.
+    fun position() = (pager.currentPage + pager.currentPageOffsetFraction).coerceIn(0f, 4f)
+    // One backdrop for all five guides, not a wash on each page: the colour melts from one Step's to the next's with the
+    // swipe instead of changing at a hard edge that slides by.
+    fun Modifier.washOf(step: Int) = tintWash(Five.step(step)) {
+        val d = kotlin.math.abs(position() - (step - 1))
+        0.33f * (1f - d).coerceIn(0f, 1f)
+    }
     VerticalPagerScaffold(
         pager,
         Modifier.background(Five.Bg),
-        pageIndicator = { VerticalPageIndicator(pager, selectedColor = Five.stepText(pager.currentPage + 1), unselectedColor = Five.TextTertiary) },
+        pageIndicator = {
+            // The selected dot takes the colour of the Step it is travelling to, as it travels.
+            val at = position()
+            val from = at.toInt().coerceAtMost(4)
+            val dot = androidx.compose.ui.graphics.lerp(Five.stepText(from + 1), Five.stepText((from + 2).coerceAtMost(5)), at - from)
+            VerticalPageIndicator(pager, selectedColor = dot, unselectedColor = Five.TextTertiary)
+        },
     ) {
-        VerticalPager(pager, Modifier.fillMaxSize()) { page -> GuidePage(page + 1) { page - (pager.currentPage + pager.currentPageOffsetFraction) } }
+        Box(Modifier.fillMaxSize()) {
+            for (step in 1..5) Spacer(Modifier.fillMaxSize().washOf(step))
+            VerticalPager(pager, Modifier.fillMaxSize()) { page -> GuidePage(page + 1) { page - (pager.currentPage + pager.currentPageOffsetFraction) } }
+        }
     }
 }
 
@@ -266,16 +283,17 @@ private fun GuidePage(label: Int, offset: () -> Float = { 0f }) {
     val art = if (compact) 46.dp else 52.dp
     val page = stringResource(R.string.page_of, label, 5)
     // The words trail the page a little and dissolve as it leaves, and arrive the same way: the swipe reads as one page
-    // handing over to the next, not a card sliding under still text. Read in the draw phase, so paging never recomposes.
-    val words = Modifier.graphicsLayer {
+    // handing over to the next, not a card sliding under still text. Each line trails a little further than the one above
+    // it ([line] 0, 1, 2), so they cascade in and out. Read in the draw phase, so paging never recomposes.
+    fun words(line: Int) = Modifier.graphicsLayer {
         val o = offset().coerceIn(-1f, 1f)
-        alpha = EaseOutStrong.transform((1f - 1.5f * kotlin.math.abs(o)).coerceIn(0f, 1f))
-        translationY = -o * 22.dp.toPx()
+        alpha = EaseOutStrong.transform((1f - (1.5f + 0.3f * line) * kotlin.math.abs(o)).coerceIn(0f, 1f))
+        translationY = -o * (16 + 8 * line).dp.toPx()
     }
     // Scrolls if it must: on a small screen, or at a large font size, the title, technique and why line may not all fit.
     Column(
         // The last 24 dp fade out, so text that runs past the round edge dissolves rather than being cut by a hard edge.
-        Modifier.fillMaxSize().tintWash(color, 0.33f).graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }.drawWithContent {
+        Modifier.fillMaxSize().graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }.drawWithContent {
             drawContent()
             val fade = 24.dp.toPx()
             drawRect(Brush.verticalGradient(listOf(Color.Black, Color.Transparent), startY = size.height - fade, endY = size.height), blendMode = BlendMode.DstIn)
@@ -298,8 +316,8 @@ private fun GuidePage(label: Int, offset: () -> Float = { 0f }) {
         ) {
             Image(painterResource(STEP_ART[label - 1]), null, Modifier.size(art).clip(CircleShape).background(Color(0xFFEEEEEE)))
         }
-        Text(stringArrayResource(R.array.steps)[label - 1], words.padding(top = 2.dp), style = FiveType.title.copy(fontSize = 16.5.sp), color = Five.stepText(label), textAlign = TextAlign.Center)
-        Text(stringArrayResource(R.array.step_how)[label - 1], words, style = FiveType.bodySmall.copy(fontSize = 13.5.sp), textAlign = TextAlign.Center)
-        Text(stringArrayResource(R.array.step_whys)[label - 1], words, color = Five.TextSecondary, style = FiveType.label.copy(fontSize = 11.5.sp), textAlign = TextAlign.Center)
+        Text(stringArrayResource(R.array.steps)[label - 1], words(0).padding(top = 2.dp), style = FiveType.title.copy(fontSize = 16.5.sp), color = Five.stepText(label), textAlign = TextAlign.Center)
+        Text(stringArrayResource(R.array.step_how)[label - 1], words(1), style = FiveType.bodySmall.copy(fontSize = 13.5.sp), textAlign = TextAlign.Center)
+        Text(stringArrayResource(R.array.step_whys)[label - 1], words(2), color = Five.TextSecondary, style = FiveType.label.copy(fontSize = 11.5.sp), textAlign = TextAlign.Center)
     }
 }
